@@ -1,0 +1,87 @@
+@import 'tailwindcss';
+
+/*
+  Beaver design tokens — minimalist, non-generic.
+  Palette: green (brand/positive) · slate (text/neutral) · white (surface).
+  Type: General Sans (UI) with tabular numerals for money; mono for receipts/IDs.
+  Aesthetic rule: avoid boxes. Prefer whitespace, alignment, and hairline dividers.
+*/
+@theme {
+  --font-sans: 'General Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Brand green scale */
+  --color-brand-50: #ecfdf3;
+  --color-brand-100: #d1fadf;
+  --color-brand-200: #a6f4c5;
+  --color-brand-300: #6ce9a6;
+  --color-brand-400: #32d583;
+  --color-brand-500: #12b76a;
+  --color-brand-600: #039855;
+  --color-brand-700: #027a48;
+  --color-brand-800: #05603a;
+  --color-brand-900: #054f31;
+
+  --color-surface: #ffffff;
+  --color-canvas: #fbfcfd; /* near-white app canvas */
+  --color-hairline: #eef1f4; /* very subtle divider instead of boxes */
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-slate-900, #0f172a);
+  font-family: var(--font-sans);
+  font-feature-settings: 'ss01', 'cv01';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Money & figures: consistent-width digits for clean right-aligned columns. */
+.tabular,
+[data-tabular] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* Hairline divider utility — used instead of bordered cards. */
+.divider {
+  border-top: 1px solid var(--color-hairline);
+}
+
+/* Large, tappable targets for POS on Android. */
+.tap {
+  min-height: 3.25rem;
+}
+
+/* Landing — staggered entrance. Reveal on load; stagger via inline animation-delay. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-rise {
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise {
+    animation: none;
+  }
+}
+
+::selection {
+  background: var(--color-brand-100);
+  color: var(--color-brand-900);
+}

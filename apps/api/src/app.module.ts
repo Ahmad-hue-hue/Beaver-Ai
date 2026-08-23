@@ -1,0 +1,40 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { configuration } from './config/configuration.js';
+import { CacheModule } from './common/cache/cache.module.js';
+import { EventsModule } from './common/events/events.module.js';
+import { PrismaModule } from './common/prisma/prisma.module.js';
+import { AuditModule } from './common/audit/audit.module.js';
+import { HealthModule } from './modules/health/health.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
+import { BusinessesModule } from './modules/businesses/businesses.module.js';
+import { CategoriesModule } from './modules/categories/categories.module.js';
+import { UnitsModule } from './modules/units/units.module.js';
+import { ProductsModule } from './modules/products/products.module.js';
+import { InventoryModule } from './modules/inventory/inventory.module.js';
+import { CustomersModule } from './modules/customers/customers.module.js';
+import { SalesModule } from './modules/sales/sales.module.js';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true, load: [configuration], cache: true }),
+    EventEmitterModule.forRoot({ wildcard: false, maxListeners: 50 }),
+    ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 120 }] }),
+    PrismaModule,
+    CacheModule,
+    EventsModule,
+    AuditModule,
+    AuthModule,
+    HealthModule,
+    BusinessesModule,
+    CategoriesModule,
+    UnitsModule,
+    ProductsModule,
+    InventoryModule,
+    CustomersModule,
+    SalesModule,
+  ],
+})
+export class AppModule {}

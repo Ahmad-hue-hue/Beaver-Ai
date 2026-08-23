@@ -1,0 +1,30 @@
+{
+  "name": "beaver",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Beaver — AI-powered business operating system for small/medium retail shops",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "bun": ">=1.3.0"
+  },
+  "scripts": {
+    "dev": "bun run --filter '*' dev",
+    "build": "bun run --filter '*' build",
+    "start": "bun run --filter '*' start",
+    "test": "bun run --filter '*' test",
+    "lint": "bun run --filter '*' lint",
+    "typecheck": "bun run --filter '*' typecheck",
+    "db:migrate": "bun --filter api db:migrate",
+    "db:seed": "bun --filter api db:seed",
+    "db:studio": "bun --filter api db:studio",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "infra:logs": "docker compose logs -f"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  }
+}

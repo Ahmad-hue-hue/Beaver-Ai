@@ -1,0 +1,4 @@
+# NestJS/Prisma expect a hoisted node_modules (peer deps like pino-http must be
+# resolvable from dependents). Use the hoisted linker instead of Bun's default isolated one.
+[install]
+linker = "hoisted"

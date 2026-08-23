@@ -1,0 +1,80 @@
+'use client';
+
+import * as React from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ArrowRight } from '@/components/ui/icon';
+import { BrandMark } from '@/components/brand-mark';
+import { Button } from '@/components/ui/button';
+import { Field, Input, PasswordInput } from '@/components/ui/field';
+import { useAuth } from '@/lib/auth-context';
+import { ApiError } from '@/lib/api-client';
+
+export default function RegisterPage() {
+  const { register } = useAuth();
+  const router = useRouter();
+  const [form, setForm] = React.useState({ name: '', email: '', phone: '', password: '' });
+  const [error, setError] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(false);
+
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      await register({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        phone: form.phone || undefined,
+      });
+      router.replace('/onboarding'); // new account → set up the business
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Something went wrong. Try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6 py-12">
+      <div className="mb-10 flex items-center gap-4">
+        <BrandMark size={64} />
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Create your account</h1>
+          <p className="text-slate-500">Start running your shop with Beaver</p>
+        </div>
+      </div>
+
+      <form onSubmit={onSubmit} className="space-y-6">
+        <Field label="Your name">
+          <Input placeholder="Asha Mushi" value={form.name} onChange={set('name')} required />
+        </Field>
+        <Field label="Email">
+          <Input type="email" autoComplete="email" placeholder="asha@duka.co.tz" value={form.email} onChange={set('email')} required />
+        </Field>
+        <Field label="Phone" hint="Optional">
+          <Input placeholder="+255 700 000 000" value={form.phone} onChange={set('phone')} />
+        </Field>
+        <Field label="Password" hint="At least 8 characters" error={error ?? undefined}>
+          <PasswordInput autoComplete="new-password" placeholder="••••••••" value={form.password} onChange={set('password')} required minLength={8} />
+        </Field>
+
+        <Button type="submit" loading={loading} className="w-full">
+          Create account
+          <ArrowRight className="size-5" />
+        </Button>
+      </form>
+
+      <div className="divider mt-10 pt-5 text-slate-500">
+        Already have an account?{' '}
+        <Link href="/login" className="font-medium text-brand-700 hover:text-brand-800">
+          Sign in
+        </Link>
+      </div>
+    </main>
+  );
+}
