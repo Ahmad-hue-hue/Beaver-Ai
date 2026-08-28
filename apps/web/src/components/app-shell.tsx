@@ -42,7 +42,7 @@ const NAV: NavItem[] = [
   { href: '/purchases', label: 'Purchases', short: 'Buy', icon: ShoppingBag },
   { href: '/expenses', label: 'Expenses', short: 'Spend', icon: Wallet },
   { href: '/cash', label: 'Cash', short: 'Cash', icon: Coins },
-  { label: 'Reports', icon: BarChart3, soon: true },
+  { href: '/reports', label: 'Reports', short: 'Reports', icon: BarChart3 },
 ];
 
 /** Authenticated layout: slim icon rail + content. Guards the session, redirects if absent. */

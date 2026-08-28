@@ -13,7 +13,7 @@ end-to-end; every scoped row carries `businessId`; domain writes are atomic. See
 | M2 | Products, categories, units, inventory core | ✅ |
 | M3 | POS & sales | ✅ |
 | M4 | Suppliers, purchases, expenses, cash, full customer debt | ✅ |
-| M5 | Analytics, dashboard, reports (+ Redis cache-aside) | ⬜ |
+| M5 | Analytics, dashboard, reports (+ Redis cache-aside) | ✅ |
 | M6 | AI assistant + autonomous agentic layer | ⬜ |
 | M7 | Notifications, employees, admin, security pass | ⬜ |
 | M8 | Polish, tests, docs, seed, deployment | ⬜ |
@@ -67,11 +67,15 @@ The revenue heart. Models: `Customer` (minimal, with `balance`), `Sale`, `SaleIt
 - Keep every write atomic and Decimal-safe; reuse the ledger + doc-numbering + audit +
   events patterns from M2/M3.
 
-## ⬜ M5 — Analytics, dashboard, reports
+## ✅ M5 — Analytics, dashboard, reports
 
-Deterministic financial analytics (sales trends, COGS/profit from snapshots, top products,
-debtors), full dashboard, exportable reports. Add Redis **cache-aside** with event-driven
-invalidation on the hot read paths.
+Deterministic financial analytics: `analytics` module with `/overview`, `/stats` (revenue,
+COGS/profit from `costSnapshot` snapshots, net after expenses, margin), `/trend` (continuous
+local-day revenue/COGS/profit series), `/top-products` and `/debtors`. All reads are
+**cache-aside via Redis** (`CacheService`), invalidated event-driven by `CacheInvalidationListener`
+off the shared `DomainEvents`. Web: Reports screen (P&L period view, revenue bars, top
+products, top debtors) and Reports added to the app rail; pure trend/margin math is
+unit-tested in `analytics/math.test.ts`.
 
 ## ⬜ M6 — AI assistant + autonomous agentic layer
 
