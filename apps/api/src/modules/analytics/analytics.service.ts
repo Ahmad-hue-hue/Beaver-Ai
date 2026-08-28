@@ -226,8 +226,8 @@ export class AnalyticsService {
       JOIN "Sale" s ON s.id = si."saleId"
       WHERE si."businessId" = ${businessId}
         AND s.status = 'COMPLETED'
-        AND s.soldAt >= ${range.gte ?? new Date(0)}
-        ${range.lt ? Prisma.sql`AND s.soldAt < ${range.lt}` : Prisma.empty}
+        AND s."soldAt" >= ${range.gte ?? new Date(0)}
+        ${range.lt ? Prisma.sql`AND s."soldAt" < ${range.lt}` : Prisma.empty}
     `;
     return dec(rows[0]?.v ?? '0');
   }
