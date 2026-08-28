@@ -14,6 +14,8 @@ import { PrismaService } from '../../common/prisma/prisma.service.js';
 import { DomainEvents } from '../../common/events/domain-events.js';
 import { InventoryService } from '../inventory/inventory.service.js';
 import { saleTotals } from './totals.js';
+import { ReturnValidationError, planReturns, refundTotal as refundTotalOf } from './refund.js';
+import type { PlannedReturn as ReturnPlanned } from './refund.js';
 import type { CreateReturnDto, CreateSaleDto, ListSalesQuery } from './dto.js';
 
 const dec = (v: number | string | Prisma.Decimal): Prisma.Decimal => new Prisma.Decimal(String(v));
@@ -392,22 +394,35 @@ export class SalesService {
       }
     }
 
-    const planned = dto.items.map((input) => {
-      const saleItem = itemById.get(input.saleItemId);
-      if (!saleItem) throw new BadRequestException(`Sale item ${input.saleItemId} is not part of this sale.`);
-      const qty = dec(input.quantity);
-      const alreadyReturned = returnedByItem.get(saleItem.id) ?? ZERO;
-      const remaining = saleItem.quantity.minus(alreadyReturned);
-      if (qty.greaterThan(remaining)) {
-        throw new BadRequestException(`Cannot return ${qty.toString()} of "${saleItem.nameSnapshot}" — only ${remaining.toString()} remaining.`);
+    // Validate that every requested line belongs to this sale.
+    for (const input of dto.items) {
+      if (!itemById.has(input.saleItemId)) {
+        throw new BadRequestException(`Sale item ${input.saleItemId} is not part of this sale.`);
       }
-      // Refund proportional to what was actually charged for the line (incl. its tax/discount).
-      const unitRefund = saleItem.lineTotal.div(saleItem.quantity);
-      const refundAmount = money(unitRefund.times(qty));
-      return { saleItem, qty, refundAmount };
-    });
+    }
 
-    const refundTotal = money(planned.reduce((s, p) => s.plus(p.refundAmount), ZERO));
+    let planned: ReturnPlanned[];
+    try {
+      planned = planReturns(
+        dto.items.map((input) => {
+          const saleItem = itemById.get(input.saleItemId)!;
+          return {
+            saleItemId: saleItem.id,
+            name: saleItem.nameSnapshot,
+            lineTotal: saleItem.lineTotal,
+            quantity: saleItem.quantity,
+            alreadyReturned: returnedByItem.get(saleItem.id) ?? ZERO,
+            returnQty: dec(input.quantity),
+          };
+        }),
+      );
+    } catch (e) {
+      if (e instanceof ReturnValidationError) throw new BadRequestException(e.message);
+      throw e;
+    }
+    // Attach the sale item back for the transactional write below.
+    const plannedWithItems = planned.map((p) => ({ ...p, saleItem: itemById.get(p.saleItemId)! }));
+    const refundTotal = refundTotalOf(planned);
     const reference = await this.nextReturnReference(businessId);
 
     const ret = await this.prisma.$transaction(async (tx) => {
@@ -420,11 +435,11 @@ export class SalesService {
           reason: dto.reason?.trim() || null,
           refundTotal,
           items: {
-            create: planned.map((p) => ({
+            create: plannedWithItems.map((p) => ({
               businessId,
               saleItemId: p.saleItem.id,
               productId: p.saleItem.productId,
-              quantity: p.qty,
+              quantity: p.quantity,
               refundAmount: p.refundAmount,
             })),
           },
@@ -433,7 +448,7 @@ export class SalesService {
       });
 
       // Restock returned inventory-tracked items.
-      for (const p of planned) {
+      for (const p of plannedWithItems) {
         const product = await tx.product.findUnique({
           where: { id: p.saleItem.productId },
           select: { isService: true, trackInventory: true },
@@ -445,7 +460,7 @@ export class SalesService {
             businessId,
             productId: p.saleItem.productId,
             type: 'RETURN',
-            signedQty: p.qty,
+            signedQty: p.quantity,
             reason: `Return ${reference}`,
             sourceType: 'Return',
             sourceId: created.id,
