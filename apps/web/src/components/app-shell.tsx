@@ -43,6 +43,7 @@ const NAV: NavItem[] = [
   { href: '/expenses', label: 'Expenses', short: 'Spend', icon: Wallet },
   { href: '/cash', label: 'Cash', short: 'Cash', icon: Coins },
   { href: '/reports', label: 'Reports', short: 'Reports', icon: BarChart3 },
+  { href: '/assistant', label: 'Assistant', short: 'AI', icon: Bot },
 ];
 
 /** Authenticated layout: slim icon rail + content. Guards the session, redirects if absent. */
@@ -100,12 +101,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           );
         })}
 
-        <span className="mt-auto grid size-13 place-items-center rounded-[0.85rem] text-brand-600" title="AI assistant — coming soon">
-          <Bot className="size-6" />
-        </span>
         <button
           onClick={signOut}
-          className="grid size-13 place-items-center rounded-[0.85rem] text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          className="mt-auto grid size-13 place-items-center rounded-[0.85rem] text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
           title="Sign out"
         >
           <LogOut className="size-5" />

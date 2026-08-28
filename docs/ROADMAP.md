@@ -14,7 +14,7 @@ end-to-end; every scoped row carries `businessId`; domain writes are atomic. See
 | M3 | POS & sales | ✅ |
 | M4 | Suppliers, purchases, expenses, cash, full customer debt | ✅ |
 | M5 | Analytics, dashboard, reports (+ Redis cache-aside) | ✅ |
-| M6 | AI assistant + autonomous agentic layer | ⬜ |
+| M6 | AI assistant + autonomous agentic layer | ✅ |
 | M7 | Notifications, employees, admin, security pass | ⬜ |
 | M8 | Polish, tests, docs, seed, deployment | ⬜ |
 
@@ -77,12 +77,17 @@ off the shared `DomainEvents`. Web: Reports screen (P&L period view, revenue bar
 products, top debtors) and Reports added to the app rail; pure trend/margin math is
 unit-tested in `analytics/math.test.ts`.
 
-## ⬜ M6 — AI assistant + autonomous agentic layer
+## ✅ M6 — AI assistant + autonomous agentic layer
 
-Assistant over business data via the AiProvider abstraction, plus **background agents** that
-study trends, detect patterns, and surface proactive insights/recommendations (not just a
-Q&A chatbot). pgvector for retrieval where useful. Mock provider keeps everything runnable
-without a key.
+`ai` provider abstraction under `common/ai` (interface + Anthropic live client + deterministic
+mock factory) selected by config; the app and its tests run with no key. The `modules/ai`
+assistant grounds `POST /ai/chat` in a live business snapshot (today's P&L, cash, debt, flags)
+and calls the provider. The autonomous layer is **rule-based agents** (`agents.service`) that
+proactively surface insights — low stock, slow movers/capital tied up, top seller, debt
+concentration, negative till, expense spikes — working identically with or without a key.
+Pure insight logic is unit-tested. Web: `/assistant` screen (insights feed + grounded chat)
+and the Assistant added to the app rail. pgvector ships in the DB image for later semantic
+retrieval but is not yet exercised.
 
 ## ⬜ M7 — Notifications, employees, admin, security pass
 

@@ -29,6 +29,7 @@ import {
   PrinterIcon,
   ReceiptIcon,
   Search01Icon,
+  SendIcon,
   ShoppingCart01Icon,
   SparklesIcon,
   Delete02Icon,
@@ -73,6 +74,7 @@ export const Receipt = make(ReceiptIcon, 'Receipt');
 export const Search = make(Search01Icon, 'Search');
 export const ShoppingCart = make(ShoppingCart01Icon, 'ShoppingCart');
 export const Sparkles = make(SparklesIcon, 'Sparkles');
+export const Send = make(SendIcon, 'Send');
 export const Trash2 = make(Delete02Icon, 'Trash2');
 export const UserPlus = make(UserAdd01Icon, 'UserPlus');
 export const Users = make(UserGroupIcon, 'Users');

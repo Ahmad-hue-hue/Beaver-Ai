@@ -5,6 +5,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { configuration } from './config/configuration.js';
 import { CacheModule } from './common/cache/cache.module.js';
 import { EventsModule } from './common/events/events.module.js';
+import { AiModule as CommonAiModule } from './common/ai/ai.module.js';
 import { PrismaModule } from './common/prisma/prisma.module.js';
 import { AuditModule } from './common/audit/audit.module.js';
 import { HealthModule } from './modules/health/health.module.js';
@@ -22,6 +23,7 @@ import { ExpensesModule } from './modules/expenses/expenses.module.js';
 import { CashModule } from './modules/cash/cash.module.js';
 import { DebtsModule } from './modules/debts/debts.module.js';
 import { AnalyticsModule } from './modules/analytics/analytics.module.js';
+import { AiModule } from './modules/ai/ai.module.js';
 
 @Module({
   imports: [
@@ -31,6 +33,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module.js';
     PrismaModule,
     CacheModule,
     EventsModule,
+    CommonAiModule,
     AuditModule,
     AuthModule,
     HealthModule,
@@ -47,6 +50,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module.js';
     CashModule,
     DebtsModule,
     AnalyticsModule,
+    AiModule,
   ],
 })
 export class AppModule {}
