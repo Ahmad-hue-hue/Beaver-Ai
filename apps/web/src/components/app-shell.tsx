@@ -8,7 +8,6 @@ import {
   Bell,
   Bot,
   Coins,
-  Invoice,
   LayoutDashboard,
   LogOut,
   Package,

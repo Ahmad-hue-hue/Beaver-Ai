@@ -65,7 +65,7 @@ export function Receipt({
             <p className="text-base font-semibold tracking-tight">{businessName}</p>
             <p className="text-slate-500">{sale.reference}</p>
             <p className="text-slate-400">
-              {new Date(sale.soldAt ?? Date.now()).toLocaleString('en-GB')}
+              {sale.soldAt ? new Date(sale.soldAt).toLocaleString('en-GB') : ''}
             </p>
           </div>
 

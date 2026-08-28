@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Bot, Send, Sparkles } from '@/components/ui/icon';
 import { AppShell } from '@/components/app-shell';
 import { api, ApiError } from '@/lib/api-client';
@@ -36,7 +36,6 @@ export default function AssistantPage() {
 function AssistantContent() {
   const { session } = useAuth();
   const token = session?.accessToken;
-  const qc = useQueryClient();
 
   const status = useQuery({
     queryKey: ['ai', 'status'],

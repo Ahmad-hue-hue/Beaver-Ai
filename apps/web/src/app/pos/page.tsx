@@ -6,7 +6,6 @@ import { Minus, Plus, Search, ShoppingCart, Trash2, X, UserPlus } from '@/compon
 import { formatMoney } from '@/lib/money';
 import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/field';
 import { Receipt, type ReceiptSale } from '@/components/receipt';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';

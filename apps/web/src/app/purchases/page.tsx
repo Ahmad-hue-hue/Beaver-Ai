@@ -11,7 +11,8 @@ import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 
 interface Supplier { id: string; name: string }
-interface Product { id: string; name: string; stockQuantity: string }
+interface Product { id: string; name: string; stockQuantity: string; isService: boolean }
+interface PurchaseItem { id: string; nameSnapshot: string; quantity: string; unitCost: string; lineTotal: string }
 interface Purchase {
   id: string;
   reference: string;
@@ -22,8 +23,10 @@ interface Purchase {
   orderDate: string;
   supplier?: { name: string } | null;
   _count?: { items: number };
+  items?: PurchaseItem[];
 }
 interface PurchaseList { data: Purchase[]; pagination: { total: number } }
+interface ListResult<T> { data: T[]; pagination: { total: number } }
 
 const money = (v: string | number) => formatMoney(Number(v), { currency: 'TZS', symbolless: true });
 
@@ -145,7 +148,7 @@ function PurchaseSheet({ purchaseId, token, onClose, onChanged }: { purchaseId: 
   const qc = useQueryClient();
   const { data: purchase, isLoading } = useQuery({
     queryKey: ['purchase', purchaseId],
-    queryFn: () => api.get<any>(`/purchases/${purchaseId}`, { accessToken: token }),
+    queryFn: () => api.get<Purchase>(`/purchases/${purchaseId}`, { accessToken: token }),
     enabled: !!token && !!purchaseId,
   });
 
@@ -187,7 +190,7 @@ function PurchaseSheet({ purchaseId, token, onClose, onChanged }: { purchaseId: 
             <div className="mt-5 flex-1">
               <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Items</p>
               <div className="mt-2">
-                {(purchase.items ?? []).map((it: any) => (
+                {(purchase.items ?? []).map((it: PurchaseItem) => (
                   <div key={it.id} className="flex items-baseline justify-between gap-3 border-b border-hairline py-2.5">
                     <p className="truncate text-sm font-medium text-slate-800">{it.nameSnapshot}</p>
                     <p className="tabular shrink-0 text-sm text-slate-600">
@@ -240,16 +243,14 @@ function PurchaseSheet({ purchaseId, token, onClose, onChanged }: { purchaseId: 
 }
 
 function AddPurchase({ token, onDone }: { token?: string; onDone: () => void }) {
-  const qc = useQueryClient();
-
   const suppliers = useQuery({
     queryKey: ['suppliers', 'all'],
-    queryFn: () => api.get<any>(`/suppliers?limit=100`, { accessToken: token }),
+    queryFn: () => api.get<ListResult<Supplier>>(`/suppliers?limit=100`, { accessToken: token }),
     enabled: !!token,
   });
   const products = useQuery({
     queryKey: ['products', 'all'],
-    queryFn: () => api.get<any>(`/products?limit=100`, { accessToken: token }),
+    queryFn: () => api.get<ListResult<Product>>(`/products?limit=100`, { accessToken: token }),
     enabled: !!token,
   });
 
@@ -259,7 +260,7 @@ function AddPurchase({ token, onDone }: { token?: string; onDone: () => void }) 
   const [lines, setLines] = React.useState([{ productId: '', quantity: '', unitCost: '' }]);
 
   const mappedProducts = products.data?.data ?? [];
-  const productOptions = mappedProducts.filter((p: any) => !p.isService);
+  const productOptions = mappedProducts.filter((p: Product) => !p.isService);
 
   const mutation = useMutation({
     mutationFn: () =>
