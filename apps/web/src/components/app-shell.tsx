@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   BarChart3,
+  Bell,
   Bot,
   Coins,
   Invoice,
@@ -12,14 +13,18 @@ import {
   LogOut,
   Package,
   Receipt,
+  Settings,
   ShoppingBag,
   ShoppingCart,
   Truck,
+  UserPlus,
   Users,
   Wallet,
 } from '@/components/ui/icon';
 import { BrandMark } from '@/components/brand-mark';
 import { useAuth } from '@/lib/auth-context';
+import { api } from '@/lib/api-client';
+import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -30,7 +35,10 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   soon?: boolean;
   accent?: boolean;
+  roles?: string[];
 }
+
+const OWNER_MANAGER = ['OWNER', 'MANAGER'];
 
 const NAV: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', short: 'Home', icon: LayoutDashboard },
@@ -44,7 +52,38 @@ const NAV: NavItem[] = [
   { href: '/cash', label: 'Cash', short: 'Cash', icon: Coins },
   { href: '/reports', label: 'Reports', short: 'Reports', icon: BarChart3 },
   { href: '/assistant', label: 'Assistant', short: 'AI', icon: Bot },
+  { href: '/team', label: 'Team', short: 'Team', icon: UserPlus, roles: OWNER_MANAGER },
+  { href: '/settings', label: 'Settings', short: 'Settings', icon: Settings, roles: OWNER_MANAGER },
 ];
+
+/** Bell with an unread dot, wired to the notifications page. */
+function NavBell({ token }: { token?: string }) {
+  const unread = useQuery({
+    queryKey: ['notifications', 'unread'],
+    queryFn: () => api.get<{ count: number }>('/notifications/unread-count', { accessToken: token }),
+    enabled: !!token,
+  });
+  const count = unread.data?.count ?? 0;
+  return (
+    <Link href="/notifications" className="group relative" aria-label="Notifications">
+      <span
+        className={cn(
+          'grid size-13 place-items-center rounded-[0.85rem] transition-colors',
+          count > 0
+            ? 'bg-brand-50 text-brand-700'
+            : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700',
+        )}
+      >
+        <Bell className="size-6" />
+      </span>
+      {count > 0 && (
+        <span className="absolute right-2 top-2 grid min-w-4 place-items-center rounded-full bg-red-500 px-1 font-mono text-[10px] font-bold text-white">
+          {count > 9 ? '9+' : count}
+        </span>
+      )}
+    </Link>
+  );
+}
 
 /** Authenticated layout: slim icon rail + content. Guards the session, redirects if absent. */
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -67,13 +106,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = () => logout().then(() => router.replace('/login'));
+  const role = session.role;
+  const items = NAV.filter((item) => !item.roles || (role && item.roles.includes(role)));
 
   return (
     <div className="min-h-dvh sm:grid sm:grid-cols-[76px_1fr]">
       {/* Tablet / desktop: slim icon rail */}
       <nav className="sticky top-0 hidden h-dvh flex-col items-center gap-1 border-r border-hairline py-6 sm:flex">
         <BrandMark size={44} className="mb-4" />
-        {NAV.map((item) => {
+        {items.map((item) => {
           const active = item.href && pathname.startsWith(item.href);
           const content = (
             <span
@@ -101,6 +142,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           );
         })}
 
+        <NavBell token={session.accessToken} />
+
         <button
           onClick={signOut}
           className="mt-auto grid size-13 place-items-center rounded-[0.85rem] text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
@@ -114,7 +157,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Phone: bottom tab bar */}
       <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-hairline bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden">
-        {NAV.filter((item) => item.href).map((item) => {
+        {items.filter((item) => item.href).map((item) => {
           const active = pathname.startsWith(item.href!);
           return (
             <Link
@@ -130,6 +173,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           );
         })}
+        <Link
+          href="/notifications"
+          className="flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium text-slate-400"
+        >
+          <Bell className="size-6" />
+          Notifs
+        </Link>
         <button
           onClick={signOut}
           className="flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium text-slate-400"

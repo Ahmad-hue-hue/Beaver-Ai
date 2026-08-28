@@ -44,11 +44,15 @@ export const PERMISSIONS = {
   REPORTS_VIEW_OPERATIONAL: 'reports.view_operational',
   REPORTS_VIEW_FINANCIAL: 'reports.view_financial',
 
+  // Notifications
+  NOTIFICATIONS_VIEW: 'notifications.view',
+
   // AI
   AI_ASSISTANT_USE: 'ai.assistant.use',
   AI_INSIGHTS_VIEW: 'ai.insights.view',
 
   // Administration
+  EMPLOYEES_VIEW: 'employees.view',
   EMPLOYEES_MANAGE: 'employees.manage',
   SETTINGS_MANAGE: 'settings.manage',
   AUDIT_VIEW: 'audit.view',
@@ -72,6 +76,8 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     P.EXPENSES_VIEW, P.EXPENSES_MANAGE, P.CASH_MANAGE,
     P.REPORTS_VIEW_OPERATIONAL, P.REPORTS_VIEW_FINANCIAL,
     P.AI_ASSISTANT_USE, P.AI_INSIGHTS_VIEW,
+    P.NOTIFICATIONS_VIEW,
+    P.EMPLOYEES_VIEW,
   ],
   [ROLES.CASHIER]: [
     P.SALES_CREATE, P.SALES_VIEW,
@@ -79,11 +85,13 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     P.INVENTORY_VIEW,
     P.CUSTOMERS_VIEW, P.CUSTOMERS_MANAGE, P.DEBTS_VIEW,
     P.CASH_MANAGE,
+    P.NOTIFICATIONS_VIEW,
   ],
   [ROLES.INVENTORY_STAFF]: [
     P.PRODUCTS_VIEW,
     P.INVENTORY_VIEW, P.INVENTORY_RECEIVE, P.INVENTORY_ADJUST, P.INVENTORY_COUNT,
     P.PURCHASES_VIEW, P.SUPPLIERS_VIEW,
+    P.NOTIFICATIONS_VIEW,
   ],
 };
 

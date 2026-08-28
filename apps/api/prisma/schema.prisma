@@ -150,6 +150,7 @@ model Business {
   cashMovements      CashMovement[]
   customerPayments   CustomerPayment[]
   debtTransactions   CustomerDebtTransaction[]
+  notifications      Notification[]
 
   @@index([deletedAt])
 }
@@ -736,4 +737,24 @@ model CustomerDebtTransaction {
   @@index([businessId, customerId, createdAt])
   @@index([businessId, customerId, type])
   @@index([sourceType, sourceId])
+}
+
+// ─────────────────────────── M7: Notifications ───────────────────────────
+
+model Notification {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  kind       String // low_stock | debt | sales_summary | cash | manual
+  severity   String   @default("info") // info | warn | critical
+  title      String
+  body       String
+  link       String? // app route, e.g. "/products"
+  refKey     String? // dedupe key, e.g. "low_stock:2026-08-28"
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([businessId, createdAt])
+  @@index([businessId, readAt])
+  @@index([businessId, refKey])
 }

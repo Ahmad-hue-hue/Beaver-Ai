@@ -15,7 +15,7 @@ end-to-end; every scoped row carries `businessId`; domain writes are atomic. See
 | M4 | Suppliers, purchases, expenses, cash, full customer debt | ✅ |
 | M5 | Analytics, dashboard, reports (+ Redis cache-aside) | ✅ |
 | M6 | AI assistant + autonomous agentic layer | ✅ |
-| M7 | Notifications, employees, admin, security pass | ⬜ |
+| M7 | Notifications, employees, admin, security pass | ✅ |
 | M8 | Polish, tests, docs, seed, deployment | ⬜ |
 
 ---
@@ -89,10 +89,21 @@ Pure insight logic is unit-tested. Web: `/assistant` screen (insights feed + gro
 and the Assistant added to the app rail. pgvector ships in the DB image for later semantic
 retrieval but is not yet exercised.
 
-## ⬜ M7 — Notifications, employees, admin, security pass
+## ✅ M7 — Notifications, employees, admin, security pass
 
 Notifications (low-stock, debts, daily summary), employee management + finer RBAC, admin
 surfaces, self-service password reset, and a dedicated security hardening pass.
+
+- API: `notifications` module (list/unread/mark-read/read-all/generate-on-demand), `members`
+  module (list/invite/role/suspend/reactivate/remove, owner protected), `audit` query
+  endpoint (cursor paged, permission gated) added to the global audit module.
+- Permissions: added `NOTIFICATIONS_VIEW` (all roles), `EMPLOYEES_VIEW` (owner/manager);
+  `EMPLOYEES_MANAGE`/`SETTINGS_MANAGE`/`AUDIT_VIEW` remain owner-scoped.
+- Web: `/notifications` (bell + unread badge in app-shell, daily signal generation), `/team`
+  (invite with one-time password, role change, suspend/remove), `/settings` (profile + defaults),
+  `/settings/audit` (paged tamper-evident log).
+- Security pass: helmet + cookie-parser + CORS already enforced; audit trail on sensitive ops;
+  owner-only management enforcement server-side; argon2 for invited accounts.
 
 ## ⬜ M8 — Polish, tests, docs, seed, deployment
 

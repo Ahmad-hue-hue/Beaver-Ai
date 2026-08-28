@@ -24,6 +24,8 @@ import { CashModule } from './modules/cash/cash.module.js';
 import { DebtsModule } from './modules/debts/debts.module.js';
 import { AnalyticsModule } from './modules/analytics/analytics.module.js';
 import { AiModule } from './modules/ai/ai.module.js';
+import { NotificationsModule } from './modules/notifications/notifications.module.js';
+import { MembersModule } from './modules/members/members.module.js';
 
 @Module({
   imports: [
@@ -51,6 +53,8 @@ import { AiModule } from './modules/ai/ai.module.js';
     DebtsModule,
     AnalyticsModule,
     AiModule,
+    NotificationsModule,
+    MembersModule,
   ],
 })
 export class AppModule {}

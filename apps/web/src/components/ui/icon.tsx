@@ -36,6 +36,11 @@ import {
   UserAdd01Icon,
   UserGroupIcon,
   Cancel01Icon,
+  BellIcon,
+  Settings01Icon,
+  Shield01Icon,
+  Activity01Icon,
+  ChevronDownIcon,
 } from '@hugeicons/core-free-icons';
 
 export interface IconProps {
@@ -79,3 +84,8 @@ export const Trash2 = make(Delete02Icon, 'Trash2');
 export const UserPlus = make(UserAdd01Icon, 'UserPlus');
 export const Users = make(UserGroupIcon, 'Users');
 export const X = make(Cancel01Icon, 'X');
+export const Bell = make(BellIcon, 'Bell');
+export const Settings = make(Settings01Icon, 'Settings');
+export const Shield = make(Shield01Icon, 'Shield');
+export const Activity = make(Activity01Icon, 'Activity');
+export const ChevronDown = make(ChevronDownIcon, 'ChevronDown');
