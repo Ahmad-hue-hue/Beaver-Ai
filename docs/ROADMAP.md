@@ -16,7 +16,7 @@ end-to-end; every scoped row carries `businessId`; domain writes are atomic. See
 | M5 | Analytics, dashboard, reports (+ Redis cache-aside) | ✅ |
 | M6 | AI assistant + autonomous agentic layer | ✅ |
 | M7 | Notifications, employees, admin, security pass | ✅ |
-| M8 | Polish, tests, docs, seed, deployment | ⬜ |
+| M8 | Polish, tests, docs, seed, deployment | ✅ |
 
 ---
 
@@ -105,6 +105,28 @@ surfaces, self-service password reset, and a dedicated security hardening pass.
 - Security pass: helmet + cookie-parser + CORS already enforced; audit trail on sensitive ops;
   owner-only management enforcement server-side; argon2 for invited accounts.
 
-## ⬜ M8 — Polish, tests, docs, seed, deployment
+## ✅ M8 — Polish, tests, docs, seed, deployment
 
-UX polish, expanded test coverage, docs, demo seed data, and deployment.
+UX/deps polish, expanded pure-logic test coverage, docs/status updates, an idempotent demo seed,
+and Docker self-hosting.
+
+- **Deployment:** multi-stage `Dockerfile` (Bun hoisted install, Prisma client generate, API runs
+  from TS source, web is `next build` + `next start`) and `docker-compose.prod.yml` for a single
+  host (postgres + redis internal-only, api :3001, web :80). Same-origin or split-origin web/API
+  with build-time `NEXT_PUBLIC_API_URL`.
+- **Demo seed** (`bun --filter api db:seed`): idempotent "Acme Duka" business + owner login
+  `demo@beaver.local` / `demo1234`, products with opening stock, a supplier + goods-received
+  purchase, a customer with credit debt, sales across recent days, expenses, and an open till —
+  so every screen has realistic data out of the box.
+- **Expanded pure-logic tests** (deterministic, no DB/HTTP), extracted from services so the maths
+  and branching are unit-tested:
+  - `sales/refund.ts` — proportional, tax/discount-aware return refunds, over-return & non-positive
+    validation, rounding.
+  - `notifications/logic.ts` — low-stock / debt / daily-summary message + severity construction.
+  - `packages/shared` `formatMoney` (symbol, locale, symbolless, non-finite safety) and `i18n`
+    locale guard + payment-method codes.
+  - Plus `members.service` `tempPassword` entropy/format tests.
+- **Docs:** README status brought up to date; ROADMAP maintained per milestone.
+- `next-env.d.ts` tracks the Next 16 route-types layout.
+
+Test suite grew from 98 → ~130 pure unit tests, all passing alongside typecheck and web lint.
