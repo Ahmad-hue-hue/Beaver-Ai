@@ -1,0 +1,102 @@
+# Beaver — Docker self-hosting (production).
+#
+# Builds and runs the full stack on a single host:
+#   postgres + redis (internal only) + api (:3001) + web (:80).
+#
+# Build-time: the web image bakes NEXT_PUBLIC_API_URL, so set it to the publicly
+# reachable API origin BEFORE building, e.g.:
+#
+#   BEAVER_PUBLIC_API_URL=https://api.example.com \
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# If you host web and API on the same origin behind a reverse proxy, route /api/* to
+# the api service and point BEAVER_PUBLIC_API_URL at that origin.
+#
+# All secrets come from a .env (or the shell). See .env.example for the keys.
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-beaver}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-beaver_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-beaver}
+    # Not exposed on the host in prod — only reachable inside the network.
+    expose:
+      - "5432"
+    volumes:
+      - beaver_pgdata:/var/lib/postgresql
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-beaver} -d ${POSTGRES_DB:-beaver}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    expose:
+      - "6379"
+    volumes:
+      - beaver_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-beaver}:${POSTGRES_PASSWORD:-beaver_dev_password}@postgres:5432/${POSTGRES_DB:-beaver}?schema=public
+      REDIS_URL: redis://redis:6379
+      API_PORT: "3001"
+      NODE_ENV: production
+      CORS_ORIGINS: ${BEAVER_WEB_ORIGIN:-http://localhost:80}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set JWT_REFRESH_SECRET}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-900}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-1209600}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-localhost}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-claude-opus-4-8}
+      AI_MAX_OUTPUT_TOKENS: ${AI_MAX_OUTPUT_TOKENS:-4096}
+    ports:
+      - "${BEAVER_API_PORT:-3001}:3001"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/v1/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+      args:
+        NEXT_PUBLIC_API_URL: ${BEAVER_PUBLIC_API_URL:-http://localhost:3001}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${BEAVER_WEB_PORT:-80}:3000"
+
+volumes:
+  beaver_pgdata:
+  beaver_redisdata:
