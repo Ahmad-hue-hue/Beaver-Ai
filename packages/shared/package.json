@@ -12,7 +12,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "bun test",
-    "lint": "eslint . --max-warnings 0 || true"
+    "lint": "eslint . --max-warnings 0"
   },
   "dependencies": {
     "zod": "^3.24.1"

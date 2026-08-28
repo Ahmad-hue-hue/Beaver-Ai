@@ -131,7 +131,7 @@ export class PurchasesService {
     const allowNeg = await this.inventory.negativeStockAllowed(businessId);
     const reference = await this.nextReceiptReference(businessId);
 
-    const received = await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx) => {
       const receipt = await tx.purchaseReceipt.create({
         data: {
           businessId,
@@ -162,7 +162,7 @@ export class PurchasesService {
             sourceId: purchase.id,
             userId,
           },
-          true,
+          allowNeg,
         );
 
         // Weighted-average cost blend. Only blend for inventory-tracked products so COGS stays correct.

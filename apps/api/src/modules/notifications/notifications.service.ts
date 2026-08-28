@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service.js';
-import { dailySummaryMessage, debtMessage, fmtMoney, lowStockMessage } from './notifications.logic.js';
+import { dailySummaryMessage, debtMessage, lowStockMessage } from './notifications.logic.js';
 
 const dec = (v: number | string | Prisma.Decimal): Prisma.Decimal =>
   new Prisma.Decimal(String(v));

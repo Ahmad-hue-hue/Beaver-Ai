@@ -7,6 +7,9 @@ import {
   rankLowStock,
   rankSlowMovers,
   type Insight,
+  type LowStockRow,
+  type SlowMoverRow,
+  type TopSellerRow,
 } from './agents.logic.js';
 
 const dec = (v: number | string | Prisma.Decimal): Prisma.Decimal =>
@@ -55,14 +58,14 @@ export class AgentsService {
     businessId: string,
     push: (i: Omit<Insight, 'id'>) => void,
   ): Promise<void> {
-    const lows = await this.prisma.$queryRaw`
+    const lows = await this.prisma.$queryRaw<LowStockRow[]>`
       SELECT id AS "productId", name, "stockQuantity"::text AS "stockQuantity",
              "reorderLevel"::text AS "reorderLevel"
       FROM "Product"
       WHERE "businessId" = ${businessId} AND "deletedAt" IS NULL
         AND "trackInventory" = true AND "stockQuantity" <= "reorderLevel"
     `;
-    const ranked = rankLowStock(lows as Array<any>);
+    const ranked = rankLowStock(lows);
     const sev = lowStockSeverity(ranked.length);
     if (ranked.length === 0) return;
     push({
@@ -82,7 +85,7 @@ export class AgentsService {
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const movers = await this.prisma.$queryRaw`
+    const movers = await this.prisma.$queryRaw<SlowMoverRow[]>`
       SELECT p.id AS "productId", p.name, p."stockQuantity"::text AS "stockQuantity",
              p."costPrice"::text AS "costPrice"
       FROM "Product" p
@@ -97,7 +100,7 @@ export class AgentsService {
       ORDER BY p."stockQuantity" * p."costPrice" DESC
       LIMIT 5
     `;
-    const slow = rankSlowMovers(movers as Array<any>);
+    const slow = rankSlowMovers(movers);
     if (slow.length) {
       const total = slow.reduce((acc, r) => acc.plus(dec(r.tiedUp)), ZERO);
       push({
@@ -115,7 +118,7 @@ export class AgentsService {
   ): Promise<void> {
     const since = new Date();
     since.setDate(since.getDate() - 14);
-    const top = await this.prisma.$queryRaw`
+    const top = await this.prisma.$queryRaw<TopSellerRow[]>`
       SELECT p.id AS "productId", p.name, COALESCE(SUM(si."lineTotal"),0)::text AS revenue
       FROM "SaleItem" si
       JOIN "Sale" s ON s.id = si."saleId"
@@ -126,7 +129,7 @@ export class AgentsService {
       ORDER BY revenue DESC
       LIMIT 1
     `;
-    const best = (top as Array<any>)[0];
+    const best = top[0];
     if (best) {
       push({
         type: 'best_seller',

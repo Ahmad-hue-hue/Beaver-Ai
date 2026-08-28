@@ -8,7 +8,6 @@ import {
   Max,
   MaxLength,
   Min,
-  MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ExpenseCategory } from '@prisma/client';

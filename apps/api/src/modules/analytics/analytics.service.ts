@@ -100,15 +100,11 @@ export class AnalyticsService {
       const range = AnalyticsService.rangeFor(period) ?? AnalyticsService.rangeFor('today')!;
       const saleWhere: Prisma.SaleWhereInput = { businessId, status: 'COMPLETED', soldAt: range };
 
-      const [agg, itemAgg, expenseAgg] = await Promise.all([
+      const [agg, expenseAgg] = await Promise.all([
         this.prisma.sale.aggregate({
           where: saleWhere,
           _sum: { total: true, discountTotal: true },
           _count: true,
-        }),
-        this.prisma.saleItem.aggregate({
-          where: { businessId, sale: { status: 'COMPLETED', soldAt: range } },
-          _sum: { lineTotal: true, quantity: true },
         }),
         this.prisma.expense.aggregate({
           where: { businessId, voidedAt: null, paidAt: range },

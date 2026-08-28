@@ -93,7 +93,7 @@ export class SalesService {
     const tenders = (dto.payments ?? []).filter((p) => p.method !== 'CREDIT');
     const tenderTotal = money(tenders.reduce((s, t) => s.plus(dec(t.amount)), ZERO));
 
-    let paidTotal = tenderTotal;
+    const paidTotal = tenderTotal;
     let changeGiven = ZERO;
     let balanceDue = ZERO;
     if (tenderTotal.greaterThanOrEqualTo(totals.total)) {

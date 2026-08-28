@@ -165,7 +165,6 @@ async function main() {
     [['Rice 1kg (Mageuzi)', 5], ['Cooking oil 1L', 1], ['Sugar 1kg', 2]],
   ];
 
-  let lineCounter = 0;
   for (let i = 0; i < saleDays.length; i++) {
     const daysAgoN = saleDays[i]!;
     const day = daysAgo(daysAgoN);
@@ -227,7 +226,6 @@ async function main() {
           userId: owner.id,
         },
       });
-      lineCounter++;
     }
 
     if (isCredit) {
