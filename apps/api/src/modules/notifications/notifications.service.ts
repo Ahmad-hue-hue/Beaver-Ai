@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service.js';
+import { dailySummaryMessage, debtMessage, fmtMoney, lowStockMessage } from './notifications.logic.js';
 
 const dec = (v: number | string | Prisma.Decimal): Prisma.Decimal =>
   new Prisma.Decimal(String(v));
@@ -123,15 +124,12 @@ export class NotificationsService {
       LIMIT 8
     `;
     if (lows.length === 0) return null;
-    const names = lows.map((l) => l.name).join(', ');
+    const msg = lowStockMessage({ count: lows.length, names: lows.map((l) => l.name) });
     return this.create(businessId, {
       kind: 'low_stock',
-      severity: lows.length >= 5 ? 'critical' : 'warn',
-      title:
-        lows.length === 1
-          ? `Out of stock: ${lows[0]!.name}`
-          : `${lows.length} products need restocking`,
-      body: `Running low: ${names}. Reorder before you run out.`,
+      severity: msg.severity,
+      title: msg.title,
+      body: msg.body,
       link: '/purchases',
       refKey: `low_stock:${today}`,
     });
@@ -145,11 +143,12 @@ export class NotificationsService {
     });
     const total = agg._sum.balance ?? new Prisma.Decimal(0);
     if (total.lessThanOrEqualTo(0)) return null;
+    const msg = debtMessage(total, agg._count);
     return this.create(businessId, {
       kind: 'debt',
-      severity: 'warn',
-      title: `Customers owe ${fmt(total)}`,
-      body: `${agg._count} account${agg._count === 1 ? '' : 's'} with an open balance. Chasing debt keeps cash flowing.`,
+      severity: msg.severity,
+      title: msg.title,
+      body: msg.body,
       link: '/customers',
       refKey: `debt:${today}`,
     });
@@ -172,21 +171,18 @@ export class NotificationsService {
         _sum: { amount: true },
       }),
     ]);
-    const revenue = agg._sum.total ?? new Prisma.Decimal(0);
-    const spent = expenses._sum.amount ?? new Prisma.Decimal(0);
+    const revenue = dec(agg._sum.total?.toString() ?? '0');
+    const spent = dec(expenses._sum.amount?.toString() ?? '0');
 
-    if (revenue.lessThanOrEqualTo(0) && spent.lessThanOrEqualTo(0)) return null;
+    const msg = dailySummaryMessage({ revenue, expenses: spent, saleCount: agg._count });
+    if (msg.severity === null) return null;
     return this.create(businessId, {
       kind: 'sales_summary',
-      severity: revenue.greaterThan(0) ? 'info' : 'warn',
-      title: `Daily summary — ${fmt(revenue)} in sales`,
-      body: `${agg._count} sale${agg._count === 1 ? '' : 's'} today. Expenses: ${fmt(spent)}.`,
+      severity: msg.severity,
+      title: msg.title,
+      body: msg.body,
       link: '/reports',
       refKey: `sales_summary:${today}`,
     });
   }
-}
-
-function fmt(v: Prisma.Decimal): string {
-  return `TZS ${v.toDecimalPlaces(0).toString()}`;
 }
