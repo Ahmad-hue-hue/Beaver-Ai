@@ -76,7 +76,13 @@ jobs:
 
       - name: Test (web)
         working-directory: apps/web
-        run: bun test
+        # The web app has no unit tests; `bun test` exits non-zero when zero files match.
+        run: |
+          if ls src/**/*.test.* src/**/*.spec.* src/*.test.* 2>/dev/null | grep -q .; then
+            bun test
+          else
+            echo "No web test files found — skipping."
+          fi
 
       - name: Typecheck
         run: bun run typecheck
