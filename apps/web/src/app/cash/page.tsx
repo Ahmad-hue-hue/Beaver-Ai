@@ -156,10 +156,12 @@ function OpenTill({ token, onOpened }: { token?: string; onOpened: () => void })
   }
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }} className="flex items-end gap-3">
-      <Field label="Opening balance (TZS)">
-        <Input type="number" inputMode="decimal" className="w-32 text-right" value={openingBalance} onChange={(e) => setOpeningBalance(e.target.value)} />
-      </Field>
+    <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }} className="flex flex-wrap items-end gap-3">
+      <div className="w-full min-[400px]:w-40">
+        <Field label="Opening balance (TZS)">
+          <Input type="number" inputMode="decimal" className="text-right" value={openingBalance} onChange={(e) => setOpeningBalance(e.target.value)} />
+        </Field>
+      </div>
       <Button type="submit" size="sm" loading={mutation.isPending}>Start</Button>
       <button type="button" onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-700"><X className="size-5" /></button>
       {mutation.isError && <p className="text-sm text-red-600">{mutation.error instanceof ApiError ? mutation.error.message : ''}</p>}
@@ -182,10 +184,12 @@ function CloseTill({ sessionId, token, onClosed }: { sessionId: string; token?: 
   }
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }} className="flex items-end gap-3">
-      <Field label="Counted cash">
-        <Input type="number" inputMode="decimal" className="w-32 text-right" placeholder="0" value={countedCash} onChange={(e) => setCountedCash(e.target.value)} required min="0" />
-      </Field>
+    <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }} className="flex flex-wrap items-end gap-3">
+      <div className="w-full min-[400px]:w-40">
+        <Field label="Counted cash">
+          <Input type="number" inputMode="decimal" className="text-right" placeholder="0" value={countedCash} onChange={(e) => setCountedCash(e.target.value)} required min="0" />
+        </Field>
+      </div>
       <div className="hidden sm:block">
         <Field label="Notes" hint="Optional">
           <Input className="w-40" placeholder="Variance reason" value={notes} onChange={(e) => setNotes(e.target.value)} />

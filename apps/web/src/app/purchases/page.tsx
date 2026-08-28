@@ -96,10 +96,10 @@ function PurchasesContent() {
       </div>
 
       <div className="mt-6">
-        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 border-b border-hairline pb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+        <div className="grid grid-cols-[1fr_auto] gap-4 border-b border-hairline pb-2 text-xs font-medium uppercase tracking-wide text-slate-400 sm:grid-cols-[1fr_auto_auto_auto]">
           <span>Purchase</span>
-          <span className="text-right">Items</span>
-          <span className="text-right">Status</span>
+          <span className="hidden text-right sm:block">Items</span>
+          <span className="hidden text-right sm:block">Status</span>
           <span className="text-right">Total</span>
         </div>
 
@@ -118,7 +118,7 @@ function PurchasesContent() {
             <button
               key={p.id}
               onClick={() => { setSelectedId(p.id); qc.invalidateQueries({ queryKey: ['purchase', p.id] }); }}
-              className="grid w-full grid-cols-[1fr_auto_auto_auto] items-center gap-4 border-b border-hairline py-3 text-left hover:bg-slate-50"
+              className="grid w-full grid-cols-[1fr_auto] items-center gap-4 border-b border-hairline py-3 text-left hover:bg-slate-50 sm:grid-cols-[1fr_auto_auto_auto]"
             >
               <div className="min-w-0">
                 <p className="flex items-center gap-2 font-medium text-slate-900">
@@ -129,8 +129,8 @@ function PurchasesContent() {
                   {Number(p.balanceDue) > 0 && <span className="text-amber-700"> · owes {money(p.balanceDue)}</span>}
                 </p>
               </div>
-              <p className="tabular text-right text-slate-500">{p._count?.items ?? 0}</p>
-              <span className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_BADGE[p.status]}`}>
+              <p className="tabular hidden text-right text-slate-500 sm:block">{p._count?.items ?? 0}</p>
+              <span className={`hidden rounded px-2 py-0.5 text-xs font-medium sm:inline-block ${STATUS_BADGE[p.status]}`}>
                 {p.status[0] + p.status.slice(1).toLowerCase()}
               </span>
               <p className="tabular text-right font-medium text-slate-900">{money(p.total)}</p>

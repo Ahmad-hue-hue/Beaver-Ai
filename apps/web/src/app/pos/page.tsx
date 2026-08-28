@@ -184,7 +184,7 @@ function Pos() {
       {/* Cart + pay — a static column on desktop, a slide-up sheet on mobile */}
       <div
         className={cn(
-          'flex flex-col bg-slate-50 p-5 transition-transform duration-300',
+          'flex flex-col bg-slate-50 p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] transition-transform duration-300',
           'fixed inset-0 z-50 lg:static lg:z-auto lg:min-h-0 lg:translate-y-0 lg:rounded-2xl lg:bg-slate-50/70',
           cartOpen ? 'translate-y-0' : 'translate-y-full lg:translate-y-0',
         )}
@@ -228,7 +228,7 @@ function Pos() {
                   />
                   <Stepper onClick={() => setQty(l.product.id, l.qty + 1)}><Plus className="size-3.5" /></Stepper>
                 </div>
-                <p className="tabular w-20 text-right text-sm font-medium text-slate-900">
+                <p className="tabular min-w-0 text-right text-sm font-medium text-slate-900">
                   {money(Number(l.product.sellingPrice) * l.qty)}
                 </p>
                 <button onClick={() => setQty(l.product.id, 0)} className="text-slate-300 hover:text-red-500">
@@ -335,7 +335,7 @@ function Pos() {
       {lines.length > 0 && !cartOpen && (
         <button
           onClick={() => setCartOpen(true)}
-          className="fixed inset-x-4 bottom-20 z-40 flex items-center justify-between rounded-xl bg-brand-600 px-5 py-3.5 text-white shadow-lg sm:inset-x-auto sm:right-6 sm:left-[92px] sm:bottom-6 lg:hidden"
+          className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] z-40 flex items-center justify-between rounded-xl bg-brand-600 px-5 py-3.5 text-white shadow-lg sm:inset-x-auto sm:right-6 sm:left-[92px] sm:bottom-6 lg:hidden"
         >
           <span className="flex items-center gap-2 font-medium">
             <ShoppingCart className="size-5" />

@@ -41,6 +41,7 @@ import {
   Shield01Icon,
   Activity01Icon,
   ChevronDownIcon,
+  Menu01Icon,
 } from '@hugeicons/core-free-icons';
 
 export interface IconProps {
@@ -89,3 +90,4 @@ export const Settings = make(Settings01Icon, 'Settings');
 export const Shield = make(Shield01Icon, 'Shield');
 export const Activity = make(Activity01Icon, 'Activity');
 export const ChevronDown = make(ChevronDownIcon, 'ChevronDown');
+export const Menu = make(Menu01Icon, 'Menu');

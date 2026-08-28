@@ -64,7 +64,7 @@ function CustomersContent() {
 
       {/* Debt aging summary */}
       {!agingLoading && aging && (
-        <div className="mt-6 grid grid-cols-4 gap-2 text-center sm:gap-4">
+        <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-5 text-center sm:grid-cols-4 sm:gap-4">
           {[
             ['Current', aging.totals.current],
             ['1–30d', aging.totals.days1to30],

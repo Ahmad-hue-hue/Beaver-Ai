@@ -91,9 +91,9 @@ function ExpensesContent() {
       </div>
 
       <div className="mt-6">
-        <div className="grid grid-cols-[1fr_auto_auto] gap-4 border-b border-hairline pb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+        <div className="grid grid-cols-[1fr_auto] gap-4 border-b border-hairline pb-2 text-xs font-medium uppercase tracking-wide text-slate-400 sm:grid-cols-[1fr_auto_auto]">
           <span>Expense</span>
-          <span className="text-right">Category</span>
+          <span className="hidden text-right sm:block">Category</span>
           <span className="text-right">Amount</span>
         </div>
 
@@ -109,15 +109,16 @@ function ExpensesContent() {
           </div>
         ) : (
           expenses.map((e) => (
-            <div key={e.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-hairline py-3">
+            <div key={e.id} className="grid grid-cols-[1fr_auto] items-center gap-4 border-b border-hairline py-3 sm:grid-cols-[1fr_auto_auto]">
               <div className="min-w-0">
                 <p className="truncate font-medium text-slate-900">{e.payee ?? e.reference}</p>
                 <p className="truncate font-mono text-xs text-slate-400">
+                  <span className="sm:hidden">{e.category[0] + e.category.slice(1).toLowerCase()} · </span>
                   {e.reference} · {new Date(e.paidAt).toLocaleDateString('en-GB')}
                   {e.note ? ` · ${e.note}` : ''}
                 </p>
               </div>
-              <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+              <span className="hidden rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 sm:inline-block">
                 {e.category[0] + e.category.slice(1).toLowerCase()}
               </span>
               <p className="tabular text-right font-medium text-red-600">−{money(e.amount)}</p>
