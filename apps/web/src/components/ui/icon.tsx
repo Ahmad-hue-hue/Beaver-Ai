@@ -11,10 +11,15 @@ import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
 import {
   ArrowRight01Icon,
   ChartColumnIcon,
+  Coins01Icon,
+  InvoiceIcon,
   RoboticIcon,
+  ShoppingBag01Icon,
   Tick02Icon,
+  TruckDeliveryIcon,
   ViewIcon,
   ViewOffSlashIcon,
+  Wallet01Icon,
   DashboardSquare01Icon,
   Loading03Icon,
   Logout01Icon,
@@ -50,6 +55,11 @@ export const ArrowRight = make(ArrowRight01Icon, 'ArrowRight');
 export const BarChart3 = make(ChartColumnIcon, 'BarChart3');
 export const Bot = make(RoboticIcon, 'Bot');
 export const Check = make(Tick02Icon, 'Check');
+export const Coins = make(Coins01Icon, 'Coins');
+export const Invoice = make(InvoiceIcon, 'Invoice');
+export const ShoppingBag = make(ShoppingBag01Icon, 'ShoppingBag');
+export const Truck = make(TruckDeliveryIcon, 'Truck');
+export const Wallet = make(Wallet01Icon, 'Wallet');
 export const Eye = make(ViewIcon, 'Eye');
 export const EyeOff = make(ViewOffSlashIcon, 'EyeOff');
 export const LayoutDashboard = make(DashboardSquare01Icon, 'LayoutDashboard');

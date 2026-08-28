@@ -12,7 +12,7 @@ end-to-end; every scoped row carries `businessId`; domain writes are atomic. See
 | M1 | Auth, tenancy, onboarding, RBAC | ✅ |
 | M2 | Products, categories, units, inventory core | ✅ |
 | M3 | POS & sales | ✅ |
-| M4 | Suppliers, purchases, expenses, cash, full customer debt | 🔜 |
+| M4 | Suppliers, purchases, expenses, cash, full customer debt | ✅ |
 | M5 | Analytics, dashboard, reports (+ Redis cache-aside) | ⬜ |
 | M6 | AI assistant + autonomous agentic layer | ⬜ |
 | M7 | Notifications, employees, admin, security pass | ⬜ |
@@ -57,7 +57,7 @@ The revenue heart. Models: `Customer` (minimal, with `balance`), `Sale`, `SaleIt
 - Web: `/pos` (search → cart → payment → receipt, print) and `/sales` history. Pure Decimal
   totals unit-tested in `sales/totals.ts`.
 
-## 🔜 M4 — Suppliers, purchases, expenses, cash, full customer debt
+## ✅ M4 — Suppliers, purchases, expenses, cash, full customer debt
 
 - **Suppliers** CRUD; **purchases / goods-received** that increase stock via the inventory
   ledger (type `PURCHASE`) and set/adjust cost.

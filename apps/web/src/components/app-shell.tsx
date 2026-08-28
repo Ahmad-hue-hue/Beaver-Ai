@@ -6,12 +6,17 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   BarChart3,
   Bot,
+  Coins,
+  Invoice,
   LayoutDashboard,
   LogOut,
   Package,
   Receipt,
+  ShoppingBag,
   ShoppingCart,
+  Truck,
   Users,
+  Wallet,
 } from '@/components/ui/icon';
 import { BrandMark } from '@/components/brand-mark';
 import { useAuth } from '@/lib/auth-context';
@@ -32,7 +37,11 @@ const NAV: NavItem[] = [
   { href: '/pos', label: 'Point of sale', short: 'Sell', icon: ShoppingCart },
   { href: '/sales', label: 'Sales', icon: Receipt },
   { href: '/products', label: 'Products', short: 'Items', icon: Package },
-  { label: 'Customers', icon: Users, soon: true },
+  { href: '/customers', label: 'Customers', short: 'Debts', icon: Users },
+  { href: '/suppliers', label: 'Suppliers', short: 'Supply', icon: Truck },
+  { href: '/purchases', label: 'Purchases', short: 'Buy', icon: ShoppingBag },
+  { href: '/expenses', label: 'Expenses', short: 'Spend', icon: Wallet },
+  { href: '/cash', label: 'Cash', short: 'Cash', icon: Coins },
   { label: 'Reports', icon: BarChart3, soon: true },
 ];
 

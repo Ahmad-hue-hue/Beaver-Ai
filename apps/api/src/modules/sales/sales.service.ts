@@ -178,9 +178,22 @@ export class SalesService {
       }
 
       if (balanceDue.greaterThan(0) && dto.customerId) {
-        await tx.customer.update({
+        const updated = await tx.customer.update({
           where: { id: dto.customerId },
           data: { balance: { increment: balanceDue } },
+          select: { balance: true },
+        });
+        await tx.customerDebtTransaction.create({
+          data: {
+            businessId,
+            customerId: dto.customerId,
+            type: 'SALE_CREDIT',
+            amount: balanceDue,
+            balanceAfter: updated.balance,
+            sourceType: 'Sale',
+            sourceId: created.id,
+            note: `Credit sale ${reference}`,
+          },
         });
       }
 
@@ -315,9 +328,22 @@ export class SalesService {
       }
 
       if (sale.balanceDue.greaterThan(0) && sale.customerId) {
-        await tx.customer.update({
+        const updated = await tx.customer.update({
           where: { id: sale.customerId },
           data: { balance: { decrement: sale.balanceDue } },
+          select: { balance: true },
+        });
+        await tx.customerDebtTransaction.create({
+          data: {
+            businessId,
+            customerId: sale.customerId,
+            type: 'ADJUSTMENT',
+            amount: sale.balanceDue.negated(), // reverse the credit
+            balanceAfter: updated.balance,
+            sourceType: 'SaleVoid',
+            sourceId: sale.id,
+            note: `Void ${sale.reference} reverses credit`,
+          },
         });
       }
 

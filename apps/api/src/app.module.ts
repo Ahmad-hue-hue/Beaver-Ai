@@ -16,6 +16,11 @@ import { ProductsModule } from './modules/products/products.module.js';
 import { InventoryModule } from './modules/inventory/inventory.module.js';
 import { CustomersModule } from './modules/customers/customers.module.js';
 import { SalesModule } from './modules/sales/sales.module.js';
+import { SuppliersModule } from './modules/suppliers/suppliers.module.js';
+import { PurchasesModule } from './modules/purchases/purchases.module.js';
+import { ExpensesModule } from './modules/expenses/expenses.module.js';
+import { CashModule } from './modules/cash/cash.module.js';
+import { DebtsModule } from './modules/debts/debts.module.js';
 
 @Module({
   imports: [
@@ -35,6 +40,11 @@ import { SalesModule } from './modules/sales/sales.module.js';
     InventoryModule,
     CustomersModule,
     SalesModule,
+    SuppliersModule,
+    PurchasesModule,
+    ExpensesModule,
+    CashModule,
+    DebtsModule,
   ],
 })
 export class AppModule {}
