@@ -186,5 +186,21 @@ helpers), unit-tested in `plans.test.ts`.
   upgrade banner, sign-out, the Assistant page, and the Notifications page all switch instantaneously;
   the API insight *body* text remains English for now (generated server-side).
 
+## ✅ Landing page professional pass
+
+- **Rich social/link previews:** `layout.tsx` now emits full OpenGraph + Twitter metadata
+  (`NEXT_PUBLIC_APP_URL`-based `metadataBase`), and a branded 1200×630 OG image is generated
+  on-the-fly by `apps/web/src/app/opengraph-image.tsx` via `next/og` (served at `/opengraph-image`).
+  WhatsApp/social shares now show a rich card instead of a bare URL.
+- **Fresh Unsplash imagery** (free under the Unsplash License) downloaded into `public/`: a new hero
+  (`hero-shop.jpg`, checkout/register) and an app-preview (`app-preview.jpg`, retail interior) used
+  in a new browser-framed "See it in action" section.
+- **New landing sections:** a trust band (14-day trial · no card · English & Kiswahili · any phone —
+  verifiable claims only, no fabricated stats), "See it in action", a 3-step "How it works",
+  and an FAQ (with `details`/toggle) answering card, free-plan, Kiswahili, receipts and upgrade.
+- **Polish:** "Free plan · No card required · 14-day full trial" trust lines near CTAs, a readability
+  eyebrow on the hero, and accessible `<summary>`/FAQ markup.
+- **Hygiene:** removed dead assets `preview.html`, `beaver-logo.jpg`, `beaver-hero.png` from `public/`.
+
 
 Test suite grew from 98 → ~130 pure unit tests, all passing alongside typecheck and web lint.
