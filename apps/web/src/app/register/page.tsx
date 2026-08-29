@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const { register } = useAuth();
   const router = useRouter();
   const [form, setForm] = React.useState({ name: '', email: '', phone: '', password: '' });
+  const [consented, setConsented] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
 
@@ -23,6 +24,10 @@ export default function RegisterPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!consented) {
+      setError('Please accept the Terms of Service and Privacy Policy to continue.');
+      return;
+    }
     setLoading(true);
     try {
       await register({
@@ -60,8 +65,24 @@ export default function RegisterPage() {
           <Input placeholder="+255 700 000 000" value={form.phone} onChange={set('phone')} />
         </Field>
         <Field label="Password" hint="At least 8 characters" error={error ?? undefined}>
-          <PasswordInput autoComplete="new-password" placeholder="••••••••" value={form.password} onChange={set('password')} required minLength={8} />
+          <PasswordInput autoComplete="new-password" placeholder="Create a password" value={form.password} onChange={set('password')} required minLength={8} />
         </Field>
+
+        <label className="flex cursor-pointer items-start gap-3 text-sm text-slate-600">
+          <input
+            type="checkbox"
+            checked={consented}
+            onChange={(e) => setConsented(e.target.checked)}
+            className="mt-0.5 size-4 shrink-0 rounded border-hairline text-brand-600 focus:ring-brand-500"
+            required
+          />
+          <span>
+            I agree to the{' '}
+            <Link href="/terms" className="font-medium text-brand-700 hover:text-brand-800">Terms of Service</Link>{' '}
+            and{' '}
+            <Link href="/privacy" className="font-medium text-brand-700 hover:text-brand-800">Privacy Policy</Link>.
+          </span>
+        </label>
 
         <Button type="submit" loading={loading} className="w-full">
           Create account

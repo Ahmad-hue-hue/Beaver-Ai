@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
-import type { Role } from '@beaver/shared';
+import { isTrialActive, type PlanKey, type Role } from '@beaver/shared';
 import { PrismaService } from '../../common/prisma/prisma.service.js';
 import { TokenService, type IssuedTokens } from './token.service.js';
 import type { ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto } from './dto.js';
@@ -20,7 +20,9 @@ export interface SessionResult extends IssuedTokens {
   user: { id: string; name: string; email: string; isPlatformAdmin: boolean };
   businessId: string | null;
   role: Role | null;
-  memberships: { businessId: string; businessName: string; role: Role }[];
+  plan: PlanKey | null;
+  isTrial: boolean;
+  memberships: { businessId: string; businessName: string; role: Role; plan: PlanKey; isTrial: boolean }[];
 }
 
 @Injectable()
@@ -86,6 +88,9 @@ export class AuthService {
       ? memberships.find((m) => m.businessId === businessId)
       : undefined;
 
+    const activePlan = (active?.business.plan as PlanKey) ?? null;
+    const activeTrial = isTrialActive(active?.business.trialEndsAt);
+
     const issued = await this.tokens.issueSession(
       {
         userId: user.id,
@@ -93,6 +98,8 @@ export class AuthService {
         role: (active?.role as Role) ?? null,
         extraPermissions: active?.extraPermissions ?? [],
         isPlatformAdmin: user.isPlatformAdmin,
+        plan: activePlan,
+        isTrial: activeTrial,
       },
       meta,
     );
@@ -102,10 +109,14 @@ export class AuthService {
       user: { id: user.id, name: user.name, email: user.email, isPlatformAdmin: user.isPlatformAdmin },
       businessId: active?.businessId ?? null,
       role: (active?.role as Role) ?? null,
+      plan: activePlan,
+      isTrial: activeTrial,
       memberships: memberships.map((m) => ({
         businessId: m.businessId,
         businessName: m.business.name,
         role: m.role as Role,
+        plan: (m.business.plan as PlanKey) ?? 'FREE',
+        isTrial: isTrialActive(m.business.trialEndsAt),
       })),
     };
   }

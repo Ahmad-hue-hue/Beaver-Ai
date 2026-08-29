@@ -4,6 +4,7 @@ import type { RequestMeta } from '../auth/auth.service.js';
 import { AuditService } from '../../common/audit/audit.service.js';
 import { PrismaService } from '../../common/prisma/prisma.service.js';
 import { parseCsvObjects, toCsv } from '../../common/csv/csv.js';
+import { BillingService } from '../billing/billing.service.js';
 import type { CreateProductDto, ImportProductsDto, ListProductsQuery, UpdateProductDto } from './dto.js';
 
 const dec = (v: number | string): Prisma.Decimal => new Prisma.Decimal(String(v));
@@ -21,6 +22,7 @@ export class ProductsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly billing: BillingService,
   ) {}
 
   // ─────────────────────────── Reads ───────────────────────────
@@ -112,6 +114,7 @@ export class ProductsService {
   // ─────────────────────────── Writes ───────────────────────────
 
   async create(businessId: string, userId: string, dto: CreateProductDto, meta: RequestMeta) {
+    await this.billing.assertProductQuota(businessId);
     await this.assertRefs(businessId, dto.categoryId, dto.unitId);
     const opening = dto.openingStock ? dec(dto.openingStock) : new Prisma.Decimal(0);
     const isService = dto.isService ?? false;

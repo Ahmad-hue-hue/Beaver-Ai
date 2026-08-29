@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Activity, Loader2, Shield, UserPlus } from '@/components/ui/icon';
+import { Activity, Coins, Loader2, Shield, UserPlus } from '@/components/ui/icon';
 import { AppShell } from '@/components/app-shell';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
@@ -224,6 +224,10 @@ function SettingsContent() {
             <LinkRow href="/team" icon={<UserPlus className="size-5" />}>
               <p className="font-medium text-slate-800">Team &amp; roles</p>
               <p className="text-sm text-slate-500">Invite people and control their access.</p>
+            </LinkRow>
+            <LinkRow href="/settings/billing" icon={<Coins className="size-5" />}>
+              <p className="font-medium text-slate-800">Billing &amp; plan</p>
+              <p className="text-sm text-slate-500">Your plan, product usage and upgrades.</p>
             </LinkRow>
             <LinkRow href="/settings/audit" icon={<Activity className="size-5" />}>
               <p className="font-medium text-slate-800">Audit log</p>

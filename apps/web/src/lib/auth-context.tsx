@@ -12,6 +12,9 @@ import type { OnboardInput, RegisterInput, Session } from '@/lib/session';
 interface AuthState {
   session: Session | null;
   loading: boolean;
+  /** Replace the in-memory session (used when the API re-issues one, e.g. after a plan
+      change re-scores the JWT/refresh cookie so the new plan takes effect immediately). */
+  setSession: (session: Session | null) => void;
   login: (email: string, password: string) => Promise<Session>;
   register: (input: RegisterInput) => Promise<Session>;
   onboard: (input: OnboardInput) => Promise<Session>;
@@ -62,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [session?.accessToken]);
 
   const value = React.useMemo(
-    () => ({ session, loading, login, register, onboard, logout }),
+    () => ({ session, loading, setSession, login, register, onboard, logout }),
     [session, loading, login, register, onboard, logout],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

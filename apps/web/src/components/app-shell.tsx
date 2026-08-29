@@ -14,6 +14,7 @@ import {
   Package,
   Receipt,
   Settings,
+  Shield,
   ShoppingBag,
   ShoppingCart,
   Truck,
@@ -27,62 +28,154 @@ import { useAuth } from '@/lib/auth-context';
 import { api } from '@/lib/api-client';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { canUseFeature } from '@/lib/plans';
+import { LanguageToggle, useI18n } from '@/lib/i18n';
 
 interface NavItem {
   href?: string;
+  /** i18n key for the label. */
   label: string;
-  /** Shorter label for the mobile bottom tab bar. */
-  short?: string;
   icon: React.ComponentType<{ className?: string }>;
-  soon?: boolean;
-  accent?: boolean;
   roles?: string[];
+  /** Premium feature locked on the current plan — show as an upgrade affordance. */
+  locked?: boolean;
 }
 
 const OWNER_MANAGER = ['OWNER', 'MANAGER'];
 
 const NAV: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', short: 'Home', icon: LayoutDashboard },
-  { href: '/pos', label: 'Point of sale', short: 'Sell', icon: ShoppingCart },
-  { href: '/sales', label: 'Sales', icon: Receipt },
-  { href: '/products', label: 'Products', short: 'Items', icon: Package },
-  { href: '/customers', label: 'Customers', short: 'Debts', icon: Users },
-  { href: '/suppliers', label: 'Suppliers', short: 'Supply', icon: Truck },
-  { href: '/purchases', label: 'Purchases', short: 'Buy', icon: ShoppingBag },
-  { href: '/expenses', label: 'Expenses', short: 'Spend', icon: Wallet },
-  { href: '/cash', label: 'Cash', short: 'Cash', icon: Coins },
-  { href: '/reports', label: 'Reports', short: 'Reports', icon: BarChart3 },
-  { href: '/assistant', label: 'Assistant', short: 'AI', icon: Bot },
-  { href: '/team', label: 'Team', short: 'Team', icon: UserPlus, roles: OWNER_MANAGER },
-  { href: '/settings', label: 'Settings', short: 'Settings', icon: Settings, roles: OWNER_MANAGER },
+  { href: '/dashboard', label: 'nav.dashboard', icon: LayoutDashboard },
+  { href: '/pos', label: 'nav.pos', icon: ShoppingCart },
+  { href: '/sales', label: 'nav.sales', icon: Receipt },
+  { href: '/products', label: 'nav.products', icon: Package },
+  { href: '/customers', label: 'nav.customers', icon: Users },
+  { href: '/suppliers', label: 'nav.suppliers', icon: Truck },
+  { href: '/purchases', label: 'nav.purchases', icon: ShoppingBag },
+  { href: '/expenses', label: 'nav.expenses', icon: Wallet },
+  { href: '/cash', label: 'nav.cash', icon: Coins },
+  { href: '/reports', label: 'nav.reports', icon: BarChart3 },
+  { href: '/assistant', label: 'nav.assistant', icon: Bot },
+  { href: '/team', label: 'nav.team', icon: UserPlus, roles: OWNER_MANAGER },
+  { href: '/settings', label: 'nav.settings', icon: Settings, roles: OWNER_MANAGER },
 ];
 
-/** Bell with an unread dot, wired to the notifications page. */
-function NavBell({ count }: { count: number }) {
+/** Bell icon with an unread dot, wired to the notifications page. */
+function NavBell({ count, label, onNavigate }: { count: number; label?: string; onNavigate?: () => void }) {
   return (
-    <Link href="/notifications" className="group relative" aria-label="Notifications">
-      <span
-        className={cn(
-          'grid size-13 place-items-center rounded-[0.85rem] transition-colors',
-          count > 0
-            ? 'bg-brand-50 text-brand-700'
-            : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700',
-        )}
-      >
-        <Bell className="size-6" />
-      </span>
-      {count > 0 && (
-        <span className="absolute right-2 top-2 grid min-w-4 place-items-center rounded-full bg-red-500 px-1 font-mono text-[10px] font-bold text-white">
-          {count > 9 ? '9+' : count}
-        </span>
+    <Link
+      href="/notifications"
+      onClick={onNavigate}
+      className={cn(
+        'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors',
+        label ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' : 'text-slate-500 hover:text-slate-700',
       )}
+    >
+      <span className="relative">
+        <Bell className="size-5" />
+        {count > 0 && (
+          <span className="absolute -right-1.5 -top-1.5 grid min-w-4 place-items-center rounded-full bg-red-500 px-1 font-mono text-[10px] font-bold text-white">
+            {count > 9 ? '9+' : count}
+          </span>
+        )}
+      </span>
+      {label && <span>{label}</span>}
     </Link>
   );
 }
 
-/** Authenticated layout: slim icon rail + content. Guards the session, redirects if absent. */
+/** The main nav list — reused verbatim in the desktop sidebar and the mobile drawer. */
+function NavRows({
+  items,
+  pathname,
+  onSelect,
+  t,
+}: {
+  items: NavItem[];
+  pathname: string;
+  onSelect?: () => void;
+  t: (key: string) => string;
+}) {
+  return (
+    <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <ul className="space-y-0.5">
+        {items.map((item) => {
+          if (!item.href) return null;
+          const active = pathname.startsWith(item.href);
+          const label = t(item.label);
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.locked ? '/settings/billing' : item.href}
+                onClick={onSelect}
+                title={item.locked ? t('nav.locked.upgrade') : label}
+                className={cn(
+                  'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors',
+                  item.locked
+                    ? 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                    : active
+                      ? 'bg-brand-50 text-brand-700'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                )}
+              >
+                <item.icon className="size-5" />
+                <span className="truncate">{label}</span>
+                {item.locked ? (
+                  <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-brand-200 bg-brand-50 px-2 py-0.5 text-[10px] font-semibold text-brand-700">
+                    <Shield className="size-3" /> PRO
+                  </span>
+                ) : active ? (
+                  <span className="ml-auto size-1.5 shrink-0 rounded-full bg-brand-600" />
+                ) : null}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
+
+/** Bottom rows (Notifications + language + Sign out) shared by sidebar and drawer. */
+function SidebarFooter({
+  unread,
+  notificationsLabel,
+  onSignOut,
+  onNavigate,
+}: {
+  unread: number;
+  notificationsLabel: string;
+  onSignOut: () => void;
+  onNavigate?: () => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <div className="border-t border-hairline p-3">
+      <ul className="space-y-0.5">
+        <li>
+          <NavBell count={unread} label={notificationsLabel} onNavigate={onNavigate} />
+        </li>
+        <li>
+          <LanguageToggle />
+        </li>
+        <li>
+          <button
+            onClick={onSignOut}
+            className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          >
+            <LogOut className="size-5" />
+            {t('app.signOut')}
+          </button>
+        </li>
+      </ul>
+    </div>
+  );
+}
+
+/** Authenticated, responsive layout. Large screens get a persistent labeled sidebar;
+    small screens use a top bar + left slide-in drawer (never a bottom sheet). */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { session, loading, logout } = useAuth();
+  const { t } = useI18n();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -100,6 +193,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     else if (!session.businessId) router.replace('/onboarding');
   }, [loading, session, router]);
 
+  // Esc closes the drawer; lock scroll while it's open.
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [menuOpen]);
+
   if (loading || !session?.businessId) {
     return (
       <div className="grid min-h-dvh place-items-center">
@@ -110,192 +217,110 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const signOut = () => logout().then(() => router.replace('/login'));
   const role = session.role;
-  const items = NAV.filter((item) => !item.roles || (role && item.roles.includes(role)));
+  const aiEnabled = canUseFeature(session.plan, session.isTrial, 'ai');
+  const showUpgrade = !aiEnabled;
 
-  // Phone bottom bar shows Home + Sell quick tabs; everything else lives in the Menu sheet.
-  const MOBILE_PRIMARY = ['/dashboard', '/pos'];
-  const primary = items.filter((item) => item.href && MOBILE_PRIMARY.some((p) => item.href!.startsWith(p)));
-  const menuItems = items.filter((item) => !primary.includes(item));
-  const primaryActive = primary.some((item) => item.href && pathname.startsWith(item.href));
+  // Keep every nav item visible; premium items render as a "locked → upgrade" row instead
+  // of disappearing, so users know the feature exists and how to unlock it.
+  const items = NAV.filter((item) => {
+    if (item.roles && role && !item.roles.includes(role)) return false;
+    return true;
+  }).map((item) => ({
+    ...item,
+    locked: item.href?.startsWith('/assistant') && !aiEnabled,
+  }));
+
+  const close = () => setMenuOpen(false);
 
   return (
-    <div className="min-h-dvh sm:grid sm:grid-cols-[76px_1fr]">
-      {/* Tablet / desktop: slim icon rail */}
-      <nav className="sticky top-0 hidden h-dvh flex-col items-center gap-1 border-r border-hairline py-6 sm:flex">
-        <BrandMark size={44} className="mb-4" />
-        {items.map((item) => {
-          const active = item.href && pathname.startsWith(item.href);
-          const content = (
-            <span
-              className={cn(
-                'grid size-13 place-items-center rounded-[0.85rem] transition-colors',
-                active
-                  ? 'bg-brand-50 text-brand-700'
-                  : item.soon
-                    ? 'text-slate-300'
-                    : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700',
-              )}
-              title={item.soon ? `${item.label} — coming soon` : item.label}
-            >
-              <item.icon className="size-6" />
-            </span>
-          );
-          return item.href ? (
-            <Link key={item.label} href={item.href}>
-              {content}
-            </Link>
-          ) : (
-            <div key={item.label} className="cursor-default">
-              {content}
-            </div>
-          );
-        })}
+    <div className="min-h-dvh lg:pl-64">
+      {/* ─── Persistent sidebar — large screens only ─── */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-hairline bg-surface lg:flex">
+        <Link href="/dashboard" className="flex items-center gap-2.5 px-5 py-5">
+          <BrandMark size={36} />
+          <span className="text-lg font-semibold tracking-tight text-slate-900">Beaver</span>
+        </Link>
+        <NavRows items={items} pathname={pathname} t={t} />
+        <SidebarFooter unread={unreadCount} notificationsLabel={t('nav.notifications')} onSignOut={signOut} />
+      </aside>
 
-        <NavBell count={unreadCount} />
+      {/* ─── Top bar — small/medium screens only ─── */}
+      <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-hairline bg-surface/95 px-4 backdrop-blur lg:hidden">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setMenuOpen(true)}
+            aria-label={t('app.openMenu')}
+            className="grid size-10 place-items-center rounded-xl text-slate-600 transition-colors hover:bg-slate-100"
+          >
+            <Menu className="size-6" />
+          </button>
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <BrandMark size={30} />
+            <span className="text-lg font-semibold tracking-tight text-slate-900">Beaver</span>
+          </Link>
+        </div>
+        <div className="flex items-center gap-1">
+          <LanguageToggle />
+          <NavBell count={unreadCount} />
+        </div>
+      </header>
 
-        <button
-          onClick={signOut}
-          className="mt-auto grid size-13 place-items-center rounded-[0.85rem] text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-          title="Sign out"
-        >
-          <LogOut className="size-5" />
-        </button>
-      </nav>
+      {showUpgrade && (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-brand-100 bg-brand-50 px-5 py-2.5 text-sm text-brand-800 sm:px-8 lg:px-10">
+          <span className="flex items-center gap-2">
+            <Shield className="size-4 shrink-0" />
+            {t('upgrade.free.unlock')}
+          </span>
+          <Link href="/settings/billing" className="font-semibold underline underline-offset-2 hover:text-brand-900">
+            {t('app.upgrade')}
+          </Link>
+        </div>
+      )}
 
-      <main className="min-w-0 px-5 pb-24 pt-6 sm:px-10 sm:py-10">{children}</main>
+      <main className="min-w-0 px-5 pb-12 pt-6 sm:px-8 sm:pb-14 lg:px-10 lg:pt-8">{children}</main>
 
-      {/* Phone: bottom tab bar — Home + Sell quick tabs + Menu sheet */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-hairline bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden">
-        {primary.map((item) => {
-          const active = item.href && pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.label}
-              href={item.href!}
-              className={cn(
-                'flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium transition-colors',
-                active ? 'text-brand-700' : 'text-slate-400',
-              )}
-            >
-              <item.icon className="size-6" />
-              {item.short ?? item.label}
-            </Link>
-          );
-        })}
-        <button
-          onClick={() => setMenuOpen(true)}
+      {/* ─── Left slide-in drawer — small/medium screens ─── */}
+      <div
+        className={cn('fixed inset-0 z-40 lg:hidden', !menuOpen && 'pointer-events-none')}
+        role="dialog"
+        aria-modal="true"
+        aria-hidden={!menuOpen}
+        aria-label="Menu"
+      >
+        <div
           className={cn(
-            'flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium transition-colors',
-            primaryActive ? 'text-slate-400' : 'text-brand-700',
+            'absolute inset-0 bg-slate-900/30 backdrop-blur-[2px] transition-opacity duration-300',
+            menuOpen ? 'opacity-100' : 'opacity-0',
+          )}
+          onClick={close}
+        />
+        <div
+          className={cn(
+            'absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-surface shadow-2xl transition-transform duration-300 ease-out',
+            menuOpen ? 'translate-x-0' : '-translate-x-full',
           )}
         >
-          <Menu className="size-6" />
-          Menu
-        </button>
-      </nav>
-
-      {menuOpen && (
-        <MenuSheet
-          items={menuItems}
-          pathname={pathname}
-          unread={unreadCount}
-          onNavigate={() => setMenuOpen(false)}
-          onSignOut={signOut}
-        />
-      )}
-    </div>
-  );
-}
-
-/** A single tap row inside the More sheet: label + icon, active dot/badge, tap-to-navigate. */
-function MoreRow({
-  icon: Icon,
-  label,
-  href,
-  badge,
-  pathname,
-  onSelect,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  href?: string;
-  badge?: React.ReactNode;
-  pathname: string;
-  onSelect?: () => void;
-}) {
-  const active = href && pathname.startsWith(href);
-  const body = (
-    <span className="flex items-center gap-3.5">
-      <Icon className="size-5 text-slate-400" />
-      <span className="font-medium text-slate-700">{label}</span>
-      <span className="ml-auto">{badge ?? (active ? <span className="size-1.5 rounded-full bg-brand-600" /> : null)}</span>
-    </span>
-  );
-  return href ? (
-    <Link href={href} onClick={onSelect} className="block px-3 py-3.5 active:bg-slate-50">
-      {body}
-    </Link>
-  ) : (
-    <button onClick={onSelect} className="block w-full px-3 py-3.5 text-left active:bg-slate-50">
-      {body}
-    </button>
-  );
-}
-
-/** Full-screen bottom sheet listing every non-primary nav item plus Notifications and Sign out. */
-function MenuSheet({
-  items,
-  pathname,
-  unread,
-  onNavigate,
-  onSignOut,
-}: {
-  items: NavItem[];
-  pathname: string;
-  unread: number;
-  onNavigate: () => void;
-  onSignOut: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-40 sm:hidden" role="dialog" aria-modal="true" aria-label="Menu">
-      <div className="absolute inset-0 bg-slate-900/20" onClick={onNavigate} />
-      <div className="absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-2xl border-t border-hairline bg-surface pb-[env(safe-area-inset-bottom)]">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-hairline bg-surface px-5 py-4">
-          <p className="font-medium text-slate-900">Menu</p>
-          <button
-            onClick={onNavigate}
-            aria-label="Close menu"
-            className="grid size-9 place-items-center rounded-[0.85rem] text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-          >
-            <X className="size-5" />
-          </button>
-        </header>
-        <nav className="px-2 py-2">
-          <div className="divide-y divide-hairline">
-            {items
-              .filter((item) => item.href)
-              .map((item) => (
-                <MoreRow key={item.label} icon={item.icon} label={item.label} href={item.href} pathname={pathname} onSelect={onNavigate} />
-              ))}
-            <MoreRow
-              icon={Bell}
-              label="Notifications"
-              href="/notifications"
-              pathname={pathname}
-              onSelect={onNavigate}
-              badge={
-                unread > 0 ? (
-                  <span className="rounded-full bg-red-500 px-1.5 font-mono text-[10px] font-bold text-white">
-                    {unread > 9 ? '9+' : unread}
-                  </span>
-                ) : undefined
-              }
-            />
+          <div className="flex items-center justify-between border-b border-hairline pr-3">
+            <Link href="/dashboard" onClick={close} className="flex items-center gap-2.5 px-5 py-5">
+              <BrandMark size={32} />
+              <span className="text-lg font-semibold tracking-tight text-slate-900">Beaver</span>
+            </Link>
+            <button
+              onClick={close}
+              aria-label={t('app.closeMenu')}
+              className="grid size-10 place-items-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            >
+              <X className="size-6" />
+            </button>
           </div>
-          <div className="mt-2 border-t border-hairline">
-            <MoreRow icon={LogOut} label="Sign out" pathname={pathname} onSelect={onSignOut} />
-          </div>
-        </nav>
+          <NavRows items={items} pathname={pathname} onSelect={close} t={t} />
+          <SidebarFooter
+            unread={unreadCount}
+            notificationsLabel={t('nav.notifications')}
+            onSignOut={signOut}
+            onNavigate={close}
+          />
+        </div>
       </div>
     </div>
   );

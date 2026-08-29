@@ -42,6 +42,12 @@ import {
   Activity01Icon,
   ChevronDownIcon,
   Menu01Icon,
+  Globe02Icon,
+  IncognitoIcon,
+  Archive01Icon,
+  Attachment01Icon,
+  GhostIcon,
+  HistoryIcon,
 } from '@hugeicons/core-free-icons';
 
 export interface IconProps {
@@ -91,3 +97,9 @@ export const Shield = make(Shield01Icon, 'Shield');
 export const Activity = make(Activity01Icon, 'Activity');
 export const ChevronDown = make(ChevronDownIcon, 'ChevronDown');
 export const Menu = make(Menu01Icon, 'Menu');
+export const Globe = make(Globe02Icon, 'Globe');
+export const Incognito = make(IncognitoIcon, 'Incognito');
+export const Archive = make(Archive01Icon, 'Archive');
+export const Paperclip = make(Attachment01Icon, 'Paperclip');
+export const Ghost = make(GhostIcon, 'Ghost');
+export const History = make(HistoryIcon, 'History');

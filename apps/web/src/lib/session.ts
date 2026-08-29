@@ -11,6 +11,8 @@ export interface Membership {
   businessId: string;
   businessName: string;
   role: string;
+  plan: string;
+  isTrial: boolean;
 }
 
 export interface Session {
@@ -19,6 +21,8 @@ export interface Session {
   user: SessionUser;
   businessId: string | null;
   role: string | null;
+  plan: string | null;
+  isTrial: boolean;
   memberships: Membership[];
 }
 

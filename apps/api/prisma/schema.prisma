@@ -125,7 +125,10 @@ model Business {
   taxId          String?
   openingDate    DateTime?
   trackInventory Boolean      @default(true)
-  plan           String       @default("FREE") // FREE | BASIC | PRO | BUSINESS (future gating)
+  plan           String       @default("FREE") // FREE | BASIC | PRO | BUSINESS (gated in modules/billing)
+  trialEndsAt    DateTime? // 14-day all-features trial; null once it has ever expired/consumed
+  planChangedAt  DateTime? // last manual plan / trial change
+  planChangedBy  String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   deletedAt      DateTime?

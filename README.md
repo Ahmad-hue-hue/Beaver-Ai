@@ -5,10 +5,11 @@ POS, inventory, purchases, suppliers, customers & debt, expenses, cash, determin
 financial analytics, reporting, and an AI assistant + autonomous agents that study the
 business (English & Kiswahili). Built multi-tenant and mobile-first for Tanzanian shops.
 
-> Status: **in active construction** (milestone-based). M0–M8 complete (infra, auth/tenancy/RBAC,
+> Status: **in active construction** (milestone-based). M0–M9 complete (infra, auth/tenancy/RBAC,
 > products/inventory, POS & sales, suppliers/purchases/expenses/cash/debt, analytics/reports,
-> AI assistant + agents, notifications/employees/admin/security, and M8 polish/tests/docs/seed/
-> deployment). See [`docs/ROADMAP.md`](docs/ROADMAP.md) for milestone scope.
+> AI assistant + agents, notifications/employees/admin/security, M8 polish/tests/docs/seed/
+> deployment, and M9 SaaS plan gating + 14-day trial). See [`docs/ROADMAP.md`](docs/ROADMAP.md)
+> for milestone scope.
 
 ## Stack
 

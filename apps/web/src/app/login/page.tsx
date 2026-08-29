@@ -42,16 +42,15 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <form onSubmit={onSubmit} autoComplete="off" className="space-y-7">
+      <form onSubmit={onSubmit} className="space-y-7">
         <Field label="Email">
           <Input
             type="email"
-            name="beaver-email"
-            autoComplete="off"
+            name="email"
+            autoComplete="email"
+            inputMode="email"
             autoCapitalize="none"
             spellCheck={false}
-            data-1p-ignore
-            data-lpignore="true"
             placeholder="asha@duka.co.tz"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -60,8 +59,9 @@ export default function LoginPage() {
         </Field>
         <Field label="Password" error={error ?? undefined}>
           <PasswordInput
+            name="password"
             autoComplete="current-password"
-            placeholder="••••••••"
+            placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

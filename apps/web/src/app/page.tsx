@@ -30,21 +30,27 @@ export default function Home() {
     <main className="relative min-h-dvh overflow-hidden">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-transparent bg-canvas/70 backdrop-blur transition-colors">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
           <Link href="/" className="flex items-center gap-2.5">
             <Image src="/beaver-mark.png" alt="" width={38} height={38} className="rounded-xl" priority />
             <span className="text-lg font-semibold tracking-tight text-slate-900">Beaver</span>
           </Link>
-          <nav className="flex items-center gap-1.5">
+          <nav className="flex items-center gap-0.5 sm:gap-1.5">
+            <Link
+              href="/pricing"
+              className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 sm:inline-flex"
+            >
+              Pricing
+            </Link>
             <Link
               href="/login"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 sm:px-4"
             >
               Sign in
             </Link>
             <Link
               href="/register"
-              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
+              className="whitespace-nowrap rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 sm:px-4"
             >
               Get started
             </Link>
@@ -152,12 +158,16 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-hairline">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-6 py-8 text-sm text-slate-400 sm:flex-row">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-sm text-slate-400 sm:flex-row">
           <span className="flex items-center gap-2">
             <Image src="/beaver-mark.png" alt="" width={22} height={22} className="rounded-md" />
             © {new Date().getFullYear()} Beaver
           </span>
           <span>Smart. Simple. Powerful.</span>
+          <span className="flex items-center gap-4">
+            <Link href="/terms" className="transition-colors hover:text-slate-600">Terms</Link>
+            <Link href="/privacy" className="transition-colors hover:text-slate-600">Privacy</Link>
+          </span>
         </div>
       </footer>
     </main>

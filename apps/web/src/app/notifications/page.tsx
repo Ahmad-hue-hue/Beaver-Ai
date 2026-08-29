@@ -6,6 +6,7 @@ import { Bell, Check, Loader2 } from '@/components/ui/icon';
 import { AppShell } from '@/components/app-shell';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 interface Notification {
@@ -25,17 +26,19 @@ const SEVERITY_DOT: Record<Notification['severity'], string> = {
   critical: 'bg-red-500',
 };
 
-const relative = (iso: string) => {
-  const then = new Date(iso).getTime();
-  const diff = Date.now() - then;
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return 'just now';
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const d = Math.floor(h / 24);
-  return d === 1 ? 'yesterday' : `${d}d ago`;
-};
+function useRelativeTime(t: (key: string, params?: Record<string, string | number>) => string) {
+  return (iso: string) => {
+    const then = new Date(iso).getTime();
+    const diff = Date.now() - then;
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return t('notifications.justNow');
+    if (m < 60) return t('notifications.minutesAgo', { n: m });
+    const h = Math.floor(m / 60);
+    if (h < 24) return t('notifications.hoursAgo', { n: h });
+    const d = Math.floor(h / 24);
+    return d === 1 ? t('notifications.yesterday') : t('notifications.daysAgo', { n: d });
+  };
+}
 
 export default function NotificationsPage() {
   return (
@@ -47,8 +50,10 @@ export default function NotificationsPage() {
 
 function NotificationsContent() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const token = session?.accessToken;
   const qc = useQueryClient();
+  const relative = useRelativeTime(t);
 
   const list = useQuery({
     queryKey: ['notifications', 'list'],
@@ -79,9 +84,9 @@ function NotificationsContent() {
     <div className="mx-auto max-w-3xl">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Notifications</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('notifications.title')}</h1>
           <p className="mt-1 text-slate-500">
-            {unread > 0 ? `${unread} unread` : 'You’re all caught up'}
+            {unread > 0 ? t('notifications.unread', { count: unread }) : t('notifications.allCaughtUp')}
           </p>
         </div>
         {unread > 0 && (
@@ -91,7 +96,7 @@ function NotificationsContent() {
             className="tap inline-flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
           >
             <Check className="size-4" />
-            Mark all read
+            {t('notifications.markAllRead')}
           </button>
         )}
       </header>
@@ -106,10 +111,8 @@ function NotificationsContent() {
             <span className="grid size-12 place-items-center rounded-2xl bg-slate-100 text-slate-400">
               <Bell className="size-6" />
             </span>
-            <p className="mt-4 font-medium text-slate-700">Nothing to report</p>
-            <p className="mt-1 text-sm text-slate-500">
-              Low-stock, debt and daily-summary alerts will appear here.
-            </p>
+            <p className="mt-4 font-medium text-slate-700">{t('notifications.empty.title')}</p>
+            <p className="mt-1 text-sm text-slate-500">{t('notifications.empty.body')}</p>
           </div>
         ) : (
           <div className="divide-y divide-hairline">
@@ -135,7 +138,7 @@ function NotificationsContent() {
                       href={n.link}
                       className="mt-1 inline-flex text-sm font-medium text-brand-700 hover:underline"
                     >
-                      View
+                      {t('notifications.view')}
                     </a>
                   )}
                 </div>
@@ -143,7 +146,7 @@ function NotificationsContent() {
                   <button
                     onClick={() => read.mutate(n.id)}
                     className="tap rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                    title="Mark read"
+                    title={t('notifications.markRead')}
                   >
                     <Check className="size-4" />
                   </button>

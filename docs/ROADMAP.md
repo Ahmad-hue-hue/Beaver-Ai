@@ -17,6 +17,7 @@ end-to-end; every scoped row carries `businessId`; domain writes are atomic. See
 | M6 | AI assistant + autonomous agentic layer | ✅ |
 | M7 | Notifications, employees, admin, security pass | ✅ |
 | M8 | Polish, tests, docs, seed, deployment | ✅ |
+| M9 | SaaS subscription plan gating + 14-day trial (no payment provider) | ✅ |
 
 ---
 
@@ -128,5 +129,62 @@ and Docker self-hosting.
   - Plus `members.service` `tempPassword` entropy/format tests.
 - **Docs:** README status brought up to date; ROADMAP maintained per milestone.
 - `next-env.d.ts` tracks the Next 16 route-types layout.
+
+## ✅ M9 — SaaS subscription plan gating + 14-day trial
+
+Tiered plans with feature gating and soft limits. **No payment provider** — the owner/admin
+manually switches plans (payment/billing collection is a later milestone). This milestone
+only adds *plan state, feature/limit enforcement and the pricing UI*.
+
+Single source of truth: `packages/shared/src/plans.ts` (plan catalog, feature gating, trial
+helpers), unit-tested in `plans.test.ts`.
+
+- **Plans** FREE / BASIC / PRO / BUSINESS. Gated features:
+  - `ai` (AI assistant & insights) → BASIC+
+  - `financialReports` (financial P&L) → PRO+
+  - `paidPaymentMethods` (mobile-money/card/bank) → BASIC+ (cash/credit always free)
+  - `branches` (multiple branches) → BUSINESS
+- **Soft limit:** `products` cap only (FREE 200 / BASIC 1000 / PRO 5000 / BUSINESS unlimited).
+  Deliberately customer-friendly — no member cap, no hard lockouts.
+- **14-day trial** modeled as `Business.trialEndsAt` (auto-set on onboarding); while active it
+  bypasses all features. No separate TRIAL plan.
+- **Plan travels in the JWT/session** (`plan` + `isTrial`); plan changes re-issue the session
+  via `AuthService.buildSession`, so enforcement reads `req.user` with no DB hit.
+- **API (`apps/api/src/modules/billing/`):** GET `/billing/plans` + `/billing/features` (public),
+  GET `/billing/current`, PATCH `/billing/plan`, POST `/billing/trial` (settings/manage).
+  Global `PlanFeatureGuard` + `@RequirePlanFeature(...)`; paid-method gate in `SalesService`;
+  product soft cap in `ProductsService`.
+- **Web:** marketing `/pricing`, owner `/settings/billing` (current plan, product usage meter,
+  manual plan change), plan-aware app-shell (free non-trial hides the Assistant nav). Web keeps a
+  local `apps/web/src/lib/plans.ts` mirror (Turbopack barrel friction — same rationale as
+  `lib/money.ts`).
+- **Legal + upgrade UX:** public `/terms` and `/privacy` pages (shared `legal-shell` header/footer,
+  linked from the landing & pricing footers); a required consent checkbox on `/register`; and
+  action-aware pricing CTAs (`components/plan-cta.tsx`) that show "Your current plan" for the active
+  tier and route logged-in users to `/settings/billing` to upgrade (logged-out users go to `/register`).
+
+## ✅ Post-M9 — AI insights → Notifications, chat UI redesign, language toggle
+
+- **AI insights now live in Notifications (auto-sent).** `NotificationsService.generate` is driven
+  by `AgentsService.insights` — each deterministic insight (restock alerts, top seller, debtors,
+  open-till, slow movers, expense spikes) is persisted as a notification keyed `ai:<type>:<day>`
+  (idempotent), deep-linked to its domain screen (`/purchases`, `/customers`, `/cash`, …). The
+  daily sales roll-up is kept. `NotificationsModule` imports `AiModule` (no cycle). The Assistant
+  page no longer duplicates the insights feed.
+- **Assistant page redesigned** to a modern chat UI in Beaver's system palette (not dark): centered
+  "AI Chat" hero + subtitle + suggestion chips, header action icons (incognito, history, archive),
+  and a bottom rounded composer with paperclip (left) + arrow/send (right). Icons added via the
+  `make()` pattern in `ui/icon.tsx` (`Globe02`, `Incognito`, `History`, `Archive01`, `Attachment01`).
+- **Functional header actions + attachments** (`apps/web/src/lib/chat-store.ts` backs an in-browser
+  `localStorage` store): the incognito icon clears the working thread and stops auto-save (with an
+  amber "incognito" banner); history opens a panel of auto-saved conversations to resume or delete;
+  archive saves/clears an archive list with restore. The composer's paperclip opens a file picker,
+  previews the selected image as a thumbnail, and sends its filename as context in the prompt
+  (the chat API is text-only, so no server upload).
+- **English (US) / Kiswahili toggle.** New web-side i18n (`apps/web/src/lib/i18n.tsx`) with an
+  `I18nProvider` + `useI18n` + a `LanguageToggle` (persisted in `localStorage`). The app shell nav,
+  upgrade banner, sign-out, the Assistant page, and the Notifications page all switch instantaneously;
+  the API insight *body* text remains English for now (generated server-side).
+
 
 Test suite grew from 98 → ~130 pure unit tests, all passing alongside typecheck and web lint.

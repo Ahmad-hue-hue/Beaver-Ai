@@ -21,7 +21,8 @@ const envSchema = z.object({
     .default('false')
     .transform((v) => v === 'true'),
 
-  AI_PROVIDER: z.enum(['anthropic', 'mock']).default('anthropic'),
+  AI_PROVIDER: z.enum(['anthropic', 'google', 'mock']).default('anthropic'),
+  GOOGLE_API_KEY: z.string().optional().default(''),
   ANTHROPIC_API_KEY: z.string().optional().default(''),
   AI_MODEL: z.string().default('claude-opus-4-8'),
   AI_MAX_OUTPUT_TOKENS: z.coerce.number().default(4096),
@@ -44,9 +45,10 @@ function buildConfig(env: z.infer<typeof envSchema>) {
     },
     cookie: { domain: env.COOKIE_DOMAIN, secure: env.COOKIE_SECURE },
     ai: {
-      // When no key is present, force the mock provider so the app still runs.
-      provider: env.ANTHROPIC_API_KEY ? env.AI_PROVIDER : 'mock',
-      apiKey: env.ANTHROPIC_API_KEY,
+      // No key → mock so the app still runs; a Google key auto-selects Gemini; otherwise the
+      // explicit AI_PROVIDER (default anthropic) when an Anthropic key is present.
+      provider: env.GOOGLE_API_KEY ? 'google' : env.ANTHROPIC_API_KEY ? env.AI_PROVIDER : 'mock',
+      apiKey: env.GOOGLE_API_KEY || env.ANTHROPIC_API_KEY,
       model: env.AI_MODEL,
       maxOutputTokens: env.AI_MAX_OUTPUT_TOKENS,
     },

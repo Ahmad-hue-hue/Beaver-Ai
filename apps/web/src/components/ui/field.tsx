@@ -5,8 +5,9 @@ import { Eye, EyeOff } from '@/components/ui/icon';
 import { cn } from '@/lib/utils';
 
 /**
- * Box-free inputs: a single hairline underline that turns green on focus — no bordered
- * boxes, in keeping with the aesthetic. Label sits above in small slate type.
+ * Mobile-first inputs. Clearly-bordered fields (rounded, subtle fill) so they read as
+ * tappable inputs on any screen — no fragile "hidden underline" styling that can look
+ * broken on phones. Label sits above in small slate type.
  */
 
 export function Field({
@@ -33,22 +34,18 @@ export function Field({
   );
 }
 
+const FIELD =
+  'h-12 w-full rounded-xl border border-hairline bg-surface px-3.5 text-base text-slate-900 outline-none transition-colors placeholder:text-slate-400 ' +
+  'focus:border-brand-600 focus:ring-2 focus:ring-brand-600/15';
+
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
   ({ className, ...props }, ref) => (
-    <input
-      ref={ref}
-      className={cn(
-        'h-11 w-full border-0 border-b border-hairline bg-transparent px-0 text-lg text-slate-900 outline-none transition-colors placeholder:text-slate-300',
-        'focus:border-brand-600',
-        className,
-      )}
-      {...props}
-    />
+    <input ref={ref} className={cn(FIELD, className)} {...props} />
   ),
 );
 Input.displayName = 'Input';
 
-/** Password input with a show/hide eye toggle, keeping the box-free underline styling. */
+/** Password input with a show/hide eye toggle, keeping the bordered field styling. */
 export const PasswordInput = React.forwardRef<
   HTMLInputElement,
   Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'>
@@ -56,15 +53,15 @@ export const PasswordInput = React.forwardRef<
   const [show, setShow] = React.useState(false);
   return (
     <div className="relative">
-      <Input ref={ref} type={show ? 'text' : 'password'} className={cn('pr-10', className)} {...props} />
+      <Input ref={ref} type={show ? 'text' : 'password'} className={cn('pr-12', className)} {...props} />
       <button
         type="button"
         tabIndex={-1}
         onClick={() => setShow((s) => !s)}
         aria-label={show ? 'Hide password' : 'Show password'}
-        className="absolute inset-y-0 right-0 grid w-10 place-items-center text-slate-400 transition-colors hover:text-slate-600"
+        className="absolute inset-y-0 right-0 grid w-12 place-items-center text-slate-400 transition-colors hover:text-slate-600"
       >
-        {show ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
+        {show ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
       </button>
     </div>
   );
@@ -77,10 +74,7 @@ export const Select = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <select
     ref={ref}
-    className={cn(
-      'h-11 w-full border-0 border-b border-hairline bg-transparent px-0 text-lg text-slate-900 outline-none transition-colors focus:border-brand-600',
-      className,
-    )}
+    className={cn(FIELD, 'appearance-none pr-10', className)}
     {...props}
   >
     {children}

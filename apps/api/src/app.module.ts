@@ -26,6 +26,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module.js';
 import { AiModule } from './modules/ai/ai.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { MembersModule } from './modules/members/members.module.js';
+import { BillingModule } from './modules/billing/billing.module.js';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { MembersModule } from './modules/members/members.module.js';
     AiModule,
     NotificationsModule,
     MembersModule,
+    BillingModule,
   ],
 })
 export class AppModule {}

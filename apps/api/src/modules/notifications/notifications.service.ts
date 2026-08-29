@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service.js';
-import { dailySummaryMessage, debtMessage, lowStockMessage } from './notifications.logic.js';
+import { AgentsService } from '../ai/agents.service.js';
+import { dailySummaryMessage } from './notifications.logic.js';
 
 const dec = (v: number | string | Prisma.Decimal): Prisma.Decimal =>
   new Prisma.Decimal(String(v));
@@ -15,9 +16,23 @@ interface CreateNotificationInput {
   refKey?: string;
 }
 
+/** Where each AI agent insight should deep-link on the web app. */
+const INSIGHT_LINKS: Record<string, string> = {
+  onboarding: '/products',
+  low_stock: '/purchases',
+  slow_movers: '/products',
+  best_seller: '/products',
+  debtors: '/customers',
+  cash: '/cash',
+  expenses: '/expenses',
+};
+
 @Injectable()
 export class NotificationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly agents: AgentsService,
+  ) {}
 
   async list(businessId: string, limit = 30) {
     const notifications = await this.prisma.notification.findMany({
@@ -77,81 +92,38 @@ export class NotificationsService {
   }
 
   /**
-   * Generate today's notifications from current signals, idempotently. Called by the web app
-   * (and a lightweight scheduler could call it daily). Low-stock/debt/daily are each keyed by
-   * day so duplicates never stack.
+   * Generate today's notifications, idempotently. Called by the web app (and a lightweight
+   * scheduler could call it daily).
+   *
+   * The AI "study the business" agents (AgentsService) compute the deterministic insights —
+   * restock alerts, top seller, debtors, open-till, slow movers, expense spikes — and each is
+   * persisted here as a notification, keyed `ai:<type>:<day>` so duplicates never stack. The
+   * daily sales roll-up completes the set. This is how the AI automatically surfaces what
+   * needs attention, in the Notifications feed.
    */
   async generate(businessId: string) {
     const today = new Date().toISOString().slice(0, 10);
     const created: string[] = [];
 
-    const productCount = await this.prisma.product.count({
-      where: { businessId, deletedAt: null },
-    });
-    if (productCount === 0) {
-      const n = await this.create(businessId, {
-        kind: 'onboarding',
-        severity: 'info',
-        title: 'Start with your catalogue',
-        body: 'Add products with cost and selling prices so we can track stock, margins and reorder alerts.',
-        link: '/products',
-        refKey: `onboarding:${today}`,
-      });
-      if (n) created.push(n.id);
-      return { created };
-    }
-
-    const [lowStockN, debtN, salesN] = await Promise.all([
-      this.generateLowStock(businessId, today),
-      this.generateDebt(businessId, today),
+    const [insights, salesN] = await Promise.all([
+      this.agents.insights(businessId, { limit: 50 }),
       this.generateDailySales(businessId, today),
     ]);
-    for (const n of [lowStockN, debtN, salesN]) {
+
+    for (const insight of insights) {
+      const n = await this.create(businessId, {
+        kind: insight.type,
+        severity: insight.severity,
+        title: insight.title,
+        body: insight.body,
+        link: INSIGHT_LINKS[insight.type],
+        refKey: `ai:${insight.type}:${today}`,
+      });
       if (n) created.push(n.id);
     }
+
+    if (salesN) created.push(salesN.id);
     return { created };
-  }
-
-  private async generateLowStock(businessId: string, today: string) {
-    const lows = await this.prisma.$queryRaw<
-      Array<{ name: string; stockQuantity: string }>
-    >`
-      SELECT name, "stockQuantity"::text AS "stockQuantity"
-      FROM "Product"
-      WHERE "businessId" = ${businessId} AND "deletedAt" IS NULL
-        AND "trackInventory" = true AND "stockQuantity" <= "reorderLevel"
-      ORDER BY "stockQuantity" - "reorderLevel" ASC
-      LIMIT 8
-    `;
-    if (lows.length === 0) return null;
-    const msg = lowStockMessage({ count: lows.length, names: lows.map((l) => l.name) });
-    return this.create(businessId, {
-      kind: 'low_stock',
-      severity: msg.severity,
-      title: msg.title,
-      body: msg.body,
-      link: '/purchases',
-      refKey: `low_stock:${today}`,
-    });
-  }
-
-  private async generateDebt(businessId: string, today: string) {
-    const agg = await this.prisma.customer.aggregate({
-      where: { businessId, deletedAt: null, balance: { gt: 0 } },
-      _sum: { balance: true },
-      _count: true,
-    });
-    const total = agg._sum.balance ?? new Prisma.Decimal(0);
-    if (total.lessThanOrEqualTo(0)) return null;
-    const msg = debtMessage(total, agg._count);
-    return this.create(businessId, {
-      kind: 'debt',
-      severity: msg.severity,
-      title: msg.title,
-      body: msg.body,
-      link: '/customers',
-      refKey: `debt:${today}`,
-    });
   }
 
   private async generateDailySales(businessId: string, today: string) {

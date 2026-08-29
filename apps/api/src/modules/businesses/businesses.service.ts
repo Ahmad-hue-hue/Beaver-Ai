@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../../common/prisma/prisma.service.js';
 import { AuditService } from '../../common/audit/audit.service.js';
 import { AuthService, type RequestMeta, type SessionResult } from '../auth/auth.service.js';
+import { TRIAL_DAYS } from '../billing/billing.service.js';
 import type { OnboardBusinessDto, UpdateSettingsDto } from './dto.js';
 
 @Injectable()
@@ -33,6 +34,8 @@ export class BusinessesService {
           taxId: dto.taxId ?? null,
           openingDate: dto.openingDate ? new Date(dto.openingDate) : null,
           trackInventory: dto.trackInventory ?? true,
+          // Every new business starts a 14-day all-features trial (customer-friendly).
+          trialEndsAt: new Date(Date.now() + TRIAL_DAYS * 86_400_000),
           settings: {
             create: {
               defaultPaymentMethods: dto.defaultPaymentMethods ?? ['CASH', 'MOBILE_MONEY'],

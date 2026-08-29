@@ -1,13 +1,14 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '@beaver/shared';
-import { BusinessId, RequirePermissions } from '../../common/auth/decorators.js';
+import { BusinessId, RequirePermissions, RequirePlanFeature } from '../../common/auth/decorators.js';
 import { AiService } from './ai.service.js';
 import { AiChatDto, InsightsQuery } from './dto.js';
 import type { ChatMessage } from '../../common/ai/ai.provider.js';
 
 @ApiTags('ai')
 @Controller('ai')
+@RequirePlanFeature('ai')
 export class AiController {
   constructor(private readonly ai: AiService) {}
 
