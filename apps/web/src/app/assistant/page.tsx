@@ -92,15 +92,32 @@ function AssistantWorkspace({ token, live, provider }: { token?: string; live: b
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   const mutation = useMutation({
-    mutationFn: (message: string) =>
-      api.post<ChatReply>('/ai/chat', { messages: [...messages, { content: message }] }, { accessToken: token }),
+    mutationFn: ({ text, images }: { text: string; images?: string[] }) =>
+      api.post<ChatReply>(
+        '/ai/chat',
+        {
+          messages: [
+            ...messages.map(({ content, images }) => ({
+              content,
+              images: images && images.length > 0 ? images : undefined,
+            })),
+            { content: text, images },
+          ],
+        },
+        { accessToken: token },
+      ),
     onSuccess: (data) => {
-      setMessages((m) => [...m, { role: 'user', content: inputAtSend.current }, { role: 'assistant', content: data.reply }]);
+      setMessages((m) => [
+        ...m,
+        { role: 'user', content: inputAtSend.current, images: imageAtSend.current },
+        { role: 'assistant', content: data.reply },
+      ]);
       setInput('');
       setAttachment(null);
     },
   });
   const inputAtSend = React.useRef('');
+  const imageAtSend = React.useRef<string[] | undefined>(undefined);
 
   // Persist each finished exchange so History/Archive can restore a thread later.
   const persist = React.useCallback(
@@ -124,11 +141,15 @@ function AssistantWorkspace({ token, live, provider }: { token?: string; live: b
 
   const submit = (raw: string) => {
     const base = raw.trim();
+    const images = attachment ? [attachment.dataUrl] : undefined;
     const attachedNote = attachment ? t('assistant.attach.note', { name: attachment.name }) : '';
     const message = [base, attachedNote].filter(Boolean).join('\n\n');
-    if (!message.trim() || mutation.isPending) return;
-    inputAtSend.current = base;
-    mutation.mutate(message);
+    if ((!message.trim() && !images) || mutation.isPending) return;
+    inputAtSend.current = message;
+    imageAtSend.current = images;
+    setInput('');
+    setAttachment(null);
+    mutation.mutate({ text: message, images });
   };
 
   const scrollToBottom = React.useCallback(() => {
@@ -250,6 +271,19 @@ function AssistantWorkspace({ token, live, provider }: { token?: string; live: b
                           : 'rounded-bl-sm bg-slate-100 text-slate-700',
                       )}
                     >
+                      {m.images && m.images.length > 0 && (
+                        <div className="mb-2 flex flex-wrap gap-2">
+                          {m.images.map((src, i) => (
+                            // eslint-disable-next-line @next/next/no-img-element -- base64 preview from the client
+                            <img
+                              key={i}
+                              src={src}
+                              alt=""
+                              className="max-h-40 max-w-56 rounded-lg object-cover"
+                            />
+                          ))}
+                        </div>
+                      )}
                       {m.content}
                     </div>
                   </div>

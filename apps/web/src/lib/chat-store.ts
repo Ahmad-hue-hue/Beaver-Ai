@@ -3,6 +3,8 @@
 export interface SavedMessage {
   role: 'user' | 'assistant';
   content: string;
+  /** Optional base64 image data URLs attached to this user message. */
+  images?: string[];
 }
 
 export interface Conversation {
