@@ -20,7 +20,7 @@ business (English & Kiswahili). Built multi-tenant and mobile-first for Tanzania
 | Database  | **PostgreSQL 18** (Docker, `pgvector` image) + **Prisma** |
 | Cache/Jobs| **Redis** (cache-aside + BullMQ queue + rate limit) |
 | Frontend  | **Next.js** (App Router, PWA) + Tailwind v4 + shadcn/ui + 21st.dev |
-| AI        | **Claude `claude-opus-4-8`** via a provider abstraction (mock fallback) |
+| AI        | **OpenRouter** `minimax/minimax-m3:free` (text & vision) via provider abstraction (mock fallback) |
 
 Money is `Decimal` end-to-end (never floats). Every business-scoped row carries `businessId`.
 
@@ -54,8 +54,8 @@ bun run dev
 - API docs (Swagger): http://localhost:3001/docs
 - Web: http://localhost:3000
 
-The AI features work without a key via a mock provider; set `ANTHROPIC_API_KEY` in `.env`
-for live Claude responses.
+The AI features work without a key via a mock provider; set `OPENROUTER_API_KEY` in `.env`
+for live responses.
 
 ## Monorepo layout
 
