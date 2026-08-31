@@ -20,7 +20,7 @@ business (English & Kiswahili). Built multi-tenant and mobile-first for Tanzania
 | Database  | **PostgreSQL 18** (Docker, `pgvector` image) + **Prisma** |
 | Cache/Jobs| **Redis** (cache-aside + BullMQ queue + rate limit) |
 | Frontend  | **Next.js** (App Router, PWA) + Tailwind v4 + shadcn/ui + 21st.dev |
-| AI        | **OpenRouter** `minimax/minimax-m3:free` (text & vision) via provider abstraction (mock fallback) |
+| AI        | **OpenRouter** `minimax/minimax-m3:free` (agent/text) → `minimax/minimax-m2.7:free` fallback, `minimax/minimax-m3:free` vision, via provider abstraction (mock fallback) |
 
 Money is `Decimal` end-to-end (never floats). Every business-scoped row carries `businessId`.
 

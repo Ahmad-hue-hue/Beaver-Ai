@@ -24,6 +24,7 @@ const envSchema = z.object({
   AI_PROVIDER: z.enum(['openrouter', 'mock']).default('openrouter'),
   OPENROUTER_API_KEY: z.string().optional().default(''),
   AI_MODEL: z.string().default('minimax/minimax-m3:free'),
+  AI_FALLBACK_MODEL: z.string().default('minimax/minimax-m2.7:free'),
   AI_VISION_MODEL: z.string().default('minimax/minimax-m3:free'),
   AI_MAX_OUTPUT_TOKENS: z.coerce.number().default(4096),
 });
@@ -49,6 +50,7 @@ function buildConfig(env: z.infer<typeof envSchema>) {
       provider: env.OPENROUTER_API_KEY ? 'openrouter' : 'mock',
       apiKey: env.OPENROUTER_API_KEY,
       model: env.AI_MODEL,
+      fallbackModel: env.AI_FALLBACK_MODEL,
       visionModel: env.AI_VISION_MODEL,
       maxOutputTokens: env.AI_MAX_OUTPUT_TOKENS,
     },

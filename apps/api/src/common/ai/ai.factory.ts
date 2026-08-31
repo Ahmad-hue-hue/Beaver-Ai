@@ -16,7 +16,7 @@ export const AiProviderFactory: Provider = {
   useFactory: (config: ConfigService): AiProvider => {
     const ai = config.get<AppConfig['ai']>('ai')!;
     if (ai.provider === 'openrouter' && ai.apiKey) {
-      return new OpenRouterAiProvider(ai.apiKey, ai.model, ai.maxOutputTokens, ai.visionModel);
+      return new OpenRouterAiProvider(ai.apiKey, ai.model, ai.maxOutputTokens, ai.visionModel, ai.fallbackModel);
     }
     return new MockAiProvider();
   },

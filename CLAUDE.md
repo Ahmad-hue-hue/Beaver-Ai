@@ -79,12 +79,12 @@ These are load-bearing. Violating them is a bug even if it compiles.
    `EventEmitter2` (`common/events/domain-events.ts`), Decimal helper
    `const dec = (v) => new Prisma.Decimal(String(v))`.
   8. **AI is behind a provider abstraction** with a mock fallback — the app runs and tests
-   pass with no `OPENROUTER_API_KEY`. Default text model id:
-   `minimax/minimax-m3:free`; when a message carries `images[]`,
-   the OpenRouter provider auto-switches to `AI_VISION_MODEL`
-   (`minimax/minimax-m3:free`) for vision input. Free-tier models are heavily
-   rate-limited on OpenRouter, so the provider retries transient overloads
-   (3 attempts with backoff) before surfacing a 500.
+   pass with no `OPENROUTER_API_KEY`. Default text/agent model id:
+   `minimax/minimax-m3:free` (function-calling capable); if it transiently overloads the
+   provider falls back to `AI_FALLBACK_MODEL` (`minimax/minimax-m2.7:free`). When a message
+   carries `images[]`, the provider auto-switches to `AI_VISION_MODEL`
+   (`minimax/minimax-m3:free`). Free-tier models are heavily rate-limited on OpenRouter, so
+   the provider retries transient overloads (3 attempts with backoff) before surfacing a 500.
 
 ### Bun / stack gotchas (cost real time)
 
