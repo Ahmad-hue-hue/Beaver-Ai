@@ -1,10 +1,19 @@
 'use client';
 
+export interface SavedAction {
+  tool: string;
+  label: string;
+  summary: string;
+  mutated: boolean;
+}
+
 export interface SavedMessage {
   role: 'user' | 'assistant';
   content: string;
   /** Optional base64 image data URLs attached to this user message. */
   images?: string[];
+  /** Tool actions the assistant performed to produce this reply (agent transcript). */
+  actions?: SavedAction[];
 }
 
 export interface Conversation {

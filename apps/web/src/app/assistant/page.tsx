@@ -32,7 +32,8 @@ import {
   upsertConversation,
 } from '@/lib/chat-store';
 interface Status { provider: string; live: boolean }
-interface ChatReply { reply: string; provider: string; live: boolean }
+interface ChatAction { tool: string; label: string; summary: string; mutated: boolean }
+interface ChatReply { reply: string; actions: ChatAction[]; provider: string; live: boolean }
 
 type Panel = 'history' | 'archive' | null;
 interface Attachment { name: string; dataUrl: string }
@@ -110,7 +111,11 @@ function AssistantWorkspace({ token, live, provider }: { token?: string; live: b
       setMessages((m) => [
         ...m,
         { role: 'user', content: inputAtSend.current, images: imageAtSend.current },
-        { role: 'assistant', content: data.reply },
+        {
+          role: 'assistant',
+          content: data.reply,
+          actions: data.actions && data.actions.length > 0 ? data.actions : undefined,
+        },
       ]);
       setInput('');
       setAttachment(null);
@@ -281,6 +286,22 @@ function AssistantWorkspace({ token, live, provider }: { token?: string; live: b
                               alt=""
                               className="max-h-40 max-w-56 rounded-lg object-cover"
                             />
+                          ))}
+                        </div>
+                      )}
+                      {m.actions && m.actions.length > 0 && (
+                        <div className="mb-2 space-y-1.5">
+                          {m.actions.map((a, ai) => (
+                            <div
+                              key={ai}
+                              className="flex items-start gap-2 rounded-lg border border-brand-100 bg-brand-50/50 px-2.5 py-1.5 text-sm text-slate-700"
+                            >
+                              <Sparkles className="mt-0.5 size-3.5 shrink-0 text-brand-600" />
+                              <span>
+                                <span className="font-medium text-brand-700">{a.label}</span>
+                                {a.summary ? <span className="text-slate-500"> — {a.summary}</span> : null}
+                              </span>
+                            </div>
                           ))}
                         </div>
                       )}

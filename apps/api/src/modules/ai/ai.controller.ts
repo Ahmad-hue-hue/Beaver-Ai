@@ -1,7 +1,13 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '@beaver/shared';
-import { BusinessId, RequirePermissions, RequirePlanFeature } from '../../common/auth/decorators.js';
+import {
+  BusinessId,
+  CurrentUser,
+  RequirePermissions,
+  RequirePlanFeature,
+} from '../../common/auth/decorators.js';
+import type { AuthenticatedUser } from '../../common/auth/auth.types.js';
 import { AiService } from './ai.service.js';
 import { AiChatDto, InsightsQuery } from './dto.js';
 import type { ChatMessage } from '../../common/ai/ai.provider.js';
@@ -29,7 +35,11 @@ export class AiController {
 
   @Post('chat')
   @RequirePermissions(PERMISSIONS.AI_ASSISTANT_USE)
-  async chat(@BusinessId() businessId: string, @Body() dto: AiChatDto) {
+  async chat(
+    @BusinessId() businessId: string,
+    @CurrentUser() actor: AuthenticatedUser,
+    @Body() dto: AiChatDto,
+  ) {
     const history: ChatMessage[] = dto.messages
       .map((m) => ({ ...m, content: m.content.trim() }))
       .filter((m) => m.content.length > 0 || (m.images?.length ?? 0) > 0)
@@ -39,7 +49,7 @@ export class AiController {
         images: m.images,
       }));
     if (history.length === 0) history.push({ role: 'user', content: '' });
-    const reply = await this.ai.chat(businessId, history);
-    return { reply, provider: this.ai.providerName, live: this.ai.isLive };
+    const result = await this.ai.chat(businessId, actor, history);
+    return { ...result, provider: this.ai.providerName, live: this.ai.isLive };
   }
 }
