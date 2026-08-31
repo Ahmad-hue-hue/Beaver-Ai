@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Receipt, type ReceiptSale } from '@/components/receipt';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 interface Product {
@@ -26,11 +27,11 @@ interface ProductList { data: Product[] }
 interface Customer { id: string; name: string; phone: string | null }
 
 type PaymentMethod = 'CASH' | 'MOBILE_MONEY' | 'BANK' | 'CARD';
-const METHODS: { key: PaymentMethod; label: string }[] = [
-  { key: 'CASH', label: 'Cash' },
-  { key: 'MOBILE_MONEY', label: 'Mobile' },
-  { key: 'BANK', label: 'Bank' },
-  { key: 'CARD', label: 'Card' },
+const METHODS: { key: PaymentMethod; labelKey: string }[] = [
+  { key: 'CASH', labelKey: 'pos.method.cash' },
+  { key: 'MOBILE_MONEY', labelKey: 'pos.method.mobile' },
+  { key: 'BANK', labelKey: 'pos.method.bank' },
+  { key: 'CARD', labelKey: 'pos.method.card' },
 ];
 
 const money = (v: number) => formatMoney(v, { currency: 'TZS', symbolless: true });
@@ -47,6 +48,7 @@ export default function PosPage() {
 
 function Pos() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const token = session?.accessToken;
   const canDiscount = session?.role === 'OWNER' || session?.role === 'MANAGER';
   const businessName = session?.memberships.find((m) => m.businessId === session.businessId)?.businessName ?? 'Sale';
@@ -64,8 +66,8 @@ function Pos() {
   const [cartOpen, setCartOpen] = React.useState(false); // mobile bottom-sheet
 
   React.useEffect(() => {
-    const t = setTimeout(() => setDebounced(search.trim()), 200);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setDebounced(search.trim()), 200);
+    return () => clearTimeout(timer);
   }, [search]);
 
   const { data } = useQuery({
@@ -139,7 +141,7 @@ function Pos() {
       {/* Catalogue */}
       <div className="flex flex-col lg:min-h-0">
         <header className="mb-4">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Point of sale</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('pos.title')}</h1>
         </header>
         <div className="mb-4 flex items-center gap-2.5 border-b border-hairline py-2 focus-within:border-brand-600">
           <Search className="size-5 text-slate-400" />
@@ -147,14 +149,14 @@ function Pos() {
             autoFocus
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search or scan a product…"
+            placeholder={t('pos.searchPlaceholder')}
             className="w-full bg-transparent text-lg outline-none placeholder:text-slate-300"
           />
         </div>
 
         <div className="grid auto-rows-min grid-cols-2 gap-2 pb-6 sm:grid-cols-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-4">
           {products.length === 0 ? (
-            <p className="col-span-full py-10 text-center text-slate-400">No products found.</p>
+            <p className="col-span-full py-10 text-center text-slate-400">{t('pos.noProducts')}</p>
           ) : (
             products.map((p) => {
               const out = p.trackInventory && !p.isService && Number(p.stockQuantity) <= 0;
@@ -170,7 +172,7 @@ function Pos() {
                     <span className="tabular font-semibold text-slate-900">{money(Number(p.sellingPrice))}</span>
                     {p.trackInventory && !p.isService && (
                       <span className={`text-xs ${out ? 'text-red-500' : 'text-slate-400'}`}>
-                        {out ? 'out' : `${Number(p.stockQuantity)}${p.unit?.abbreviation ?? ''}`}
+                        {out ? t('pos.out') : `${Number(p.stockQuantity)}${p.unit?.abbreviation ?? ''}`}
                       </span>
                     )}
                   </span>
@@ -191,15 +193,15 @@ function Pos() {
       >
         <div className="mb-2 flex items-center justify-between">
           <p className="flex items-center gap-2 font-medium text-slate-700">
-            <ShoppingCart className="size-5 text-brand-600" /> Cart
+            <ShoppingCart className="size-5 text-brand-600" /> {t('pos.cart')}
           </p>
           <div className="flex items-center gap-4">
             {lines.length > 0 && (
-              <button onClick={resetSale} className="text-sm text-slate-400 hover:text-red-600">Clear</button>
+              <button onClick={resetSale} className="text-sm text-slate-400 hover:text-red-600">{t('pos.clear')}</button>
             )}
             <button
               onClick={() => setCartOpen(false)}
-              aria-label="Close cart"
+              aria-label={t('pos.closeCart')}
               className="text-slate-400 hover:text-slate-600 lg:hidden"
             >
               <X className="size-5" />
@@ -210,14 +212,14 @@ function Pos() {
         <div className="min-h-0 flex-1 overflow-y-auto">
           {lines.length === 0 ? (
             <div className="grid h-full place-items-center text-center text-slate-400">
-              <p>Tap a product to add it.</p>
+              <p>{t('pos.tapToAdd')}</p>
             </div>
           ) : (
             lines.map((l) => (
               <div key={l.product.id} className="flex items-center gap-3 border-b border-hairline py-2.5">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-slate-800">{l.product.name}</p>
-                  <p className="tabular text-xs text-slate-400">{money(Number(l.product.sellingPrice))} each</p>
+                  <p className="tabular text-xs text-slate-400">{money(Number(l.product.sellingPrice))} {t('pos.each')}</p>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Stepper onClick={() => setQty(l.product.id, l.qty - 1)}><Minus className="size-3.5" /></Stepper>
@@ -243,7 +245,7 @@ function Pos() {
         <div className="mt-3 border-t border-hairline pt-3">
           {canDiscount && lines.length > 0 && (
             <div className="mb-2 flex items-center justify-between text-sm">
-              <span className="text-slate-500">Discount</span>
+              <span className="text-slate-500">{t('pos.discount')}</span>
               <input
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}
@@ -254,26 +256,26 @@ function Pos() {
             </div>
           )}
           <div className="flex items-baseline justify-between">
-            <span className="text-slate-500">Total</span>
+            <span className="text-slate-500">{t('pos.total')}</span>
             <span className="tabular text-2xl font-semibold tracking-tight text-slate-900">{money(total)}</span>
           </div>
 
           {lines.length > 0 && (
             <div className="mt-3 space-y-2">
-              {tenders.map((t, i) => (
+              {tenders.map((td, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <select
-                    value={t.method}
+                    value={td.method}
                     onChange={(e) => setTenders((ts) => ts.map((x, j) => (j === i ? { ...x, method: e.target.value as PaymentMethod } : x)))}
                     className="h-10 rounded-lg border border-hairline bg-white px-2 text-sm outline-none focus:border-brand-600"
                   >
-                    {METHODS.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
+                    {METHODS.map((m) => <option key={m.key} value={m.key}>{t(m.labelKey)}</option>)}
                   </select>
                   <input
-                    value={t.amount}
+                    value={td.amount}
                     onChange={(e) => setTenders((ts) => ts.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)))}
                     inputMode="numeric"
-                    placeholder="Amount"
+                    placeholder={t('pos.amount')}
                     className="tabular h-10 flex-1 rounded-lg border border-hairline bg-white px-3 text-right outline-none focus:border-brand-600"
                   />
                   {tenders.length > 1 && (
@@ -288,25 +290,25 @@ function Pos() {
                   onClick={() => setTenders((ts) => [...ts, { method: 'MOBILE_MONEY', amount: '' }])}
                   className="text-brand-700 hover:text-brand-800"
                 >
-                  + Split payment
+                  + {t('pos.splitPayment')}
                 </button>
                 <button
                   onClick={() => setTenders((ts) => (ts.length ? ts.map((x, j) => (j === 0 ? { ...x, amount: String(total) } : x)) : ts))}
                   className="text-slate-500 hover:text-slate-700"
                 >
-                  Exact
+                  {t('pos.exact')}
                 </button>
               </div>
 
               {change > 0 && (
                 <p className="flex justify-between text-sm text-slate-600">
-                  <span>Change</span><span className="tabular">{money(change)}</span>
+                  <span>{t('pos.change')}</span><span className="tabular">{money(change)}</span>
                 </p>
               )}
               {due > 0 && (
                 <div className="rounded-lg bg-amber-50 px-3 py-2">
                   <p className="flex justify-between text-sm text-amber-700">
-                    <span>On credit</span><span className="tabular font-medium">{money(due)}</span>
+                    <span>{t('pos.onCredit')}</span><span className="tabular font-medium">{money(due)}</span>
                   </p>
                   <CustomerPicker token={token} customer={customer} onPick={setCustomer} />
                 </div>
@@ -314,7 +316,7 @@ function Pos() {
 
               {checkout.isError && (
                 <p className="text-sm text-red-600">
-                  {checkout.error instanceof ApiError ? checkout.error.message : 'Could not complete the sale.'}
+                  {checkout.error instanceof ApiError ? checkout.error.message : t('pos.saleError')}
                 </p>
               )}
 
@@ -324,7 +326,7 @@ function Pos() {
                 disabled={!canCheckout}
                 onClick={() => checkout.mutate()}
               >
-                {due > 0 ? `Charge ${money(paid)} + credit` : `Charge ${money(total)}`}
+                {due > 0 ? t('pos.chargeCredit', { amount: money(paid) }) : t('pos.charge', { amount: money(total) })}
               </Button>
             </div>
           )}
@@ -339,9 +341,9 @@ function Pos() {
         >
           <span className="flex items-center gap-2 font-medium">
             <ShoppingCart className="size-5" />
-            {cartCount} item{cartCount === 1 ? '' : 's'}
+            {t('pos.items', { count: cartCount })}
           </span>
-          <span className="tabular font-semibold">{money(total)} · Review &amp; pay</span>
+          <span className="tabular font-semibold">{money(total)} · {t('pos.reviewPay')}</span>
         </button>
       )}
 
@@ -373,6 +375,7 @@ function CustomerPicker({
 }) {
   const [q, setQ] = React.useState('');
   const [open, setOpen] = React.useState(false);
+  const { t } = useI18n();
 
   const { data } = useQuery({
     queryKey: ['pos-customers', q],
@@ -388,7 +391,7 @@ function CustomerPicker({
     return (
       <p className="mt-1 flex items-center justify-between text-sm text-slate-700">
         <span>{customer.name}</span>
-        <button onClick={() => onPick(null)} className="text-slate-400 hover:text-red-600">change</button>
+        <button onClick={() => onPick(null)} className="text-slate-400 hover:text-red-600">{t('pos.changeCustomer')}</button>
       </p>
     );
   }
@@ -401,7 +404,7 @@ function CustomerPicker({
           value={q}
           onFocus={() => setOpen(true)}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Customer name…"
+          placeholder={t('pos.customerName')}
           className="w-full bg-transparent text-sm outline-none placeholder:text-amber-400/70"
         />
       </div>
@@ -414,7 +417,7 @@ function CustomerPicker({
           ))}
           {q.trim() && !create.isPending && (
             <button onClick={() => create.mutate()} className="block w-full px-1 py-1 text-left text-sm font-medium text-brand-700 hover:bg-amber-100">
-              + Create “{q.trim()}”
+              + {t('pos.createCustomer', { name: q.trim() })}
             </button>
           )}
         </div>

@@ -8,6 +8,7 @@ import { formatMoney } from '@/lib/money';
 import { AppShell } from '@/components/app-shell';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 
 interface Product {
   id: string;
@@ -35,6 +36,7 @@ export default function DashboardPage() {
 
 function DashboardContent() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const token = session?.accessToken;
 
   const { data, isLoading } = useQuery({
@@ -73,7 +75,7 @@ function DashboardContent() {
       <header className="flex items-baseline justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-            Habari, {firstName(session?.user.name ?? '')} 👋
+            {t('dashboard.greeting', { name: firstName(session?.user.name ?? '') })}
           </h1>
           <p className="mt-1 text-slate-500">
             {today} · {session?.memberships[0]?.businessName}
@@ -83,24 +85,24 @@ function DashboardContent() {
 
       {/* KPIs — no boxes; separated by hairline rules. */}
       <div className="mt-10 grid grid-cols-2 gap-y-7 sm:grid-cols-4 sm:gap-y-0">
-        <Kpi label="Products" value={isLoading ? '—' : String(totalItems)} sub="in catalogue" />
+        <Kpi label={t('dashboard.products')} value={isLoading ? '—' : String(totalItems)} sub={t('dashboard.inCatalogue')} />
         <Kpi
-          label="Stock value"
+          label={t('dashboard.stockValue')}
           value={isLoading ? '—' : formatMoney(stockValue, { currency: 'TZS' })}
-          sub="at cost"
+          sub={t('dashboard.atCost')}
           divide
         />
         <Kpi
-          label="Low on stock"
+          label={t('dashboard.lowOnStock')}
           value={isLoading ? '—' : String(lowStock.length)}
-          sub={lowStock.length ? 'reorder soon' : 'all healthy'}
+          sub={lowStock.length ? t('dashboard.reorderSoon') : t('dashboard.allHealthy')}
           tone={lowStock.length ? 'warn' : 'ok'}
           divide
         />
         <Kpi
-          label="Today's sales"
+          label={t('dashboard.todaysSales')}
           value={summary ? formatMoney(Number(summary.revenue), { currency: 'TZS' }) : '—'}
-          sub={summary ? `${summary.count} sale${summary.count === 1 ? '' : 's'}` : 'no sales yet'}
+          sub={summary ? t('dashboard.salesCount', { count: summary.count }) : t('dashboard.noSalesYet')}
           tone={summary && summary.count > 0 ? 'ok' : undefined}
           divide
         />
@@ -109,19 +111,19 @@ function DashboardContent() {
       {/* Data-derived insight — a taste of the autonomous layer. */}
       <div className="mt-12 rounded-r-xl border-l-[3px] border-brand-600 bg-brand-50 px-6 py-5">
         <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand-700">
-          <Sparkles className="size-3.5" /> AI insight
+          <Sparkles className="size-3.5" /> {t('dashboard.aiInsight')}
         </p>
         <p className="mt-1.5 leading-relaxed text-slate-700">
           {isLoading
-            ? 'Studying your catalogue…'
+            ? t('dashboard.studying')
             : lowStock.length > 0
-              ? `${lowStock.length} product${lowStock.length > 1 ? 's are' : ' is'} at or below reorder level — ${lowStock
-                  .slice(0, 3)
-                  .map((p) => p.name)
-                  .join(', ')}${lowStock.length > 3 ? '…' : ''}. Restock before you run out.`
+              ? t('dashboard.restockBody', {
+                  count: lowStock.length,
+                  names: lowStock.slice(0, 3).map((p) => p.name).join(', '),
+                })
               : totalItems === 0
-                ? 'No products yet. Add your first product to start tracking stock and margins.'
-                : 'Stock levels look healthy. Once you start selling, I’ll watch trends and flag what needs attention.'}
+                ? t('dashboard.noProductsBody')
+                : t('dashboard.healthyBody')}
         </p>
       </div>
 
@@ -131,15 +133,15 @@ function DashboardContent() {
           <span className="grid size-16 place-items-center rounded-2xl bg-slate-100 text-slate-400">
             <Package className="size-8" />
           </span>
-          <p className="mt-4 text-lg font-medium text-slate-800">Your catalogue is empty</p>
+          <p className="mt-4 text-lg font-medium text-slate-800">{t('dashboard.catalogueEmpty')}</p>
           <p className="mt-1 max-w-sm text-slate-500">
-            Add products with cost and selling prices to track stock, margins and low-stock alerts.
+            {t('dashboard.catalogueEmptyBody')}
           </p>
           <Link
             href="/products"
             className="tap mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 font-medium text-white transition hover:bg-brand-700"
           >
-            Add products <ArrowRight className="size-5" />
+            {t('dashboard.addProducts')} <ArrowRight className="size-5" />
           </Link>
         </div>
       )}

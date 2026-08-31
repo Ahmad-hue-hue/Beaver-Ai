@@ -8,6 +8,7 @@ import { AppShell } from '@/components/app-shell';
 import { Receipt, type ReceiptSale } from '@/components/receipt';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 
 interface SaleRow {
   id: string;
@@ -34,6 +35,7 @@ export default function SalesPage() {
 
 function SalesHistory() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const token = session?.accessToken;
   const businessName = session?.memberships.find((m) => m.businessId === session.businessId)?.businessName ?? 'Sale';
   const [openId, setOpenId] = React.useState<string | null>(null);
@@ -56,27 +58,27 @@ function SalesHistory() {
     <div className="mx-auto max-w-4xl">
       <header className="flex items-baseline justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Sales</h1>
-          <p className="mt-1 text-slate-500">{isLoading ? 'Loading…' : `Today · ${data?.pagination.total ?? 0} sales`}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('sales.title')}</h1>
+          <p className="mt-1 text-slate-500">{isLoading ? t('sales.loading') : t('sales.todayCount', { count: data?.pagination.total ?? 0 })}</p>
         </div>
       </header>
 
       <div className="mt-8">
         <div className="grid grid-cols-[1fr_auto_auto] gap-4 border-b border-hairline pb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
-          <span>Sale</span>
-          <span className="text-right">Items</span>
-          <span className="text-right">Total</span>
+          <span>{t('sales.col.sale')}</span>
+          <span className="text-right">{t('sales.col.items')}</span>
+          <span className="text-right">{t('sales.col.total')}</span>
         </div>
 
         {isLoading ? (
-          <p className="py-8 text-slate-400">Loading…</p>
+          <p className="py-8 text-slate-400">{t('sales.loading')}</p>
         ) : sales.length === 0 ? (
           <div className="flex flex-col items-center py-16 text-center">
             <span className="grid size-14 place-items-center rounded-2xl bg-slate-100 text-slate-400">
               <ReceiptIcon className="size-7" />
             </span>
-            <p className="mt-4 font-medium text-slate-700">No sales today yet</p>
-            <p className="mt-1 text-slate-500">Ring one up on the Point of sale screen.</p>
+            <p className="mt-4 font-medium text-slate-700">{t('sales.emptyTitle')}</p>
+            <p className="mt-1 text-slate-500">{t('sales.emptyBody')}</p>
           </div>
         ) : (
           sales.map((s) => (
@@ -88,8 +90,8 @@ function SalesHistory() {
               <div className="min-w-0">
                 <p className="flex items-center gap-2 font-medium text-slate-900">
                   <span className="font-mono text-sm">{s.reference}</span>
-                  {s.status === 'VOIDED' && <span className="rounded bg-red-50 px-1.5 text-xs text-red-600">voided</span>}
-                  {Number(s.balanceDue) > 0 && <span className="rounded bg-amber-50 px-1.5 text-xs text-amber-700">credit</span>}
+                  {s.status === 'VOIDED' && <span className="rounded bg-red-50 px-1.5 text-xs text-red-600">{t('sales.status.voided')}</span>}
+                  {Number(s.balanceDue) > 0 && <span className="rounded bg-amber-50 px-1.5 text-xs text-amber-700">{t('sales.status.credit')}</span>}
                 </p>
                 <p className="truncate text-xs text-slate-400">
                   {new Date(s.soldAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}

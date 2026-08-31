@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowRight, Check } from '@/components/ui/icon';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 
 const RANK: Record<string, number> = { FREE: 0, BASIC: 1, PRO: 2, BUSINESS: 3 };
 
@@ -17,6 +18,7 @@ export function PlanCta({
   featured?: boolean;
 }) {
   const { session } = useAuth();
+  const { t } = useI18n();
   const current = session?.plan;
   const isCurrent = !!current && current === planKey;
 
@@ -29,7 +31,7 @@ export function PlanCta({
           featured ? 'bg-brand-600 text-white hover:bg-brand-700' : 'border border-hairline text-slate-700 hover:bg-slate-50'
         }`}
       >
-        {planKey === 'FREE' ? 'Start free' : `Choose ${planName}`}
+        {planKey === 'FREE' ? t('plans.startFree') : t('plans.choose', { name: planName })}
         <ArrowRight className="size-4" />
       </Link>
     );
@@ -39,7 +41,7 @@ export function PlanCta({
   if (isCurrent) {
     return (
       <span className="tap mt-8 inline-flex items-center justify-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50 px-4 py-2.5 text-sm font-semibold text-brand-700">
-        <Check className="size-4" /> Your current plan
+        <Check className="size-4" /> {t('plans.yourPlan')}
       </span>
     );
   }
@@ -52,7 +54,7 @@ export function PlanCta({
         featured ? 'bg-brand-600 text-white hover:bg-brand-700' : 'border border-hairline text-slate-700 hover:bg-slate-50'
       }`}
     >
-      {upgrade ? `Upgrade to ${planName}` : 'View billing'}
+      {upgrade ? t('plans.upgradeTo', { name: planName }) : t('plans.viewBilling')}
       <ArrowRight className="size-4" />
     </Link>
   );

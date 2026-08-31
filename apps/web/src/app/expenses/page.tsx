@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 
 interface Expense {
   id: string;
@@ -43,6 +44,7 @@ export default function ExpensesPage() {
 }
 
 function ExpensesContent() {
+  const { t } = useI18n();
   const { session } = useAuth();
   const token = session?.accessToken;
   const qc = useQueryClient();
@@ -63,14 +65,14 @@ function ExpensesContent() {
     <div className="mx-auto max-w-4xl">
       <header className="flex items-baseline justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Expenses</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('expenses.title')}</h1>
           <p className="mt-1 text-slate-500">
-            {isLoading ? 'Loading…' : `${expenses.length} shown · ${money(total)} spent`}
+            {isLoading ? 'Loading…' : t('expenses.subtitle', { count: expenses.length, amount: money(total) })}
           </p>
         </div>
         <Button size="sm" onClick={() => setAdding((v) => !v)}>
           {adding ? <X className="size-4" /> : <Plus className="size-4" strokeWidth={2.5} />}
-          {adding ? 'Close' : 'Add expense'}
+          {adding ? 'Close' : t('expenses.add')}
         </Button>
       </header>
 
@@ -92,9 +94,9 @@ function ExpensesContent() {
 
       <div className="mt-6">
         <div className="grid grid-cols-[1fr_auto] gap-4 border-b border-hairline pb-2 text-xs font-medium uppercase tracking-wide text-slate-400 sm:grid-cols-[1fr_auto_auto]">
-          <span>Expense</span>
-          <span className="hidden text-right sm:block">Category</span>
-          <span className="text-right">Amount</span>
+          <span>{t('expenses.col.expense')}</span>
+          <span className="hidden text-right sm:block">{t('expenses.col.category')}</span>
+          <span className="text-right">{t('expenses.col.amount')}</span>
         </div>
 
         {isLoading ? (
@@ -104,8 +106,8 @@ function ExpensesContent() {
             <span className="grid size-14 place-items-center rounded-2xl bg-slate-100 text-slate-400">
               <WalletIcon className="size-7" />
             </span>
-            <p className="mt-4 font-medium text-slate-700">No expenses yet</p>
-            <p className="mt-1 text-slate-500">Record what the business spends — rent, salaries, stock transport and more.</p>
+            <p className="mt-4 font-medium text-slate-700">{t('expenses.emptyTitle')}</p>
+            <p className="mt-1 text-slate-500">{t('expenses.emptyBody')}</p>
           </div>
         ) : (
           expenses.map((e) => (
@@ -131,6 +133,7 @@ function ExpensesContent() {
 }
 
 function AddExpense({ token, onDone }: { token?: string; onDone: () => void }) {
+  const { t } = useI18n();
   const [form, setForm] = React.useState({ category: 'RENT', amount: '', payee: '', note: '' });
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -149,37 +152,37 @@ function AddExpense({ token, onDone }: { token?: string; onDone: () => void }) {
   return (
     <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }} className="mt-6 rounded-xl bg-slate-50/60 px-6 py-6">
       <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
-        <Field label="Category">
+        <Field label={t('expenses.field.category')}>
           <select
             value={form.category}
             onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
             className="h-11 w-full border-0 border-b border-hairline bg-transparent px-0 text-lg text-slate-900 outline-none focus:border-brand-600"
           >
-            {CATEGORIES.map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
+            {CATEGORIES.map(([value]) => (
+              <option key={value} value={value}>{t(`expenses.cat.${value.toLowerCase()}`)}</option>
             ))}
           </select>
         </Field>
-        <Field label="Amount (TZS)">
+        <Field label={t('expenses.field.amount')}>
           <Input type="number" inputMode="decimal" placeholder="50000" value={form.amount} onChange={set('amount')} required min="0.01" />
         </Field>
-        <Field label="Paid to" hint="Optional">
+        <Field label={t('expenses.field.paidTo')} hint="Optional">
           <Input placeholder="e.g. TANESCO" value={form.payee} onChange={set('payee')} />
         </Field>
-        <Field label="Note" hint="Optional">
-          <Input placeholder="What was this for?" value={form.note} onChange={set('note')} />
+        <Field label={t('expenses.field.note')} hint="Optional">
+          <Input placeholder={t('expenses.placeholderNote')} value={form.note} onChange={set('note')} />
         </Field>
       </div>
 
       {mutation.isError && (
         <p className="mt-4 text-sm text-red-600">
-          {mutation.error instanceof ApiError ? mutation.error.message : 'Could not record expense.'}
+          {mutation.error instanceof ApiError ? mutation.error.message : t('expenses.saveError')}
         </p>
       )}
 
       <div className="mt-6 flex justify-end gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={onDone}>Cancel</Button>
-        <Button type="submit" size="sm" loading={mutation.isPending}>Save expense</Button>
+        <Button type="submit" size="sm" loading={mutation.isPending}>{t('expenses.save')}</Button>
       </div>
     </form>
   );

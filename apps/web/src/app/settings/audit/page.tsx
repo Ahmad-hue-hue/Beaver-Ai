@@ -6,6 +6,7 @@ import { Activity, ChevronDown, Loader2 } from '@/components/ui/icon';
 import { AppShell } from '@/components/app-shell';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 interface AuditRow {
@@ -37,6 +38,7 @@ export default function AuditPage() {
 }
 
 function AuditContent() {
+  const { t } = useI18n();
   const { session } = useAuth();
   const token = session?.accessToken;
 
@@ -54,8 +56,8 @@ function AuditContent() {
   if (query.error instanceof ApiError && query.error.status === 403) {
     return (
       <div className="mx-auto max-w-3xl py-20 text-center">
-        <p className="text-lg font-medium text-slate-800">No access to the audit log</p>
-        <p className="mt-1 text-slate-500">Only the shop owner can view the audit trail.</p>
+        <p className="text-lg font-medium text-slate-800">{t('audit.noAccess')}</p>
+        <p className="mt-1 text-slate-500">{t('audit.noAccessBody')}</p>
       </div>
     );
   }
@@ -66,8 +68,8 @@ function AuditContent() {
   return (
     <div className="mx-auto max-w-3xl">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Audit log</h1>
-        <p className="mt-1 text-slate-500">A tamper-evident trail of sensitive business actions.</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('audit.title')}</h1>
+        <p className="mt-1 text-slate-500">{t('audit.subtitle')}</p>
       </header>
 
       <div className="mt-8">
@@ -80,7 +82,7 @@ function AuditContent() {
             <span className="grid size-12 place-items-center rounded-2xl bg-slate-100 text-slate-400">
               <Activity className="size-6" />
             </span>
-            <p className="mt-4 font-medium text-slate-700">No activity recorded yet</p>
+            <p className="mt-4 font-medium text-slate-700">{t('audit.empty')}</p>
           </div>
         ) : (
           <div className="divide-y divide-hairline">
@@ -94,7 +96,7 @@ function AuditContent() {
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-sm text-slate-500">{r.user?.name ?? 'System'}</p>
+                  <p className="text-sm text-slate-500">{r.user?.name ?? t('audit.system')}</p>
                   <p className="text-xs text-slate-400">{time(r.createdAt)}</p>
                 </div>
               </div>
@@ -115,7 +117,7 @@ function AuditContent() {
             ) : (
               <ChevronDown className={cn('size-4')} />
             )}
-            Load more
+            {t('audit.loadMore')}
           </button>
         </div>
       )}

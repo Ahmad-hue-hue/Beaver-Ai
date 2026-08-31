@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 
 interface Supplier { id: string; name: string }
 interface Product { id: string; name: string; stockQuantity: string; isService: boolean }
@@ -45,6 +46,7 @@ export default function PurchasesPage() {
 }
 
 function PurchasesContent() {
+  const { t } = useI18n();
   const { session } = useAuth();
   const token = session?.accessToken;
   const qc = useQueryClient();
@@ -66,15 +68,15 @@ function PurchasesContent() {
     <div className="mx-auto max-w-4xl">
       <header className="flex items-baseline justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Purchases</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('purchases.title')}</h1>
           <p className="mt-1 text-slate-500">
-            {isLoading ? 'Loading…' : `${data?.pagination.total ?? 0} purchases`}
-            {drafted > 0 && <span className="text-amber-600"> · {drafted} awaiting receipt</span>}
+            {isLoading ? 'Loading…' : t('purchases.count', { count: data?.pagination.total ?? 0 })}
+            {drafted > 0 && <span className="text-amber-600"> · {t('purchases.awaitingReceipt')}</span>}
           </p>
         </div>
         <Button size="sm" onClick={() => setAdding((v) => !v)}>
           {adding ? <X className="size-4" /> : <Plus className="size-4" strokeWidth={2.5} />}
-          {adding ? 'Close' : 'New purchase'}
+          {adding ? 'Close' : t('purchases.new')}
         </Button>
       </header>
 
@@ -90,17 +92,17 @@ function PurchasesContent() {
               status === s ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            {s === '' ? 'All' : s[0] + s.slice(1).toLowerCase()}
+            {s === '' ? t('purchases.filter.all') : s[0] + s.slice(1).toLowerCase()}
           </button>
         ))}
       </div>
 
       <div className="mt-6">
         <div className="grid grid-cols-[1fr_auto] gap-4 border-b border-hairline pb-2 text-xs font-medium uppercase tracking-wide text-slate-400 sm:grid-cols-[1fr_auto_auto_auto]">
-          <span>Purchase</span>
-          <span className="hidden text-right sm:block">Items</span>
-          <span className="hidden text-right sm:block">Status</span>
-          <span className="text-right">Total</span>
+          <span>{t('purchases.col.purchase')}</span>
+          <span className="hidden text-right sm:block">{t('purchases.col.items')}</span>
+          <span className="hidden text-right sm:block">{t('purchases.col.status')}</span>
+          <span className="text-right">{t('purchases.col.total')}</span>
         </div>
 
         {isLoading ? (
@@ -110,8 +112,8 @@ function PurchasesContent() {
             <span className="grid size-14 place-items-center rounded-2xl bg-slate-100 text-slate-400">
               <BagIcon className="size-7" />
             </span>
-            <p className="mt-4 font-medium text-slate-700">No purchases yet</p>
-            <p className="mt-1 text-slate-500">Record a purchase to restock and track supplier costs.</p>
+            <p className="mt-4 font-medium text-slate-700">{t('purchases.emptyTitle')}</p>
+            <p className="mt-1 text-slate-500">{t('purchases.emptyBody')}</p>
           </div>
         ) : (
           purchases.map((p) => (
@@ -126,7 +128,7 @@ function PurchasesContent() {
                 </p>
                 <p className="truncate text-xs text-slate-400">
                   {p.supplier?.name ?? '—'}
-                  {Number(p.balanceDue) > 0 && <span className="text-amber-700"> · owes {money(p.balanceDue)}</span>}
+                  {Number(p.balanceDue) > 0 && <span className="text-amber-700"> · {t('purchases.debt', { amount: money(p.balanceDue) })}</span>}
                 </p>
               </div>
               <p className="tabular hidden text-right text-slate-500 sm:block">{p._count?.items ?? 0}</p>
@@ -145,6 +147,7 @@ function PurchasesContent() {
 }
 
 function PurchaseSheet({ purchaseId, token, onClose, onChanged }: { purchaseId: string; token?: string; onClose: () => void; onChanged: () => void }) {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const { data: purchase, isLoading } = useQuery({
     queryKey: ['purchase', purchaseId],
@@ -176,7 +179,7 @@ function PurchaseSheet({ purchaseId, token, onClose, onChanged }: { purchaseId: 
         {purchase && (
           <>
             <div className="mt-4 border-b border-hairline pb-4">
-              <p className="text-sm text-slate-500">Supplier</p>
+              <p className="text-sm text-slate-500">{t('purchases.field.supplier')}</p>
               <p className="mt-0.5 font-medium text-slate-900">{purchase.supplier?.name ?? '—'}</p>
               <div className="mt-3 flex items-baseline justify-between">
                 <span className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_BADGE[purchase.status as Purchase['status']]}`}>
@@ -188,7 +191,7 @@ function PurchaseSheet({ purchaseId, token, onClose, onChanged }: { purchaseId: 
 
             {/* Items */}
             <div className="mt-5 flex-1">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Items</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{t('purchases.items')}</p>
               <div className="mt-2">
                 {(purchase.items ?? []).map((it: PurchaseItem) => (
                   <div key={it.id} className="flex items-baseline justify-between gap-3 border-b border-hairline py-2.5">
@@ -202,8 +205,8 @@ function PurchaseSheet({ purchaseId, token, onClose, onChanged }: { purchaseId: 
               </div>
 
               <div className="mt-4 space-y-1 border-b border-hairline pb-4 text-sm">
-                <div className="flex justify-between text-slate-500"><span>Paid</span><span className="tabular">{money(purchase.paidTotal)}</span></div>
-                <div className="flex justify-between text-slate-500"><span>Balance due</span><span className="tabular text-amber-700">{money(purchase.balanceDue)}</span></div>
+                <div className="flex justify-between text-slate-500"><span>{t('purchases.paid')}</span><span className="tabular">{money(purchase.paidTotal)}</span></div>
+                <div className="flex justify-between text-slate-500"><span>{t('purchases.balanceDue')}</span><span className="tabular text-amber-700">{money(purchase.balanceDue)}</span></div>
               </div>
             </div>
 
@@ -212,26 +215,26 @@ function PurchaseSheet({ purchaseId, token, onClose, onChanged }: { purchaseId: 
               {isDraft ? (
                 <div className="flex flex-col gap-2">
                   <Button onClick={() => receive.mutate()} loading={receive.isPending} disabled={cancel.isPending}>
-                    Receive goods
+                    {t('purchases.receiveGoods')}
                   </Button>
                   {Number(purchase.balanceDue) > 0 && (
                     <p className="text-center text-xs text-slate-400">
-                      Under-paid — supplier still owes {money(purchase.balanceDue)}.
+                      {t('purchases.underpaid', { amount: money(purchase.balanceDue) })}
                     </p>
                   )}
                   <Button variant="danger" onClick={() => cancel.mutate()} loading={cancel.isPending} disabled={receive.isPending}>
-                    Cancel purchase
+                    {t('purchases.cancel')}
                   </Button>
                 </div>
               ) : (
                 <p className="text-center text-sm text-slate-400">
-                  {purchase.status === 'RECEIVED' ? 'Goods received — stock and cost updated.' : 'This purchase was cancelled.'}
+                  {purchase.status === 'RECEIVED' ? t('purchases.received') : t('purchases.cancelled')}
                 </p>
               )}
 
               {(receive.isError || cancel.isError) && (
                 <p className="mt-3 text-sm text-red-600">
-                  {receive.error instanceof ApiError ? receive.error.message : cancel.error instanceof ApiError ? cancel.error.message : 'Something went wrong.'}
+                  {receive.error instanceof ApiError ? receive.error.message : cancel.error instanceof ApiError ? cancel.error.message : t('purchases.goesWrong')}
                 </p>
               )}
             </div>
@@ -243,6 +246,7 @@ function PurchaseSheet({ purchaseId, token, onClose, onChanged }: { purchaseId: 
 }
 
 function AddPurchase({ token, onDone }: { token?: string; onDone: () => void }) {
+  const { t } = useI18n();
   const suppliers = useQuery({
     queryKey: ['suppliers', 'all'],
     queryFn: () => api.get<ListResult<Supplier>>(`/suppliers?limit=100`, { accessToken: token }),
@@ -285,45 +289,45 @@ function AddPurchase({ token, onDone }: { token?: string; onDone: () => void }) 
   return (
     <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }} className="mt-6 rounded-xl bg-slate-50/60 px-6 py-6">
       <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
-        <Field label="Supplier">
+        <Field label={t('purchases.field.supplier')}>
           <select
             value={supplierId}
             onChange={(e) => setSupplierId(e.target.value)}
             required
             className="h-11 w-full border-0 border-b border-hairline bg-transparent px-0 text-lg text-slate-900 outline-none focus:border-brand-600"
           >
-            <option value="">Select supplier…</option>
+            <option value="">{t('purchases.selectSupplier')}</option>
             {(suppliers.data?.data ?? []).map((s: Supplier) => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
         </Field>
-        <Field label="Paid today (TZS)" hint="Optional — leave 0 to owe the supplier">
+        <Field label={t('purchases.paidToday')} hint={t('purchases.paidTodayHint')}>
           <Input type="number" inputMode="decimal" placeholder="0" value={paidAmount} onChange={(e) => setPaidAmount(e.target.value)} />
         </Field>
       </div>
 
       {/* Line items */}
       <div className="mt-5">
-        <p className="mb-1.5 text-sm font-medium text-slate-600">Items</p>
+        <p className="mb-1.5 text-sm font-medium text-slate-600">{t('purchases.items')}</p>
         {lines.map((line, idx) => (
           <div key={idx} className="grid grid-cols-[1fr_auto_auto] items-end gap-3 border-b border-hairline py-3">
-            <Field label={idx === 0 ? 'Product' : ''}>
+            <Field label={idx === 0 ? t('purchases.field.product') : ''}>
               <select
                 value={line.productId}
                 onChange={(e) => updateLine(idx, { productId: e.target.value })}
                 className="h-11 w-full border-0 bg-transparent px-0 text-base text-slate-900 outline-none"
               >
-                <option value="">Select product…</option>
+                <option value="">{t('purchases.selectProduct')}</option>
                 {productOptions.map((p: Product) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
             </Field>
-            <Field label={idx === 0 ? 'Qty' : ''}>
+            <Field label={idx === 0 ? t('purchases.field.qty') : ''}>
               <Input type="number" inputMode="decimal" placeholder="0" value={line.quantity} onChange={(e) => updateLine(idx, { quantity: e.target.value })} className="w-20 text-right" />
             </Field>
-            <Field label={idx === 0 ? 'Cost' : ''}>
+            <Field label={idx === 0 ? t('purchases.field.cost') : ''}>
               <Input type="number" inputMode="decimal" placeholder="0" value={line.unitCost} onChange={(e) => updateLine(idx, { unitCost: e.target.value })} className="w-24 text-right" />
             </Field>
           </div>
@@ -333,24 +337,24 @@ function AddPurchase({ token, onDone }: { token?: string; onDone: () => void }) 
           onClick={() => setLines((ls) => [...ls, { productId: '', quantity: '', unitCost: '' }])}
           className="tap mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:text-brand-700"
         >
-          <Plus className="size-4" /> Add line item
+          <Plus className="size-4" /> {t('purchases.addLine')}
         </button>
       </div>
 
-      <Field label="Note" hint="Optional">
+      <Field label={t('purchases.field.note')} hint="Optional">
         <Input placeholder="Anything to remember" value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
 
       {mutation.isError && (
         <p className="mt-4 text-sm text-red-600">
-          {mutation.error instanceof ApiError ? mutation.error.message : 'Could not create purchase.'}
+          {mutation.error instanceof ApiError ? mutation.error.message : t('purchases.createError')}
         </p>
       )}
 
       <div className="mt-6 flex justify-end gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={onDone}>Cancel</Button>
         <Button type="submit" size="sm" loading={mutation.isPending} disabled={!supplierId}>
-          Save purchase
+          {t('purchases.save')}
         </Button>
       </div>
     </form>

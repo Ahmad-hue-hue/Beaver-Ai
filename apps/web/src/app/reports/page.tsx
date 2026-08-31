@@ -7,12 +7,13 @@ import { formatMoney } from '@/lib/money';
 import { AppShell } from '@/components/app-shell';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 const PERIODS = [
-  { value: 'today', label: 'Today' },
-  { value: 'week', label: 'This week' },
-  { value: 'month', label: 'This month' },
+  { value: 'today', label: 'reports.period.today' },
+  { value: 'week', label: 'reports.period.week' },
+  { value: 'month', label: 'reports.period.month' },
 ];
 
 interface Stats {
@@ -47,6 +48,7 @@ export default function ReportsPage() {
 }
 
 function ReportsContent() {
+  const { t } = useI18n();
   const { session } = useAuth();
   const token = session?.accessToken;
   const [period, setPeriod] = React.useState('today');
@@ -79,9 +81,9 @@ function ReportsContent() {
   if (unauthorized) {
     return (
       <div className="mx-auto max-w-4xl py-20 text-center">
-        <p className="text-lg font-medium text-slate-800">No access to reports</p>
+        <p className="text-lg font-medium text-slate-800">{t('reports.noAccess')}</p>
         <p className="mt-1 text-slate-500">
-          Your role doesn&apos;t have permission to view reports. Ask the shop owner.
+          {t('reports.noAccessBody')}
         </p>
       </div>
     );
@@ -93,8 +95,8 @@ function ReportsContent() {
     <div className="mx-auto max-w-5xl">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Reports</h1>
-          <p className="mt-1 text-slate-500">Profit, trends and the numbers behind your shop.</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('reports.title')}</h1>
+          <p className="mt-1 text-slate-500">{t('reports.subtitle')}</p>
         </div>
         <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
           {PERIODS.map((p) => (
@@ -106,7 +108,7 @@ function ReportsContent() {
                 period === p.value ? 'bg-surface text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700',
               )}
             >
-              {p.label}
+              {t(p.label)}
             </button>
           ))}
         </div>
@@ -114,22 +116,22 @@ function ReportsContent() {
 
       {/* Profit & loss */}
       <div className="mt-8 grid grid-cols-2 gap-y-7 sm:grid-cols-3 lg:grid-cols-6">
-        <Kpi label="Revenue" value={s ? money(s.revenue) : '—'} sub={s ? `${s.salesCount} sale${s.salesCount === 1 ? '' : 's'}` : undefined} />
-        <Kpi label="Cost of goods" value={s ? money(s.cogs) : '—'} divide />
-        <Kpi label="Gross profit" value={s ? money(s.grossProfit) : '—'} tone={s && Number(s.grossProfit) >= 0 ? 'ok' : 'warn'} divide />
-        <Kpi label="Expenses" value={s ? money(s.expenses) : '—'} tone="warn" divide />
-        <Kpi label="Net profit" value={s ? money(s.netProfit) : '—'} tone={s && Number(s.netProfit) >= 0 ? 'ok' : 'warn'} divide />
-        <Kpi label="Margin" value={s ? `${s.marginPct}%` : '—'} divide />
+        <Kpi label={t('reports.revenue')} value={s ? money(s.revenue) : '—'} sub={s ? t('reports.salesCount', { count: s.salesCount }) : undefined} />
+        <Kpi label={t('reports.costOfGoods')} value={s ? money(s.cogs) : '—'} divide />
+        <Kpi label={t('reports.grossProfit')} value={s ? money(s.grossProfit) : '—'} tone={s && Number(s.grossProfit) >= 0 ? 'ok' : 'warn'} divide />
+        <Kpi label={t('reports.expenses')} value={s ? money(s.expenses) : '—'} tone="warn" divide />
+        <Kpi label={t('reports.netProfit')} value={s ? money(s.netProfit) : '—'} tone={s && Number(s.netProfit) >= 0 ? 'ok' : 'warn'} divide />
+        <Kpi label={t('reports.margin')} value={s ? `${s.marginPct}%` : '—'} divide />
       </div>
 
       {/* Trend */}
-      <Section title="Sales trend" iconOffset>
+      <Section title={t('reports.salesTrend')} iconOffset>
         {trend.isLoading ? (
           <p className="text-slate-400">Loading…</p>
         ) : trend.data?.length ? (
           <MiniBars data={trend.data} />
         ) : (
-          <p className="text-slate-400">No sales yet — revenue by day will appear here.</p>
+          <p className="text-slate-400">{t('reports.salesTrendEmpty')}</p>
         )}
       </Section>
 
@@ -139,7 +141,7 @@ function ReportsContent() {
           <div className="flex items-center gap-2 border-b border-hairline pb-2">
             <Package className="size-4 text-slate-400" />
             <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Top products
+              {t('reports.topProducts')}
             </h2>
           </div>
           {top.isLoading ? (
@@ -152,7 +154,7 @@ function ReportsContent() {
                   <div className="min-w-0">
                     <p className="truncate font-medium text-slate-800">{p.name}</p>
                     <p className="text-xs text-slate-400">
-                      {money(p.quantity)} sold · {p.marginPct}% margin
+                      {money(p.quantity)} {t('reports.sold')} · {p.marginPct}% {t('reports.marginShort')}
                     </p>
                   </div>
                   <p className="tabular font-medium text-slate-900">{money(p.revenue)}</p>
@@ -160,7 +162,7 @@ function ReportsContent() {
               ))}
             </div>
           ) : (
-            <p className="py-6 text-sm text-slate-400">No sales to rank yet.</p>
+            <p className="py-6 text-sm text-slate-400">{t('reports.topProductsEmpty')}</p>
           )}
         </div>
 
@@ -169,7 +171,7 @@ function ReportsContent() {
           <div className="flex items-center gap-2 border-b border-hairline pb-2">
             <Users className="size-4 text-slate-400" />
             <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Top debtors
+              {t('reports.topDebtors')}
             </h2>
           </div>
           {debtors.isLoading ? (
@@ -188,7 +190,7 @@ function ReportsContent() {
               <span className="grid size-11 place-items-center rounded-2xl bg-slate-100 text-slate-400">
                 <Users className="size-5" />
               </span>
-              <p className="mt-3 text-sm text-slate-500">No outstanding debt. Everyone&apos;s settled up 🎉</p>
+              <p className="mt-3 text-sm text-slate-500">{t('reports.noDebt')} 🎉</p>
             </div>
           )}
         </div>

@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/lib/api-client';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 import type { Session } from '@/lib/session';
 import { cn } from '@/lib/utils';
 import { AppShell } from '@/components/app-shell';
@@ -49,6 +50,7 @@ export default function BillingPage() {
 }
 
 function BillingContent() {
+  const { t } = useI18n();
   const { session, setSession } = useAuth();
   const token = session?.accessToken;
   const role = session?.role;
@@ -86,20 +88,20 @@ function BillingContent() {
   return (
     <div className="mx-auto max-w-3xl">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Billing &amp; plan</h1>
-        <p className="mt-1 text-slate-500">Your current plan and what you’re using.</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('billing.title')}</h1>
+        <p className="mt-1 text-slate-500">{t('billing.subtitle')}</p>
       </header>
 
       {/* Current plan + trial */}
       <section className="mt-8">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Your plan</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t('billing.yourPlan')}</h2>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <span className="rounded-full bg-brand-50 px-3 py-1 text-sm font-semibold text-brand-700">
             {currentPlan ?? '…'}
           </span>
           {isTrial ? (
             <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">
-              Trial — {billing.data?.trialDays ?? 14} days left on all features
+              {t('billing.trial', { count: billing.data?.trialDays ?? 14 })}
             </span>
           ) : null}
         </div>
@@ -108,7 +110,7 @@ function BillingContent() {
         {billing.data && (
           <div className="mt-5 max-w-xl">
             <UsageRow
-              label="Active products"
+              label={t('billing.activeProducts')}
               value={billing.data.usage.products}
               limit={billing.data.limits.products}
             />
@@ -118,8 +120,7 @@ function BillingContent() {
 
       {!canManage && (
         <p className="mt-8 rounded-xl border border-hairline bg-slate-50 px-4 py-3 text-sm text-slate-600">
-          Only the workspace owner can change the plan. Ask your owner to upgrade if you need more
-          features or head to{' '}
+          {t('billing.ownerOnly')} Ask your owner to upgrade if you need more features or head to{' '}
           <Link href="/pricing" className="font-medium text-brand-700 hover:text-brand-800">
             the pricing page
           </Link>{' '}
@@ -130,9 +131,9 @@ function BillingContent() {
       {/* Change plan */}
       {canManage && plans.data && (
         <section className="mt-10">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Choose a plan</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t('billing.choosePlan')}</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Billing is manual for now — picking a plan records it; we’ll reach out to arrange payment.
+            {t('billing.manual')} — picking a plan records it; we’ll reach out to arrange payment.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {plans.data.map((plan) => {
@@ -154,28 +155,28 @@ function BillingContent() {
                     <span className="text-lg font-semibold tracking-tight text-slate-900">{plan.name}</span>
                     {active && (
                       <span className="flex items-center gap-1 text-sm font-medium text-brand-700">
-                        <Check className="size-4" /> Current
+                        <Check className="size-4" /> {t('billing.current')}
                       </span>
                     )}
                   </span>
                   <span className="mt-1 text-sm text-slate-500">{plan.tagline}</span>
                   <span className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">
                     {fmt(plan.priceMonthly, plan.currency)}
-                    <span className="text-sm font-normal text-slate-400">/mo</span>
+                    <span className="text-sm font-normal text-slate-400">{t('billing.perMonth')}</span>
                   </span>
                   <ul className="mt-4 flex-1 space-y-1.5">
                     {plan.features.map((f) => (
                       <li key={f} className="flex items-center gap-2 text-sm text-slate-700">
-                        <Check className="size-4 shrink-0 text-brand-700" /> {featureLabel(f)}
+                        <Check className="size-4 shrink-0 text-brand-700" /> {t(featureLabel(f))}
                       </li>
                     ))}
                     {plan.productLimit === null ? (
                       <li className="flex items-center gap-2 text-sm text-slate-700">
-                        <Check className="size-4 shrink-0 text-brand-700" /> Unlimited products
+                        <Check className="size-4 shrink-0 text-brand-700" /> {t('billing.unlimitedProducts')}
                       </li>
                     ) : (
                       <li className="flex items-center gap-2 text-sm text-slate-400">
-                        Up to {plan.productLimit} products
+                        {t('billing.upToProducts', { count: plan.productLimit })}
                       </li>
                     )}
                   </ul>
@@ -184,7 +185,7 @@ function BillingContent() {
                       {changePlan.isPending ? (
                         <Loader2 className="size-4 animate-spin" />
                       ) : null}
-                      Choose {plan.name}
+                      {t('billing.choose', { name: plan.name })}
                     </span>
                   )}
                 </button>
@@ -194,14 +195,14 @@ function BillingContent() {
 
           {changePlan.isSuccess && (
             <p className="mt-3 text-sm font-medium text-brand-600">
-              Plan updated. Your access has been refreshed.
+              {t('billing.updated')}
             </p>
           )}
           {changePlan.isError && (
             <p className="mt-3 text-sm font-medium text-red-600">
               {changePlan.error instanceof ApiError
                 ? changePlan.error.message
-                : 'Failed to update the plan.'}
+                : t('billing.failed')}
             </p>
           )}
         </section>
@@ -211,6 +212,7 @@ function BillingContent() {
 }
 
 function UsageRow({ label, value, limit }: { label: string; value: number; limit: number | null }) {
+  const { t } = useI18n();
   const pct = limit === null || limit === 0 ? 0 : Math.min(100, Math.round((value / limit) * 100));
   return (
     <div>
@@ -232,7 +234,7 @@ function UsageRow({ label, value, limit }: { label: string; value: number; limit
       </div>
       {limit !== null && pct >= 90 && (
         <p className="mt-1 text-xs text-amber-700">
-          Getting close to your product limit — upgrade for more room.
+          {t('billing.limitWarning')}
         </p>
       )}
     </div>
@@ -241,10 +243,10 @@ function UsageRow({ label, value, limit }: { label: string; value: number; limit
 
 function featureLabel(key: string): string {
   const map: Record<string, string> = {
-    ai: 'AI assistant',
-    financialReports: 'Financial reports',
-    paidPaymentMethods: 'Digital payments',
-    branches: 'Multiple branches',
+    ai: 'billing.feature.ai',
+    financialReports: 'billing.feature.reports',
+    paidPaymentMethods: 'billing.feature.payments',
+    branches: 'billing.feature.branches',
   };
   return map[key] ?? key;
 }

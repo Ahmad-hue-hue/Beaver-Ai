@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 
 interface CashSession {
   id: string;
@@ -33,18 +34,6 @@ interface MovementList { data: Movement[]; pagination: { total: number } }
 
 const money = (v: string | number) => formatMoney(Number(v), { currency: 'TZS', symbolless: true });
 
-const TYPE_LABEL: Record<string, string> = {
-  OPENING_BALANCE: 'Opening balance',
-  SALE: 'Sales',
-  EXPENSE: 'Expense',
-  PURCHASE: 'Purchase',
-  SUPPLIER_PAYMENT: 'Supplier payment',
-  CUSTOMER_PAYMENT: 'Customer payment',
-  DRAWING: 'Owner drawing',
-  TRANSFER: 'Transfer',
-  CLOSING_ADJUSTMENT: 'Adjustment',
-};
-
 export default function CashPage() {
   return (
     <AppShell>
@@ -54,9 +43,22 @@ export default function CashPage() {
 }
 
 function CashContent() {
+  const { t } = useI18n();
   const { session } = useAuth();
   const token = session?.accessToken;
   const qc = useQueryClient();
+
+  const TYPE_LABEL: Record<string, string> = {
+    OPENING_BALANCE: t('cash.movement.opening'),
+    SALE: t('cash.movement.sales'),
+    EXPENSE: t('cash.movement.expense'),
+    PURCHASE: t('cash.movement.purchase'),
+    SUPPLIER_PAYMENT: t('cash.movement.supplierPayment'),
+    CUSTOMER_PAYMENT: t('cash.movement.customerPayment'),
+    DRAWING: t('cash.movement.ownerDrawing'),
+    TRANSFER: t('cash.movement.transfer'),
+    CLOSING_ADJUSTMENT: t('cash.movement.adjustment'),
+  };
 
   const { data: current, isLoading: sessionLoading } = useQuery({
     queryKey: ['cash', 'current'],
@@ -77,16 +79,16 @@ function CashContent() {
   return (
     <div className="mx-auto max-w-4xl">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Cash</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('cash.title')}</h1>
         <p className="mt-1 text-slate-500">
-          {sessionLoading ? 'Loading…' : current?.status === 'OPEN' ? 'Till is open' : 'Till is closed'}
+          {sessionLoading ? 'Loading…' : current?.status === 'OPEN' ? t('cash.tillOpen') : t('cash.tillClosed')}
         </p>
       </header>
 
       {/* Till summary */}
       <div className="mt-6 flex items-end justify-between border-b border-hairline pb-5">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Cash in hand</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{t('cash.inHand')}</p>
           <p className="tabular mt-1 text-3xl font-semibold text-slate-900">{money(running)}</p>
           <p className="mt-1 font-mono text-xs text-slate-400">{current?.reference ?? '—'}</p>
         </div>
@@ -102,8 +104,8 @@ function CashContent() {
       {/* Movements */}
       <div className="mt-6">
         <div className="grid grid-cols-[1fr_auto] gap-4 border-b border-hairline pb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
-          <span>Movement</span>
-          <span className="text-right">Amount</span>
+          <span>{t('cash.col.movement')}</span>
+          <span className="text-right">{t('cash.col.amount')}</span>
         </div>
 
         {all.length === 0 ? (
@@ -111,8 +113,8 @@ function CashContent() {
             <span className="grid size-14 place-items-center rounded-2xl bg-slate-100 text-slate-400">
               <CoinsIcon className="size-7" />
             </span>
-            <p className="mt-4 font-medium text-slate-700">No movements yet</p>
-            <p className="mt-1 text-slate-500">Sales, expenses, purchases and payments all feed this ledger.</p>
+            <p className="mt-4 font-medium text-slate-700">{t('cash.emptyTitle')}</p>
+            <p className="mt-1 text-slate-500">{t('cash.emptyBody')}</p>
           </div>
         ) : (
           all.map((m) => {
@@ -139,6 +141,7 @@ function CashContent() {
 }
 
 function OpenTill({ token, onOpened }: { token?: string; onOpened: () => void }) {
+  const { t } = useI18n();
   const [open, setOpen] = React.useState(false);
   const [openingBalance, setOpeningBalance] = React.useState('0');
 
@@ -150,7 +153,7 @@ function OpenTill({ token, onOpened }: { token?: string; onOpened: () => void })
   if (!open) {
     return (
       <Button size="sm" onClick={() => setOpen(true)}>
-        Open till
+        {t('cash.openTill')}
       </Button>
     );
   }
@@ -158,11 +161,11 @@ function OpenTill({ token, onOpened }: { token?: string; onOpened: () => void })
   return (
     <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }} className="flex flex-wrap items-end gap-3">
       <div className="w-full min-[400px]:w-40">
-        <Field label="Opening balance (TZS)">
+        <Field label={t('cash.openingBalance')}>
           <Input type="number" inputMode="decimal" className="text-right" value={openingBalance} onChange={(e) => setOpeningBalance(e.target.value)} />
         </Field>
       </div>
-      <Button type="submit" size="sm" loading={mutation.isPending}>Start</Button>
+      <Button type="submit" size="sm" loading={mutation.isPending}>{t('cash.start')}</Button>
       <button type="button" onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-700"><X className="size-5" /></button>
       {mutation.isError && <p className="text-sm text-red-600">{mutation.error instanceof ApiError ? mutation.error.message : ''}</p>}
     </form>
@@ -170,6 +173,7 @@ function OpenTill({ token, onOpened }: { token?: string; onOpened: () => void })
 }
 
 function CloseTill({ sessionId, token, onClosed }: { sessionId: string; token?: string; onClosed: () => void }) {
+  const { t } = useI18n();
   const [open, setOpen] = React.useState(false);
   const [countedCash, setCountedCash] = React.useState('');
   const [notes, setNotes] = React.useState('');
@@ -180,22 +184,22 @@ function CloseTill({ sessionId, token, onClosed }: { sessionId: string; token?: 
   });
 
   if (!open) {
-    return <Button size="sm" variant="subtle" onClick={() => setOpen(true)}>Close till</Button>;
+    return <Button size="sm" variant="subtle" onClick={() => setOpen(true)}>{t('cash.closeTill')}</Button>;
   }
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }} className="flex flex-wrap items-end gap-3">
       <div className="w-full min-[400px]:w-40">
-        <Field label="Counted cash">
+        <Field label={t('cash.countedCash')}>
           <Input type="number" inputMode="decimal" className="text-right" placeholder="0" value={countedCash} onChange={(e) => setCountedCash(e.target.value)} required min="0" />
         </Field>
       </div>
       <div className="hidden sm:block">
-        <Field label="Notes" hint="Optional">
-          <Input className="w-40" placeholder="Variance reason" value={notes} onChange={(e) => setNotes(e.target.value)} />
+        <Field label={t('cash.notes')} hint="Optional">
+          <Input className="w-40" placeholder={t('cash.varianceReason')} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </Field>
       </div>
-      <Button type="submit" size="sm" loading={mutation.isPending}>Close</Button>
+      <Button type="submit" size="sm" loading={mutation.isPending}>{t('cash.closeTill')}</Button>
       <button type="button" onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-700"><X className="size-5" /></button>
       {mutation.isError && <p className="text-sm text-red-600">{mutation.error instanceof ApiError ? mutation.error.message : ''}</p>}
     </form>

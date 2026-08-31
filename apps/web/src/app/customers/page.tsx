@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 
 interface Debtor {
   id: string;
@@ -44,6 +45,7 @@ export default function CustomersPage() {
 }
 
 function CustomersContent() {
+  const { t } = useI18n();
   const { session } = useAuth();
   const token = session?.accessToken;
 
@@ -56,9 +58,9 @@ function CustomersContent() {
   return (
     <div className="mx-auto max-w-4xl">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Customers</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('customers.title')}</h1>
         <p className="mt-1 text-slate-500">
-          {agingLoading ? 'Loading…' : `${money(aging?.totals.total ?? 0)} outstanding`}
+          {agingLoading ? 'Loading…' : t('customers.outstanding', { amount: money(aging?.totals.total ?? 0) })}
         </p>
       </header>
 
@@ -66,7 +68,7 @@ function CustomersContent() {
       {!agingLoading && aging && (
         <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-5 text-center sm:grid-cols-4 sm:gap-4">
           {[
-            ['Current', aging.totals.current],
+            [t('customers.col.current'), aging.totals.current],
             ['1–30d', aging.totals.days1to30],
             ['31–60d', aging.totals.days31to60],
             ['60d+', aging.totals.days60plus],
@@ -85,14 +87,15 @@ function CustomersContent() {
 }
 
 function DebtorsList({ token }: { token?: string }) {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [search, setSearch] = React.useState('');
   const [debounced, setDebounced] = React.useState('');
   const [selected, setSelected] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const t = setTimeout(() => setDebounced(search.trim()), 250);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setDebounced(search.trim()), 250);
+    return () => clearTimeout(timer);
   }, [search]);
 
   const { data, isLoading } = useQuery({
@@ -110,15 +113,15 @@ function DebtorsList({ token }: { token?: string }) {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Find a customer with a balance…"
+          placeholder={t('customers.searchPlaceholder')}
           className="w-full bg-transparent text-base outline-none placeholder:text-slate-300"
         />
       </div>
 
       <div className="mt-6">
         <div className="grid grid-cols-[1fr_auto] gap-4 border-b border-hairline pb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
-          <span>Customer</span>
-          <span className="text-right">Owes</span>
+          <span>{t('customers.col.customer')}</span>
+          <span className="text-right">{t('customers.col.owes')}</span>
         </div>
 
         {isLoading ? (
@@ -129,10 +132,10 @@ function DebtorsList({ token }: { token?: string }) {
               <UsersIcon className="size-7" />
             </span>
             <p className="mt-4 font-medium text-slate-700">
-              {debounced ? `No customers named “${debounced}”.` : 'No outstanding balances'}
+              {debounced ? t('customers.noneMatch', { query: debounced }) : t('customers.noneYet')}
             </p>
             <p className="mt-1 text-slate-500">
-              {debounced ? '' : 'Customers show up here once they owe on a credit sale.'}
+              {debounced ? '' : t('customers.noneBody')}
             </p>
           </div>
         ) : (
@@ -148,7 +151,7 @@ function DebtorsList({ token }: { token?: string }) {
               <div className="flex items-center gap-3">
                 <p className="tabular text-right font-medium text-amber-700">{money(d.balance)}</p>
                 <Button size="sm" variant="ghost" onClick={() => setSelected(d.id)}>
-                  <Coins className="size-4" /> Pay
+                  <Coins className="size-4" /> {t('customers.pay')}
                 </Button>
               </div>
             </div>
@@ -169,6 +172,7 @@ function DebtorsList({ token }: { token?: string }) {
 }
 
 function PaymentSheet({ customerId, token, onClose, onPaid }: { customerId: string; token?: string; onClose: () => void; onPaid: () => void }) {
+  const { t } = useI18n();
   const [amount, setAmount] = React.useState('');
   const [method, setMethod] = React.useState('CASH');
   const [note, setNote] = React.useState('');
@@ -206,21 +210,21 @@ function PaymentSheet({ customerId, token, onClose, onPaid }: { customerId: stri
         </header>
 
         <p className="mt-3 border-b border-hairline pb-4">
-          <span className="text-sm text-slate-500">Owes </span>
+          <span className="text-sm text-slate-500">{t('customers.owes')} </span>
           <span className="tabular text-xl font-semibold text-amber-700">{money(statement?.balance ?? 0)}</span>
         </p>
 
         {/* Statement */}
         <div className="mt-5 flex-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Statement</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{t('customers.statement')}</p>
           <div className="mt-2">
             {statement?.entries.length === 0 ? (
-              <p className="py-6 text-sm text-slate-400">No activity yet.</p>
+              <p className="py-6 text-sm text-slate-400">{t('customers.noActivity')}</p>
             ) : statement?.entries.slice().reverse().map((e) => (
               <div key={e.id} className="flex items-center justify-between gap-3 border-b border-hairline py-2.5">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-slate-800">
-                    {e.type === 'PAYMENT' ? 'Payment' : e.type === 'SALE_CREDIT' ? 'Credit sale' : 'Adjustment'}
+                    {e.type === 'PAYMENT' ? t('customers.type.payment') : e.type === 'SALE_CREDIT' ? t('customers.type.credit') : t('customers.type.adjustment')}
                   </p>
                   <p className="truncate font-mono text-xs text-slate-400">
                     {new Date(e.createdAt).toLocaleDateString('en-GB')}
@@ -231,7 +235,7 @@ function PaymentSheet({ customerId, token, onClose, onPaid }: { customerId: stri
                   <p className={`tabular text-sm font-medium ${e.amount.startsWith('-') ? 'text-brand-700' : 'text-slate-900'}`}>
                     {e.amount.startsWith('-') ? '' : '+'}{money(e.amount.replace('-', ''))}
                   </p>
-                  <p className="tabular font-mono text-[11px] text-slate-400">bal {money(e.balanceAfter)}</p>
+                  <p className="tabular font-mono text-[11px] text-slate-400">{t('customers.bal')} {money(e.balanceAfter)}</p>
                 </div>
               </div>
             ))}
@@ -243,38 +247,38 @@ function PaymentSheet({ customerId, token, onClose, onPaid }: { customerId: stri
           onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}
           className="mt-6 rounded-xl bg-slate-50/60 px-5 py-5"
         >
-          <p className="mb-4 text-sm font-medium text-slate-700">Record payment</p>
+          <p className="mb-4 text-sm font-medium text-slate-700">{t('customers.recordPayment')}</p>
           <div className="grid gap-4">
-            <Field label="Amount (TZS)">
+            <Field label={t('customers.amount')}>
               <Input type="number" inputMode="decimal" placeholder="5000" value={amount} onChange={(e) => setAmount(e.target.value)} required min="0.01" />
             </Field>
-            <Field label="Method">
+            <Field label={t('customers.method')}>
               <select
                 value={method}
                 onChange={(e) => setMethod(e.target.value)}
                 className="h-11 w-full border-0 border-b border-hairline bg-transparent px-0 text-lg text-slate-900 outline-none focus:border-brand-600"
               >
-                <option value="CASH">Cash</option>
-                <option value="MOBILE_MONEY">Mobile money</option>
-                <option value="BANK">Bank</option>
-                <option value="CARD">Card</option>
+                <option value="CASH">{t('customers.method.cash')}</option>
+                <option value="MOBILE_MONEY">{t('customers.method.mobile')}</option>
+                <option value="BANK">{t('customers.method.bank')}</option>
+                <option value="CARD">{t('customers.method.card')}</option>
               </select>
             </Field>
-            <Field label="Note" hint="Optional">
+            <Field label={t('customers.note')} hint="Optional">
               <Input placeholder="e.g. M-Pesa received" value={note} onChange={(e) => setNote(e.target.value)} />
             </Field>
           </div>
 
           {mutation.isError && (
             <p className="mt-4 text-sm text-red-600">
-              {mutation.error instanceof ApiError ? mutation.error.message : 'Could not record payment.'}
+              {mutation.error instanceof ApiError ? mutation.error.message : t('customers.paymentError')}
             </p>
           )}
 
           <div className="mt-5 flex justify-end gap-2">
             <Button type="button" variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
             <Button type="submit" size="sm" loading={mutation.isPending} disabled={!amount || Number(amount) <= 0}>
-              <Plus className="size-4" /> Record payment
+              <Plus className="size-4" /> {t('customers.recordPayment')}
             </Button>
           </div>
         </form>

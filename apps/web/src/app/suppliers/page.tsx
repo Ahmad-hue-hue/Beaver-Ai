@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 
 interface Supplier {
   id: string;
@@ -29,6 +30,7 @@ export default function SuppliersPage() {
 }
 
 function SuppliersContent() {
+  const { t } = useI18n();
   const { session } = useAuth();
   const token = session?.accessToken;
   const qc = useQueryClient();
@@ -55,12 +57,12 @@ function SuppliersContent() {
     <div className="mx-auto max-w-4xl">
       <header className="flex items-baseline justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Suppliers</h1>
-          <p className="mt-1 text-slate-500">{isLoading ? 'Loading…' : `${data?.pagination.total ?? 0} suppliers`}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('suppliers.title')}</h1>
+          <p className="mt-1 text-slate-500">{isLoading ? 'Loading…' : t('suppliers.count', { count: data?.pagination.total ?? 0 })}</p>
         </div>
         <Button size="sm" onClick={() => setAdding((v) => !v)}>
           {adding ? <X className="size-4" /> : <Plus className="size-4" strokeWidth={2.5} />}
-          {adding ? 'Close' : 'Add supplier'}
+          {adding ? 'Close' : t('suppliers.add')}
         </Button>
       </header>
 
@@ -71,30 +73,30 @@ function SuppliersContent() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search suppliers…"
+          placeholder={t('suppliers.searchPlaceholder')}
           className="w-full bg-transparent text-base outline-none placeholder:text-slate-300"
         />
       </div>
 
       <div className="mt-6">
         <div className="grid grid-cols-[1fr_auto_auto] gap-4 border-b border-hairline pb-2 text-xs font-medium uppercase tracking-wide text-slate-400 sm:grid-cols-[1fr_auto_auto_auto]">
-          <span>Supplier</span>
-          <span className="text-right">Purchases</span>
-          <span className="hidden text-right sm:block">Phone</span>
+          <span>{t('suppliers.col.supplier')}</span>
+          <span className="text-right">{t('suppliers.col.purchases')}</span>
+          <span className="hidden text-right sm:block">{t('suppliers.col.phone')}</span>
           <span className="w-9" />
         </div>
 
         {isLoading ? (
-          <p className="py-8 text-slate-400">Loading suppliers…</p>
+          <p className="py-8 text-slate-400">{t('suppliers.loading')}</p>
         ) : suppliers.length === 0 ? (
           <div className="flex flex-col items-center py-16 text-center">
             <span className="grid size-14 place-items-center rounded-2xl bg-slate-100 text-slate-400">
               <TruckIcon className="size-7" />
             </span>
             <p className="mt-4 font-medium text-slate-700">
-              {debounced ? `No suppliers match “${debounced}”.` : 'No suppliers yet'}
+              {debounced ? t('suppliers.noneMatch', { query: debounced }) : t('suppliers.noneYet')}
             </p>
-            <p className="mt-1 text-slate-500">Add your first supplier to start recording purchases.</p>
+            <p className="mt-1 text-slate-500">{t('suppliers.noneBody')}</p>
           </div>
         ) : (
           suppliers.map((s) => (
@@ -117,6 +119,7 @@ function SuppliersContent() {
 }
 
 function DeleteSupplier({ supplier, token }: { supplier: Supplier; token?: string }) {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const mutation = useMutation({
     mutationFn: () => api.del(`/suppliers/${supplier.id}`, { accessToken: token }),
@@ -129,7 +132,7 @@ function DeleteSupplier({ supplier, token }: { supplier: Supplier; token?: strin
     <button
       onClick={() => mutation.mutate()}
       disabled={mutation.isPending}
-      title="Delete supplier"
+      title={t('suppliers.delete')}
       className="grid size-9 place-items-center justify-self-end rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
     >
       <Trash2 className="size-4" />
@@ -138,6 +141,7 @@ function DeleteSupplier({ supplier, token }: { supplier: Supplier; token?: strin
 }
 
 function AddSupplier({ token, onDone }: { token?: string; onDone: () => void }) {
+  const { t } = useI18n();
   const [form, setForm] = React.useState({ name: '', phone: '', email: '', address: '', note: '' });
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -161,23 +165,23 @@ function AddSupplier({ token, onDone }: { token?: string; onDone: () => void }) 
     >
       <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <Field label="Business name">
+          <Field label={t('suppliers.field.name')}>
             <Input autoFocus placeholder="e.g. Mtitu Wholesale" value={form.name} onChange={set('name')} required />
           </Field>
         </div>
-        <Field label="Phone" hint="Optional">
+        <Field label={t('suppliers.field.phone')} hint="Optional">
           <Input placeholder="+255 7xx xxx xxx" value={form.phone} onChange={set('phone')} />
         </Field>
-        <Field label="Email" hint="Optional">
+        <Field label={t('suppliers.field.email')} hint="Optional">
           <Input type="email" placeholder="orders@mtitu.co.tz" value={form.email} onChange={set('email')} />
         </Field>
         <div className="sm:col-span-2">
-          <Field label="Address" hint="Optional">
+          <Field label={t('suppliers.field.address')} hint="Optional">
             <Input placeholder="Street, area, city" value={form.address} onChange={set('address')} />
           </Field>
         </div>
         <div className="sm:col-span-2">
-          <Field label="Note" hint="Optional">
+          <Field label={t('suppliers.field.note')} hint="Optional">
             <Input placeholder="Anything to remember" value={form.note} onChange={set('note')} />
           </Field>
         </div>
@@ -185,13 +189,13 @@ function AddSupplier({ token, onDone }: { token?: string; onDone: () => void }) 
 
       {mutation.isError && (
         <p className="mt-4 text-sm text-red-600">
-          {mutation.error instanceof ApiError ? mutation.error.message : 'Could not save supplier.'}
+          {mutation.error instanceof ApiError ? mutation.error.message : t('suppliers.saveError')}
         </p>
       )}
 
       <div className="mt-6 flex justify-end gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={onDone}>Cancel</Button>
-        <Button type="submit" size="sm" loading={mutation.isPending}>Save supplier</Button>
+        <Button type="submit" size="sm" loading={mutation.isPending}>{t('suppliers.save')}</Button>
       </div>
     </form>
   );

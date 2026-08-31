@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Check, Printer, Plus } from '@/components/ui/icon';
 import { formatMoney } from '@/lib/money';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/lib/i18n';
 
 export interface ReceiptSale {
   id: string;
@@ -28,12 +29,12 @@ export interface ReceiptSale {
 }
 
 const money = (v: string | number) => formatMoney(Number(v), { currency: 'TZS', symbolless: true });
-const methodLabel: Record<string, string> = {
-  CASH: 'Cash',
-  MOBILE_MONEY: 'Mobile money',
-  BANK: 'Bank',
-  CARD: 'Card',
-  CREDIT: 'Credit',
+const METHOD_KEY: Record<string, string> = {
+  CASH: 'receipt.method.cash',
+  MOBILE_MONEY: 'receipt.method.mobile',
+  BANK: 'receipt.method.bank',
+  CARD: 'receipt.method.card',
+  CREDIT: 'receipt.method.credit',
 };
 
 /** Post-sale confirmation + printable receipt. Print CSS isolates #receipt on paper. */
@@ -47,6 +48,7 @@ export function Receipt({
   onNewSale: () => void;
 }) {
   const credit = Number(sale.balanceDue) > 0;
+  const { t } = useI18n();
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4 backdrop-blur-sm print:static print:bg-white print:p-0 print:backdrop-blur-none">
@@ -57,7 +59,7 @@ export function Receipt({
           <span className="grid size-8 place-items-center rounded-full bg-brand-50">
             <Check className="size-5" strokeWidth={2.5} />
           </span>
-          <p className="font-medium">Sale completed</p>
+          <p className="font-medium">{t('receipt.completed')}</p>
         </div>
 
         <div id="receipt" className="font-mono text-[13px] leading-relaxed text-slate-800">
@@ -83,28 +85,28 @@ export function Receipt({
 
           <div className="my-3 border-t border-dashed border-slate-300" />
 
-          <Row label="Subtotal" value={money(sale.subtotal)} />
-          {Number(sale.discountTotal) > 0 && <Row label="Discount" value={`- ${money(sale.discountTotal)}`} />}
-          {Number(sale.taxTotal) > 0 && <Row label="Tax" value={money(sale.taxTotal)} />}
+          <Row label={t('receipt.subtotal')} value={money(sale.subtotal)} />
+          {Number(sale.discountTotal) > 0 && <Row label={t('receipt.discount')} value={`- ${money(sale.discountTotal)}`} />}
+          {Number(sale.taxTotal) > 0 && <Row label={t('receipt.tax')} value={money(sale.taxTotal)} />}
           <div className="mt-1 flex justify-between text-[15px] font-semibold">
-            <span>TOTAL</span>
+            <span>{t('receipt.total')}</span>
             <span className="tabular">{money(sale.total)}</span>
           </div>
 
           <div className="my-3 border-t border-dashed border-slate-300" />
 
           {sale.payments.map((p, i) => (
-            <Row key={i} label={methodLabel[p.method] ?? p.method} value={money(p.amount)} />
+            <Row key={i} label={t(METHOD_KEY[p.method] ?? p.method)} value={money(p.amount)} />
           ))}
-          {Number(sale.changeGiven) > 0 && <Row label="Change" value={money(sale.changeGiven)} />}
+          {Number(sale.changeGiven) > 0 && <Row label={t('receipt.change')} value={money(sale.changeGiven)} />}
           {credit && (
             <Row
-              label={`Credit${sale.customer ? ` · ${sale.customer.name}` : ''}`}
+              label={`${t('receipt.credit')}${sale.customer ? ` · ${sale.customer.name}` : ''}`}
               value={money(sale.balanceDue)}
             />
           )}
 
-          <p className="mt-4 text-center text-slate-400">Asante! Karibu tena.</p>
+          <p className="mt-4 text-center text-slate-400">{t('receipt.thanks')}</p>
         </div>
 
         <div className="no-print mt-6 flex gap-2">

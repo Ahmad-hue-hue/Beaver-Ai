@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Field, Input, PasswordInput } from '@/components/ui/field';
 import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api-client';
+import { useI18n } from '@/lib/i18n';
 
 export default function RegisterPage() {
   const { register } = useAuth();
+  const { t } = useI18n();
   const router = useRouter();
   const [form, setForm] = React.useState({ name: '', email: '', phone: '', password: '' });
   const [consented, setConsented] = React.useState(false);
@@ -25,7 +27,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
     if (!consented) {
-      setError('Please accept the Terms of Service and Privacy Policy to continue.');
+      setError(t('register.consentError'));
       return;
     }
     setLoading(true);
@@ -49,22 +51,22 @@ export default function RegisterPage() {
       <div className="mb-10 flex items-center gap-4">
         <BrandMark size={64} />
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Create your account</h1>
-          <p className="text-slate-500">Start running your shop with Beaver</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('register.title')}</h1>
+          <p className="text-slate-500">{t('register.subtitle')}</p>
         </div>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6">
-        <Field label="Your name">
+        <Field label={t('register.name')}>
           <Input placeholder="Asha Mushi" value={form.name} onChange={set('name')} required />
         </Field>
-        <Field label="Email">
+        <Field label={t('register.email')}>
           <Input type="email" autoComplete="email" placeholder="asha@duka.co.tz" value={form.email} onChange={set('email')} required />
         </Field>
-        <Field label="Phone" hint="Optional">
+        <Field label={t('register.phone')} hint="Optional">
           <Input placeholder="+255 700 000 000" value={form.phone} onChange={set('phone')} />
         </Field>
-        <Field label="Password" hint="At least 8 characters" error={error ?? undefined}>
+        <Field label={t('register.password')} hint={t('register.passwordHint')} error={error ?? undefined}>
           <PasswordInput autoComplete="new-password" placeholder="Create a password" value={form.password} onChange={set('password')} required minLength={8} />
         </Field>
 
@@ -77,23 +79,23 @@ export default function RegisterPage() {
             required
           />
           <span>
-            I agree to the{' '}
-            <Link href="/terms" className="font-medium text-brand-700 hover:text-brand-800">Terms of Service</Link>{' '}
-            and{' '}
-            <Link href="/privacy" className="font-medium text-brand-700 hover:text-brand-800">Privacy Policy</Link>.
+            {t('register.agree1')}{' '}
+            <Link href="/terms" className="font-medium text-brand-700 hover:text-brand-800">{t('register.terms')}</Link>{' '}
+            {t('register.and')}{' '}
+            <Link href="/privacy" className="font-medium text-brand-700 hover:text-brand-800">{t('register.privacy')}</Link>
           </span>
         </label>
 
         <Button type="submit" loading={loading} className="w-full">
-          Create account
+          {t('register.create')}
           <ArrowRight className="size-5" />
         </Button>
       </form>
 
       <div className="divider mt-10 pt-5 text-slate-500">
-        Already have an account?{' '}
+        {t('register.haveAccount')}{' '}
         <Link href="/login" className="font-medium text-brand-700 hover:text-brand-800">
-          Sign in
+          {t('register.signIn')}
         </Link>
       </div>
     </main>

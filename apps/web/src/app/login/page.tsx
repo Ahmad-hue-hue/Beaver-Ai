@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Field, Input, PasswordInput } from '@/components/ui/field';
 import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api-client';
+import { useI18n } from '@/lib/i18n';
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { t } = useI18n();
   const router = useRouter();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -37,13 +39,13 @@ export default function LoginPage() {
       <div className="mb-10 flex items-center gap-4">
         <BrandMark size={64} />
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Welcome back</h1>
-          <p className="text-slate-500">Sign in to your shop</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('login.welcome')}</h1>
+          <p className="text-slate-500">{t('login.subtitle')}</p>
         </div>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-7">
-        <Field label="Email">
+        <Field label={t('login.email')}>
           <Input
             type="email"
             name="email"
@@ -57,11 +59,11 @@ export default function LoginPage() {
             required
           />
         </Field>
-        <Field label="Password" error={error ?? undefined}>
+        <Field label={t('login.password')} error={error ?? undefined}>
           <PasswordInput
             name="password"
             autoComplete="current-password"
-            placeholder="Enter your password"
+            placeholder={t('login.passwordPlaceholder')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -69,15 +71,15 @@ export default function LoginPage() {
         </Field>
 
         <Button type="submit" loading={loading} className="w-full">
-          Sign in
+          {t('login.signIn')}
           <ArrowRight className="size-5" />
         </Button>
       </form>
 
       <div className="divider mt-10 pt-5 text-slate-500">
-        New here?{' '}
+        {t('login.newHere')}{' '}
         <Link href="/register" className="font-medium text-brand-700 hover:text-brand-800">
-          Create an account
+          {t('login.createAccount')}
         </Link>
       </div>
     </main>

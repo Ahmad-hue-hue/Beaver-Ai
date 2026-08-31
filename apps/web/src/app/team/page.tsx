@@ -6,6 +6,7 @@ import { Loader2, Plus, Shield, UserPlus, X } from '@/components/ui/icon';
 import { AppShell } from '@/components/app-shell';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 interface Member {
@@ -19,10 +20,10 @@ interface Member {
 }
 
 const ROLE_LABEL: Record<Member['role'], string> = {
-  OWNER: 'Owner',
-  MANAGER: 'Manager',
-  CASHIER: 'Cashier',
-  INVENTORY_STAFF: 'Inventory',
+  OWNER: 'team.role.owner',
+  MANAGER: 'team.role.manager',
+  CASHIER: 'team.role.cashier',
+  INVENTORY_STAFF: 'team.role.inventory',
 };
 const ROLES: Member['role'][] = ['OWNER', 'MANAGER', 'CASHIER', 'INVENTORY_STAFF'];
 const MANAGE_ROLES = new Set(['OWNER', 'MANAGER']);
@@ -36,6 +37,7 @@ export default function TeamPage() {
 }
 
 function TeamContent() {
+  const { t } = useI18n();
   const { session } = useAuth();
   const token = session?.accessToken;
   const myRole = session?.role as Member['role'] | null;
@@ -53,9 +55,9 @@ function TeamContent() {
   if (members.error instanceof ApiError && members.error.status === 403) {
     return (
       <div className="mx-auto max-w-3xl py-20 text-center">
-        <p className="text-lg font-medium text-slate-800">No access to the team</p>
+        <p className="text-lg font-medium text-slate-800">{t('team.noAccess')}</p>
         <p className="mt-1 text-slate-500">
-          Only the owner and managers can manage employees.
+          {t('team.noAccessBody')}
         </p>
       </div>
     );
@@ -67,8 +69,8 @@ function TeamContent() {
     <div className="mx-auto max-w-3xl">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Team</h1>
-          <p className="mt-1 text-slate-500">The people who run the shop, and their access.</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('team.title')}</h1>
+          <p className="mt-1 text-slate-500">{t('team.subtitle')}</p>
         </div>
         {canManage && (
           <button
@@ -76,7 +78,7 @@ function TeamContent() {
             className="tap inline-flex items-center gap-2 rounded-xl bg-brand-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-800"
           >
             <UserPlus className="size-4" />
-            Invite
+            {t('team.invite')}
           </button>
         )}
       </header>
@@ -122,6 +124,7 @@ function InviteForm({
   token?: string;
   onDone: () => void;
 }) {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
@@ -141,7 +144,7 @@ function InviteForm({
     <div className="mt-8 rounded-2xl border border-hairline p-5">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold text-slate-900">
-          {tempPassword ? 'Account created' : 'Invite a teammate'}
+          {tempPassword ? t('team.accountCreated') : t('team.inviteTitle')}
         </h2>
         <button
           onClick={() => {
@@ -157,14 +160,14 @@ function InviteForm({
       {tempPassword != null ? (
         <div className="mt-4 rounded-xl bg-slate-50 p-4">
           <p className="text-sm text-slate-700">
-            Share this one-time password with your teammate. They&apos;ll log in and change it right away.
+            {t('team.oneTimePw')}
           </p>
           <p className="mt-2 rounded-lg bg-surface px-3 py-2 font-mono text-sm text-brand-700">{tempPassword}</p>
           <button
             onClick={onDone}
             className="tap mt-4 rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800"
           >
-            Done
+            {t('common.done')}
           </button>
         </div>
       ) : (
@@ -178,14 +181,14 @@ function InviteForm({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Full name"
+            placeholder={t('team.field.name')}
             required
             className="tap h-10 rounded-lg border border-hairline bg-surface px-3 text-sm outline-none focus:border-brand-400"
           />
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
+            placeholder={t('team.field.email')}
             type="email"
             required
             className="tap h-10 rounded-lg border border-hairline bg-surface px-3 text-sm outline-none focus:border-brand-400"
@@ -197,7 +200,7 @@ function InviteForm({
           >
             {ROLES.filter((r) => r !== 'OWNER').map((r) => (
               <option key={r} value={r}>
-                {ROLE_LABEL[r]}
+                {t(ROLE_LABEL[r])}
               </option>
             ))}
           </select>
@@ -207,13 +210,13 @@ function InviteForm({
             className="tap inline-flex h-10 items-center gap-2 rounded-lg bg-brand-700 px-4 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-50"
           >
             {invite.isPending ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-            Send
+            {t('common.send')}
           </button>
         </form>
       )}
       {invite.isError && (
         <p className="mt-3 text-sm font-medium text-red-600">
-          {invite.error instanceof ApiError ? invite.error.message : 'Failed to invite.'}
+          {invite.error instanceof ApiError ? invite.error.message : t('team.inviteFail')}
         </p>
       )}
     </div>
@@ -233,6 +236,7 @@ function MemberRow({
   onChanged: () => void;
   token?: string;
 }) {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const invalidate = () => qc.invalidateQueries({ queryKey: ['members'] });
   const setRole = useMutation({
@@ -276,7 +280,7 @@ function MemberRow({
         <div className="flex items-center gap-2">
           <p className={cn('truncate font-medium text-slate-900', suspended && 'text-slate-400 line-through')}>
             {m.name}
-            {isMe && <span className="ml-2 text-xs font-normal text-slate-400">(you)</span>}
+            {isMe && <span className="ml-2 text-xs font-normal text-slate-400">{t('team.you')}</span>}
           </p>
           {isOwner && <Shield className="size-4 text-brand-600" />}
         </div>
@@ -292,12 +296,12 @@ function MemberRow({
         >
           {ROLES.filter((r) => r !== 'OWNER').map((r) => (
             <option key={r} value={r}>
-              {ROLE_LABEL[r]}
+              {t(ROLE_LABEL[r])}
             </option>
           ))}
         </select>
       ) : (
-        <span className="text-sm font-medium text-slate-600">{ROLE_LABEL[m.role]}</span>
+        <span className="text-sm font-medium text-slate-600">{t(ROLE_LABEL[m.role])}</span>
       )}
 
       {canManage && !isOwner && !isMe && (
@@ -307,16 +311,16 @@ function MemberRow({
             disabled={setStatus.isPending}
             className="tap rounded-lg px-2 py-1.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
           >
-            {suspended ? 'Reactivate' : 'Suspend'}
+            {suspended ? t('team.reactivate') : t('team.suspend')}
           </button>
           <button
             onClick={() => {
-              if (confirm(`Remove ${m.name} from this shop?`)) remove.mutate();
+              if (confirm(t('team.removeConfirm', { name: m.name }))) remove.mutate();
             }}
             disabled={remove.isPending}
             className="tap rounded-lg px-2 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
           >
-            Remove
+            {t('team.remove')}
           </button>
         </div>
       )}

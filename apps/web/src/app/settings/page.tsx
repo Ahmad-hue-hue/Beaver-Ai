@@ -6,6 +6,7 @@ import { Activity, Coins, Loader2, Shield, UserPlus } from '@/components/ui/icon
 import { AppShell } from '@/components/app-shell';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 interface Business {
@@ -46,6 +47,7 @@ export default function SettingsPage() {
 }
 
 function SettingsContent() {
+  const { t } = useI18n();
   const { session } = useAuth();
   const token = session?.accessToken;
   const qc = useQueryClient();
@@ -90,34 +92,34 @@ function SettingsContent() {
   return (
     <div className="mx-auto max-w-3xl">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Settings</h1>
-        <p className="mt-1 text-slate-500">Shop profile, defaults and team access.</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('settings.title')}</h1>
+        <p className="mt-1 text-slate-500">{t('settings.subtitle')}</p>
       </header>
 
       <div className="mt-8 grid gap-10">
         {/* Profile */}
         <section>
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Shop</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t('settings.shop')}</h2>
           <div className="mt-3 grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
-            <Row label="Name" value={biz.data?.name} />
-            <Row label="Type" value={biz.data?.type} />
-            <Row label="Country" value={biz.data?.country} />
-            <Row label="Currency" value={biz.data?.currency} />
-            <Row label="Phone" value={biz.data?.phone ?? '—'} />
-            <Row label="Tax ID" value={biz.data?.taxId ?? '—'} />
+            <Row label={t('settings.info.name')} value={biz.data?.name} />
+            <Row label={t('settings.info.type')} value={biz.data?.type} />
+            <Row label={t('settings.info.country')} value={biz.data?.country} />
+            <Row label={t('settings.info.currency')} value={biz.data?.currency} />
+            <Row label={t('settings.info.phone')} value={biz.data?.phone ?? '—'} />
+            <Row label={t('settings.info.taxId')} value={biz.data?.taxId ?? '—'} />
           </div>
         </section>
 
         {/* Defaults / settings */}
         <section>
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Defaults</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t('settings.defaults')}</h2>
           {!biz.data?.settings ? (
-            <p className="mt-3 text-sm text-slate-400">Loading settings…</p>
+            <p className="mt-3 text-sm text-slate-400">{t('settings.loading')}</p>
           ) : (
             <div className="mt-3 max-w-xl space-y-5">
               <fieldset>
                 <legend className="mb-2 text-sm font-medium text-slate-700">
-                  Default payment methods
+                  {t('settings.paymentMethods')}
                 </legend>
                 <div className="flex flex-wrap gap-2">
                   {METHODS.map((m) => {
@@ -143,7 +145,7 @@ function SettingsContent() {
               </fieldset>
 
               <label className="block">
-                <span className="text-sm font-medium text-slate-700">Default language</span>
+                <span className="text-sm font-medium text-slate-700">{t('settings.language')}</span>
                 <select
                   value={locale}
                   disabled={!canEdit}
@@ -156,7 +158,7 @@ function SettingsContent() {
               </label>
 
               <label className="block">
-                <span className="text-sm font-medium text-slate-700">Timezone</span>
+                <span className="text-sm font-medium text-slate-700">{t('settings.timezone')}</span>
                 <input
                   value={timezone}
                   disabled={!canEdit}
@@ -166,7 +168,7 @@ function SettingsContent() {
               </label>
 
               <label className="block">
-                <span className="text-sm font-medium text-slate-700">Receipt footer</span>
+                <span className="text-sm font-medium text-slate-700">{t('settings.receiptFooter')}</span>
                 <textarea
                   value={footer}
                   disabled={!canEdit}
@@ -177,7 +179,7 @@ function SettingsContent() {
               </label>
 
               <label className="flex items-center justify-between gap-4">
-                <span className="text-sm font-medium text-slate-700">Allow negative stock</span>
+                <span className="text-sm font-medium text-slate-700">{t('settings.allowNegative')}</span>
                 <input
                   type="checkbox"
                   checked={allowNegative}
@@ -202,15 +204,15 @@ function SettingsContent() {
                   className="tap inline-flex items-center gap-2 rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-800 disabled:opacity-50"
                 >
                   {save.isPending && <Loader2 className="size-4 animate-spin" />}
-                  {save.isError ? 'Try again' : 'Save changes'}
+                  {save.isError ? t('common.tryAgain') : t('common.save')}
                 </button>
               )}
               {save.isSuccess && (
-                <p className="text-sm font-medium text-brand-600">Saved.</p>
+                <p className="text-sm font-medium text-brand-600">{t('common.saved')}</p>
               )}
               {save.isError && (
                 <p className="text-sm font-medium text-red-600">
-                  {save.error instanceof ApiError ? save.error.message : 'Failed to save.'}
+                  {save.error instanceof ApiError ? save.error.message : t('common.failedToSave')}
                 </p>
               )}
             </div>
@@ -219,28 +221,28 @@ function SettingsContent() {
 
         {/* Management */}
         <section>
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Management</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t('settings.management')}</h2>
           <div className="mt-3 divide-y divide-hairline">
             <LinkRow href="/team" icon={<UserPlus className="size-5" />}>
-              <p className="font-medium text-slate-800">Team &amp; roles</p>
-              <p className="text-sm text-slate-500">Invite people and control their access.</p>
+              <p className="font-medium text-slate-800">{t('settings.teamRoles')}</p>
+              <p className="text-sm text-slate-500">{t('settings.teamRolesBody')}</p>
             </LinkRow>
             <LinkRow href="/settings/billing" icon={<Coins className="size-5" />}>
-              <p className="font-medium text-slate-800">Billing &amp; plan</p>
-              <p className="text-sm text-slate-500">Your plan, product usage and upgrades.</p>
+              <p className="font-medium text-slate-800">{t('settings.billingPlan')}</p>
+              <p className="text-sm text-slate-500">{t('settings.billingPlanBody')}</p>
             </LinkRow>
             <LinkRow href="/settings/audit" icon={<Activity className="size-5" />}>
-              <p className="font-medium text-slate-800">Audit log</p>
-              <p className="text-sm text-slate-500">A record of sensitive business actions.</p>
+              <p className="font-medium text-slate-800">{t('settings.auditLog')}</p>
+              <p className="text-sm text-slate-500">{t('settings.auditLogBody')}</p>
             </LinkRow>
             <div className="flex items-center gap-4 py-4">
               <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-400">
                 <Shield className="size-5" />
               </span>
               <div>
-                <p className="font-medium text-slate-800">Passwords</p>
+                <p className="font-medium text-slate-800">{t('settings.passwords')}</p>
                 <p className="text-sm text-slate-500">
-                  Self-service password reset lives on the login screen.
+                  {t('settings.passwordsBody')}
                 </p>
               </div>
             </div>
