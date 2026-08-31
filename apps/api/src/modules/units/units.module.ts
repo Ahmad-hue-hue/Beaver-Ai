@@ -13,7 +13,7 @@ class CreateUnitDto {
 }
 
 @Injectable()
-class UnitsService {
+export class UnitsService {
   constructor(private readonly prisma: PrismaService) {}
 
   list(businessId: string) {
@@ -66,5 +66,6 @@ class UnitsController {
 @Module({
   controllers: [UnitsController],
   providers: [UnitsService],
+  exports: [UnitsService],
 })
 export class UnitsModule {}
