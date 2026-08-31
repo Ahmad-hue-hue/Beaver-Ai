@@ -7,6 +7,8 @@
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
+  /** Optional base64 image data URLs (e.g. data:image/png;base64,…) to attach to this message. */
+  images?: string[];
 }
 
 export interface CompleteOptions {

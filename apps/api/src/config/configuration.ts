@@ -21,10 +21,10 @@ const envSchema = z.object({
     .default('false')
     .transform((v) => v === 'true'),
 
-  AI_PROVIDER: z.enum(['anthropic', 'google', 'mock']).default('anthropic'),
-  GOOGLE_API_KEY: z.string().optional().default(''),
-  ANTHROPIC_API_KEY: z.string().optional().default(''),
-  AI_MODEL: z.string().default('claude-opus-4-8'),
+  AI_PROVIDER: z.enum(['openrouter', 'mock']).default('openrouter'),
+  OPENROUTER_API_KEY: z.string().optional().default(''),
+  AI_MODEL: z.string().default('minimax/minimax-m3:free'),
+  AI_VISION_MODEL: z.string().default('minimax/minimax-m3:free'),
   AI_MAX_OUTPUT_TOKENS: z.coerce.number().default(4096),
 });
 
@@ -45,11 +45,11 @@ function buildConfig(env: z.infer<typeof envSchema>) {
     },
     cookie: { domain: env.COOKIE_DOMAIN, secure: env.COOKIE_SECURE },
     ai: {
-      // No key → mock so the app still runs; a Google key auto-selects Gemini; otherwise the
-      // explicit AI_PROVIDER (default anthropic) when an Anthropic key is present.
-      provider: env.GOOGLE_API_KEY ? 'google' : env.ANTHROPIC_API_KEY ? env.AI_PROVIDER : 'mock',
-      apiKey: env.GOOGLE_API_KEY || env.ANTHROPIC_API_KEY,
+      // No key → mock; OpenRouter key auto-selects OpenRouter; otherwise mock.
+      provider: env.OPENROUTER_API_KEY ? 'openrouter' : 'mock',
+      apiKey: env.OPENROUTER_API_KEY,
       model: env.AI_MODEL,
+      visionModel: env.AI_VISION_MODEL,
       maxOutputTokens: env.AI_MAX_OUTPUT_TOKENS,
     },
   };

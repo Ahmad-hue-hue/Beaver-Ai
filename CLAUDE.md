@@ -78,8 +78,13 @@ These are load-bearing. Violating them is a bug even if it compiles.
    mirrors `nextCountReference`), audit via `AuditService.record`, domain events via
    `EventEmitter2` (`common/events/domain-events.ts`), Decimal helper
    `const dec = (v) => new Prisma.Decimal(String(v))`.
-8. **AI is behind a provider abstraction** with a mock fallback — the app runs and tests
-   pass with no `ANTHROPIC_API_KEY`. Default live model id: `claude-opus-4-8`.
+  8. **AI is behind a provider abstraction** with a mock fallback — the app runs and tests
+   pass with no `OPENROUTER_API_KEY`. Default text model id:
+   `minimax/minimax-m3:free`; when a message carries `images[]`,
+   the OpenRouter provider auto-switches to `AI_VISION_MODEL`
+   (`minimax/minimax-m3:free`) for vision input. Free-tier models are heavily
+   rate-limited on OpenRouter, so the provider retries transient overloads
+   (3 attempts with backoff) before surfacing a 500.
 
 ### Bun / stack gotchas (cost real time)
 

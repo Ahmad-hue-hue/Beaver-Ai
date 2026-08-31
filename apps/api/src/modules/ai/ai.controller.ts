@@ -31,9 +31,13 @@ export class AiController {
   @RequirePermissions(PERMISSIONS.AI_ASSISTANT_USE)
   async chat(@BusinessId() businessId: string, @Body() dto: AiChatDto) {
     const history: ChatMessage[] = dto.messages
-      .map((m) => m.content.trim())
-      .filter((c) => c.length > 0)
-      .map((content, idx) => ({ role: (idx % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant', content }));
+      .map((m) => ({ ...m, content: m.content.trim() }))
+      .filter((m) => m.content.length > 0 || (m.images?.length ?? 0) > 0)
+      .map((m, idx) => ({
+        role: (idx % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
+        content: m.content,
+        images: m.images,
+      }));
     if (history.length === 0) history.push({ role: 'user', content: '' });
     const reply = await this.ai.chat(businessId, history);
     return { reply, provider: this.ai.providerName, live: this.ai.isLive };
