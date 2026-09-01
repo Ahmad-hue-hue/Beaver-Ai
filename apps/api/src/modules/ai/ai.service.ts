@@ -13,6 +13,24 @@ const money = (v: Prisma.Decimal | string | number): string => {
   return `TZS ${d.toDecimalPlaces(0).toString()}`;
 };
 
+/**
+ * Safety net: strip any incidental raw JSON fragments the model may have echoed
+ * back into its reply (e.g. a tool result like {"id":"…","businessId":"…"}).
+ * Collapses them into a short, readable marker so raw data never surfaces to the user.
+ */
+function scrubReply(text: string): string {
+  if (!text.includes('{')) return text;
+  return text
+    .split(/(\s+)/)
+    .map((token) => {
+      if (token.includes('{') && /\{\s*"(?:id|businessId|name|sku)"\s*:/.test(token)) {
+        return '[data]';
+      }
+      return token;
+    })
+    .join('');
+}
+
 /** One action the agent performed, surfaced to the user. */
 export interface AgentAction {
   tool: string;
@@ -92,14 +110,14 @@ export class AiService {
       });
 
       if (result.toolCalls.length === 0) {
-        const reply = result.text || 'Done.';
+        const reply = scrubReply(result.text || 'Done.');
         return { reply, actions, steps };
       }
 
       if (steps >= MAX_STEPS) {
         return {
           reply:
-            result.text ||
+            scrubReply(result.text) ||
             'I took several actions but hit my step limit. Here is where things stand — let me know if you want me to continue.',
           actions,
           steps,

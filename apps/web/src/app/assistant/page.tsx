@@ -38,6 +38,20 @@ interface ChatReply { reply: string; actions: ChatAction[]; provider: string; li
 type Panel = 'history' | 'archive' | null;
 interface Attachment { name: string; dataUrl: string }
 
+/** Strip any accidental raw JSON fragments a model reply may contain. */
+function cleanContent(text: string): string {
+  if (!text.includes('{')) return text;
+  return text
+    .split(/(\s+)/)
+    .map((token) => {
+      if (token.includes('{') && /\{\s*"(?:id|businessId|name|sku)"\s*:/.test(token)) {
+        return '[data]';
+      }
+      return token;
+    })
+    .join('');
+}
+
 export default function AssistantPage() {
   return (
     <AppShell>
@@ -305,7 +319,7 @@ function AssistantWorkspace({ token, live, provider }: { token?: string; live: b
                           ))}
                         </div>
                       )}
-                      {m.content}
+                      {cleanContent(m.content)}
                     </div>
                   </div>
                 ))}

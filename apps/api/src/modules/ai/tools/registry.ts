@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PERMISSIONS } from '@beaver/shared';
 import type { Permission } from '@beaver/shared';
 import { AnalyticsService } from '../../analytics/analytics.service.js';
@@ -40,6 +41,76 @@ const isMutating = (name: string) =>
   /create|record|sale|purchase|expense|receive|adjust|write_off|void|payment|open|close|supplier|category|unit|debt/.test(name);
 
 const trunc = (s: string, n = 600): string => (s.length <= n ? s : `${s.slice(0, n)}\u2026`);
+
+const tzs = (v: unknown): string => {
+  if (v === null || v === undefined || v === '') return '';
+  try {
+    return `TZS ${new Prisma.Decimal(String(v)).toDecimalPlaces(0).toString()}`;
+  } catch {
+    return String(v);
+  }
+};
+const strOf = (v: unknown): string => (v === null || v === undefined ? '' : String(v));
+const arrOf = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+
+/** Readable, one-line summaries for the list/read tools — never raw JSON blobs. */
+function formatReadOutput(name: string, result: unknown): string {
+  switch (name) {
+    case 'product_lookup': {
+      const p = result as Record<string, unknown> | null | undefined;
+      if (!p) return 'No product found.';
+      const unit = (p.unit as Record<string, unknown> | null)?.abbreviation;
+      const stock =
+        p.trackInventory === false ? 'service' : `stock ${strOf(p.stockQuantity)}${unit ? ` ${unit}` : ''}`;
+      return `Product: ${strOf(p.name)}${p.sku ? ` (SKU ${strOf(p.sku)})` : ''} — sell ${tzs(
+        p.sellingPrice,
+      )}${p.costPrice != null ? `, cost ${tzs(p.costPrice)}` : ''} · ${stock} · reorder at ${strOf(
+        p.reorderLevel,
+      )}`;
+    }
+    case 'list_products': {
+      const data = arrOf((result as Record<string, unknown>)?.data);
+      if (data.length === 0) return 'No products found.';
+      return data
+        .map((r) => {
+          const p = r as Record<string, unknown>;
+          const unit = (p.unit as Record<string, unknown> | null)?.abbreviation;
+          return (
+            `${strOf(p.name)}${p.sku ? ` (${strOf(p.sku)})` : ''} — ${tzs(p.sellingPrice)} · ` +
+            `stock ${strOf(p.stockQuantity)}${unit ? ` ${unit}` : ''} · reorder ${strOf(p.reorderLevel)}`
+          );
+        })
+        .join('\n');
+    }
+    case 'list_customers': {
+      const data = arrOf((result as Record<string, unknown>)?.data);
+      if (data.length === 0) return 'No customers found.';
+      return data
+        .map((r) => {
+          const c = r as Record<string, unknown>;
+          return `${strOf(c.name)}${c.phone ? ` — ${strOf(c.phone)}` : ''} · owes ${tzs(c.debtBalance)}`;
+        })
+        .join('\n');
+    }
+    case 'list_suppliers': {
+      const data = arrOf((result as Record<string, unknown>)?.data);
+      if (data.length === 0) return 'No suppliers found.';
+      return data
+        .map((r) => {
+          const s = r as Record<string, unknown>;
+          return `${strOf(s.name)}${s.phone ? ` — ${strOf(s.phone)}` : ''}${s.address ? ` · ${strOf(s.address)}` : ''}`;
+        })
+        .join('\n');
+    }
+    case 'list_categories': {
+      const data = arrOf(result);
+      if (data.length === 0) return 'No categories found.';
+      return data.map((r) => strOf((r as Record<string, unknown>).name)).join(', ');
+    }
+    default:
+      return JSON.stringify(result ?? null);
+  }
+}
 
 function schema(
   name: string,
@@ -297,7 +368,7 @@ export class AgentToolRegistry {
     const label = call.name.replace(/_/g, ' ');
     let output: string;
     if (typeof result === 'string') output = result;
-    else output = JSON.stringify(result ?? null);
+    else output = formatReadOutput(call.name, result);
     return { label, output: trunc(output), mutated: isMutating(call.name) };
   }
 }
