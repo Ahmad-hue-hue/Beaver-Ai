@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { Globe } from '@/components/ui/icon';
 
 export type Locale = 'en' | 'sw';
 
@@ -1173,9 +1172,21 @@ const I18nContext = React.createContext<I18nContextValue | null>(null);
  * statically-prerendered pages like the landing page. */
 const localeListeners = new Set<() => void>();
 
+/* In-app browsers / webviews can block localStorage (SecurityError). We fall back to an
+ * in-memory store so the language toggle still works there, it just won't persist. */
+let memoryLocale: Locale | null = null;
+
+function readStoredLocale(): string | null {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
 function getStoredLocale(): Locale {
   if (typeof window === 'undefined') return 'en';
-  const stored = window.localStorage.getItem(STORAGE_KEY);
+  const stored = memoryLocale ?? readStoredLocale();
   return stored === 'sw' || stored === 'en' ? stored : 'en';
 }
 
@@ -1190,7 +1201,12 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const locale = React.useSyncExternalStore<Locale>(subscribeLocale, getStoredLocale, () => 'en');
 
   const setLocale = React.useCallback((l: Locale) => {
-    window.localStorage.setItem(STORAGE_KEY, l);
+    memoryLocale = l;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, l);
+    } catch {
+      /* storage blocked (webview) — keep in-memory locale active */
+    }
     localeListeners.forEach((fn) => fn());
   }, []);
 
@@ -1215,6 +1231,7 @@ export function useI18n(): I18nContextValue {
 export function LanguageToggle() {
   const { locale, setLocale, t } = useI18n();
   const next: Locale = locale === 'en' ? 'sw' : 'en';
+  const flag = locale === 'en' ? '🇬🇧' : '🇹🇿';
   return (
     <button
       type="button"
@@ -1223,7 +1240,9 @@ export function LanguageToggle() {
       title={t('lang.en')}
       aria-label={t('lang.en')}
     >
-      <Globe className="size-5" />
+      <span className="text-base leading-none" aria-hidden>
+        {flag}
+      </span>
       <span className="hidden sm:inline">{locale === 'en' ? 'English' : 'Kiswahili'}</span>
     </button>
   );
