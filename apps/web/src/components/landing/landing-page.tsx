@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { useI18n } from '@/lib/i18n';
 import { Reveal } from '@/components/ui/reveal';
 import { LandingNav } from '@/components/ui/landing-nav';
+import { CanvasRevealEffect } from '@/components/ui/canvas-reveal-effect';
+import { HowItWorks } from '@/components/landing/how-it-works';
 import {
   ShoppingCart,
   Package,
@@ -19,12 +21,6 @@ const FEATURES = [
   { icon: Package, titleKey: 'landing.feat2.title', bodyKey: 'landing.feat2.body' },
   { icon: Users, titleKey: 'landing.feat3.title', bodyKey: 'landing.feat3.body' },
   { icon: Sparkles, titleKey: 'landing.feat4.title', bodyKey: 'landing.feat4.body' },
-];
-
-const STEPS = [
-  { n: '01', icon: ShoppingCart, titleKey: 'landing.step1.title', bodyKey: 'landing.step1.body' },
-  { n: '02', icon: Package, titleKey: 'landing.step2.title', bodyKey: 'landing.step2.body' },
-  { n: '03', icon: Sparkles, titleKey: 'landing.step3.title', bodyKey: 'landing.step3.body' },
 ];
 
 const FAQ_KEYS = [
@@ -53,32 +49,25 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero — full-bleed background photo with overlaid copy. */}
-      <section className="relative isolate overflow-hidden bg-slate-950">
-        <Image
-          src="/hero-shop.jpg"
-          alt={t('landing.hero.imageAlt')}
-          fill
-          priority
-          sizes="100vw"
-          className="-z-20 object-cover object-center"
+      {/* Hero — Aceternity interactive canvas-reveal dot background with overlaid copy. */}
+      <section className="relative min-h-[34rem] overflow-hidden bg-white sm:min-h-[38rem] lg:min-h-[44rem]">
+        <CanvasRevealEffect
+          containerClassName="absolute inset-0"
+          showGradient={false}
+          colors={[[3, 152, 85]]}
         />
-        {/* Legibility overlays */}
-        <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-slate-950/90 via-slate-950/65 to-slate-950/30" />
-        <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-
-        <div className="mx-auto flex min-h-[34rem] max-w-6xl flex-col justify-center px-6 py-24 sm:min-h-[38rem] lg:min-h-[44rem]">
+        <div className="relative z-10 mx-auto flex min-h-[34rem] max-w-6xl flex-col justify-center px-6 py-24 sm:min-h-[38rem] lg:min-h-[44rem]">
           <div className="max-w-2xl">
             <h1
-              className="animate-rise text-[2.6rem] font-semibold leading-[1.04] tracking-tight text-white sm:text-6xl lg:text-7xl"
+              className="animate-rise text-[2.6rem] font-semibold leading-[1.04] tracking-tight text-slate-900 sm:text-6xl lg:text-7xl"
               style={{ animationDelay: '0ms' }}
             >
               {t('landing.hero.titleA')}
               <br className="hidden sm:block" /> {t('landing.hero.titleB')}{' '}
-              <span className="text-brand-300">{t('landing.hero.titleC')}</span>
+              <span className="text-brand-600">{t('landing.hero.titleC')}</span>
             </h1>
             <p
-              className="animate-rise mt-6 max-w-lg text-lg leading-relaxed text-slate-200"
+              className="animate-rise mt-6 max-w-lg text-lg leading-relaxed text-slate-600"
               style={{ animationDelay: '100ms' }}
             >
               {t('landing.hero.sub')}
@@ -89,19 +78,19 @@ export default function LandingPage() {
             >
               <Link
                 href="/register"
-                className="tap inline-flex items-center gap-2 rounded-xl bg-white px-7 text-base font-medium text-brand-700 shadow-sm transition-colors hover:bg-brand-50"
+                className="tap inline-flex items-center gap-2 rounded-xl bg-brand-600 px-7 text-base font-medium text-white shadow-sm transition-colors hover:bg-brand-700"
               >
                 {t('landing.hero.ctaPrimary')} <ArrowRight className="size-5" />
               </Link>
               <Link
                 href="/login"
-                className="tap inline-flex items-center rounded-xl border border-white/40 px-6 text-base font-medium text-white transition-colors hover:bg-white/10"
+                className="tap inline-flex items-center rounded-xl border border-slate-300 px-6 text-base font-medium text-slate-700 transition-colors hover:bg-slate-100"
               >
                 {t('landing.hero.ctaSecondary')}
               </Link>
             </div>
             <p
-              className="animate-rise mt-6 text-sm text-slate-300"
+              className="animate-rise mt-6 text-sm text-slate-500"
               style={{ animationDelay: '240ms' }}
             >
               {t('landing.hero.trust')}
@@ -170,50 +159,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <Reveal className="max-w-xl">
-            <p className="font-mono text-xs uppercase tracking-[0.22em] text-brand-600">{t('landing.how.section')}</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-              {t('landing.how.title')}
-            </h2>
-            <p className="mt-3 text-slate-500">
-              {t('landing.how.body')}
-            </p>
-          </Reveal>
-
-          <ol className="mt-14 grid gap-x-10 gap-y-12 md:grid-cols-3">
-            {STEPS.map((s, i) => (
-              <li key={s.n}>
-                <Reveal delay={i * 120}>
-                  <div className="flex items-start gap-4">
-                    <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-brand-50 text-brand-700 ring-1 ring-brand-100">
-                      <s.icon className="size-7" />
-                    </div>
-                    <div>
-                      <p className="font-mono text-sm font-semibold text-brand-600">
-                        {t('landing.how.step', { n: s.n })}
-                      </p>
-                      <h3 className="mt-1.5 text-xl font-semibold tracking-tight text-slate-900">{t(s.titleKey)}</h3>
-                      <p className="mt-2 leading-relaxed text-slate-500">{t(s.bodyKey)}</p>
-                    </div>
-                  </div>
-                </Reveal>
-              </li>
-            ))}
-          </ol>
-
-          <Reveal className="mt-14" delay={200}>
-            <Link
-              href="/register"
-              className="tap inline-flex items-center gap-2 rounded-xl bg-brand-600 px-7 text-base font-medium text-white transition-colors hover:bg-brand-700"
-            >
-              {t('landing.how.cta')} <ArrowRight className="size-5" />
-            </Link>
-          </Reveal>
-        </div>
-      </section>
+      {/* How it works — a continuous Modern Timeline (01 → 02 → 03). */}
+      <HowItWorks />
 
       {/* FAQ */}
       <section className="border-y border-hairline bg-canvas">

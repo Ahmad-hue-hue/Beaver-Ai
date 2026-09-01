@@ -53,9 +53,9 @@ export function Reveal({
     return () => io.disconnect();
   }, [delay]);
 
-  return (
-    <Tag ref={ref} className={className}>
-      {children}
-    </Tag>
+  return React.createElement(
+    Tag as React.ElementType<React.HTMLProps<HTMLElement>>,
+    { ref, className },
+    children,
   );
 }
