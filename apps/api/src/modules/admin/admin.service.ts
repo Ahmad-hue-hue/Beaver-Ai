@@ -39,10 +39,11 @@ export class AdminService {
         this.prisma.user.count({ where: { isPlatformAdmin: true, deletedAt: null } }),
         this.prisma.user.count({ where: { deletedAt: null, approvedAt: null } }),
         this.prisma.user.count({
-          where: { deletedAt: null, approvedAt: { not: null }, OR: [
-            { serviceExpiresAt: null },
-            { serviceExpiresAt: { lte: new Date() } },
-          ] },
+          where: {
+            deletedAt: null,
+            approvedAt: { not: null },
+            serviceExpiresAt: { not: null, lte: new Date() },
+          },
         }),
         this.prisma.sale.count({
           where: { soldAt: { gte: startOfToday }, status: 'COMPLETED', voidedAt: null },
@@ -216,8 +217,7 @@ export class AdminService {
 
     const needsAttention: Prisma.UserWhereInput[] = [
       { approvedAt: null },
-      { serviceExpiresAt: null },
-      { serviceExpiresAt: { lte: new Date() } },
+      { approvedAt: { not: null }, serviceExpiresAt: { not: null, lte: new Date() } },
     ];
 
     const where: Prisma.UserWhereInput = { deletedAt: null, OR: needsAttention };

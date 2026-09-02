@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Archive,
   Bot,
@@ -18,6 +18,7 @@ import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { invalidateAfterAgentMutations } from '@/lib/agent-cache';
 import {
   type SavedMessage,
   archiveConversation,
@@ -72,6 +73,7 @@ function AssistantContent() {
 
 function AssistantWorkspace({ token, live, provider }: { token?: string; live: boolean; provider?: string }) {
   const { t } = useI18n();
+  const qc = useQueryClient();
   const [messages, setMessages] = React.useState<SavedMessage[]>([]);
   const [input, setInput] = React.useState('');
   const [attachment, setAttachment] = React.useState<Attachment | null>(null);
@@ -97,6 +99,7 @@ function AssistantWorkspace({ token, live, provider }: { token?: string; live: b
         { accessToken: token },
       ),
     onSuccess: (data) => {
+      invalidateAfterAgentMutations(qc, data.actions ?? []);
       setMessages((m) => [
         ...m,
         { role: 'user', content: inputAtSend.current, images: imageAtSend.current },
@@ -218,6 +221,11 @@ function AssistantWorkspace({ token, live, provider }: { token?: string; live: b
       <div className="relative flex min-h-0 flex-1">
         {/* Main chat column */}
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          {!live && (
+            <div className="border-b border-amber-200 bg-amber-50 px-5 py-2.5 text-xs leading-relaxed text-amber-800 sm:text-sm">
+              {t('assistant.offlineBanner')}
+            </div>
+          )}
           {incognito && (
             <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-5 py-2 text-xs font-medium text-amber-800">
               <Incognito className="size-4" />

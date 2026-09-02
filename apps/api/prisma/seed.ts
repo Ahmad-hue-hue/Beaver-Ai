@@ -16,6 +16,7 @@ const prisma = new PrismaClient();
 const DEMO_OWNER_EMAIL = 'demo@beaver.local';
 const DEMO_OWNER_PASSWORD = 'demo1234';
 const BUSINESS_NAME = 'Acme Duka';
+const SERVICE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
 const dec = (v: number) => new Prisma.Decimal(String(v));
 const daysAgo = (n: number, h = 12) => {
@@ -26,19 +27,44 @@ const daysAgo = (n: number, h = 12) => {
 };
 
 async function main() {
-  const existing = await prisma.business.findFirst({ where: { name: BUSINESS_NAME } });
+  const existing = await prisma.business.findFirst({
+    where: { name: BUSINESS_NAME },
+    include: {
+      memberships: {
+        where: { role: 'OWNER' },
+        include: { user: true },
+        take: 1,
+      },
+    },
+  });
   if (existing) {
-    console.log(`Demo business "${BUSINESS_NAME}" already exists — nothing to do.`);
+    const owner = existing.memberships[0]?.user;
+    if (owner && !owner.approvedAt) {
+      const now = new Date();
+      await prisma.user.update({
+        where: { id: owner.id },
+        data: {
+          approvedAt: now,
+          serviceExpiresAt: new Date(now.getTime() + SERVICE_MONTH_MS),
+        },
+      });
+      console.log(`Demo owner ${DEMO_OWNER_EMAIL} patched with active subscription.`);
+    } else {
+      console.log(`Demo business "${BUSINESS_NAME}" already exists — nothing to do.`);
+    }
     return;
   }
 
-  // ── Owner account ──
+  // ── Owner account (pre-approved with an active month so demo login works) ──
   const ownerPasswordHash = await argon2.hash(DEMO_OWNER_PASSWORD, { type: argon2.argon2id });
+  const now = new Date();
   const owner = await prisma.user.create({
     data: {
       name: 'Demo Owner',
       email: DEMO_OWNER_EMAIL,
       passwordHash: ownerPasswordHash,
+      approvedAt: now,
+      serviceExpiresAt: new Date(now.getTime() + SERVICE_MONTH_MS),
     },
   });
 

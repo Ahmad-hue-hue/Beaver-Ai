@@ -330,7 +330,7 @@ function ReviewsTab() {
         <>
           <div className="mt-5 divide-y divide-hairline">
             {rows.map((u) => (
-              <div key={u.id} className="flex items-start gap-3 py-4">
+              <div key={u.id} className="flex flex-col gap-3 border-b border-hairline py-4 sm:flex-row sm:items-start">
                 <div className="min-w-0 flex-1">
                   <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-800">
                     <span className="truncate">{u.name}</span>
@@ -346,7 +346,7 @@ function ReviewsTab() {
                       : t('admin.review.signedUp', { date: fmtDate(u.createdAt) })}
                   </p>
                 </div>
-                <div className="shrink-0 space-y-1.5 sm:flex sm:items-center sm:space-x-2 sm:space-y-0">
+                <div className="flex shrink-0 flex-wrap gap-2 sm:flex-nowrap sm:items-center">
                   <button
                     onClick={() => mutate.mutate({ id: u.id, action: 'activate' })}
                     disabled={mutate.isPending}
@@ -391,7 +391,7 @@ function SearchBox({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="h-10 w-full max-w-xs rounded-xl border border-hairline bg-surface pl-9 pr-3.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/15"
+        className="h-10 w-full max-w-xs rounded-xl border border-hairline bg-surface pl-9 pr-3.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/15 sm:max-w-sm"
       />
     </div>
   );
@@ -435,7 +435,45 @@ function BusinessesTab() {
         <Loader />
       ) : (
         <>
-          <div className="mt-5 overflow-x-auto">
+          {/* Mobile: card list */}
+          <div className="mt-5 space-y-3 md:hidden">
+            {rows.map((b) => (
+              <div key={b.id} className="rounded-xl border border-hairline p-4">
+                <p className="font-medium text-slate-800">{b.name}</p>
+                <p className="text-xs text-slate-400">
+                  {b.type} · {b.country}
+                </p>
+                <p className="mt-2 text-sm text-slate-600">
+                  {b.owner?.name ?? '—'}
+                  {b.owner?.email ? <span className="block truncate text-xs text-slate-400">{b.owner.email}</span> : null}
+                </p>
+                {b.ownerSubscription && (
+                  <div className="mt-2">
+                    <SubscriptionBadge status={b.ownerSubscription.status} t={t} />
+                  </div>
+                )}
+                <dl className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                  <div>
+                    <dt className="text-slate-400">{t('admin.col.products')}</dt>
+                    <dd className="tabular mt-0.5 font-medium text-slate-700">{b.productCount}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-400">{t('admin.col.sales')}</dt>
+                    <dd className="tabular mt-0.5 font-medium text-slate-700">{b.salesCount}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-400">{t('admin.col.revenue')}</dt>
+                    <dd className="tabular mt-0.5 font-medium text-slate-800">
+                      {formatMoney(b.revenue, { currency: b.currency })}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="mt-5 hidden overflow-x-auto md:block">
             <table className="w-full min-w-[640px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-hairline text-xs uppercase tracking-wide text-slate-400">
@@ -527,7 +565,7 @@ function UsersTab() {
         <>
           <div className="mt-5 divide-y divide-hairline">
             {rows.map((u) => (
-              <div key={u.id} className="flex items-center gap-3 py-3">
+              <div key={u.id} className="flex flex-col gap-2 border-b border-hairline py-3 sm:flex-row sm:items-center sm:gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="flex flex-wrap items-center gap-2 truncate text-sm font-medium text-slate-800">
                     <span className="truncate">{u.name}</span>
@@ -543,10 +581,12 @@ function UsersTab() {
                     {u.phone ? ` · ${u.phone}` : ''}
                   </p>
                 </div>
-                <p className="shrink-0 text-xs text-slate-400">
-                  {u.memberCount} {t('admin.col.businesses')}
-                </p>
-                <p className="w-28 shrink-0 text-right text-xs text-slate-400">{fmtTime(u.createdAt)}</p>
+                <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                  <p className="text-xs text-slate-400">
+                    {u.memberCount} {t('admin.col.businesses')}
+                  </p>
+                  <p className="text-xs text-slate-400 sm:w-28 sm:text-right">{fmtTime(u.createdAt)}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -588,7 +628,7 @@ function ActivityTab() {
         <>
           <div className="mt-5 divide-y divide-hairline">
             {rows.map((r) => (
-              <div key={r.id} className="flex items-start gap-4 py-3">
+              <div key={r.id} className="flex flex-col gap-2 border-b border-hairline py-3 sm:flex-row sm:items-start sm:gap-4">
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-mono text-sm text-slate-800">{r.action}</p>
                   <p className="truncate text-xs text-slate-400">
@@ -597,7 +637,7 @@ function ActivityTab() {
                     {r.business ? ` · ${r.business.name}` : ''}
                   </p>
                 </div>
-                <div className="shrink-0 text-right">
+                <div className="shrink-0 sm:text-right">
                   <p className="truncate text-sm text-slate-500">{r.user?.name ?? '—'}</p>
                   <p className="text-xs text-slate-400">{fmtTime(r.createdAt)}</p>
                 </div>

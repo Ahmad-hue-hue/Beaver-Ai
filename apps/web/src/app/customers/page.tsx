@@ -11,14 +11,14 @@ import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 
-interface Debtor {
+interface CustomerRow {
   id: string;
   name: string;
   phone: string | null;
   balance: string;
   creditLimit: string | null;
 }
-interface Overview { data: Debtor[]; pagination: { total: number } }
+interface CustomerList { data: CustomerRow[]; pagination: { total: number } }
 interface DebtEntry {
   id: string;
   type: 'SALE_CREDIT' | 'PAYMENT' | 'ADJUSTMENT';
@@ -81,12 +81,12 @@ function CustomersContent() {
         </div>
       )}
 
-      <DebtorsList token={token} />
+      <CustomerList token={token} />
     </div>
   );
 }
 
-function DebtorsList({ token }: { token?: string }) {
+function CustomerList({ token }: { token?: string }) {
   const { t } = useI18n();
   const qc = useQueryClient();
   const [search, setSearch] = React.useState('');
@@ -99,12 +99,16 @@ function DebtorsList({ token }: { token?: string }) {
   }, [search]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['debts', 'overview', debounced],
-    queryFn: () => api.get<Overview>(`/debts/overview?limit=100${debounced ? `&search=${encodeURIComponent(debounced)}` : ''}`, { accessToken: token }),
+    queryKey: ['customers', debounced],
+    queryFn: () =>
+      api.get<CustomerList>(
+        `/customers?limit=100${debounced ? `&search=${encodeURIComponent(debounced)}` : ''}`,
+        { accessToken: token },
+      ),
     enabled: !!token,
   });
 
-  const debtors = data?.data ?? [];
+  const customers = data?.data ?? [];
 
   return (
     <div className="mt-8">
@@ -121,12 +125,12 @@ function DebtorsList({ token }: { token?: string }) {
       <div className="mt-6">
         <div className="grid grid-cols-[1fr_auto] gap-4 border-b border-hairline pb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
           <span>{t('customers.col.customer')}</span>
-          <span className="text-right">{t('customers.col.owes')}</span>
+          <span className="text-right">{t('customers.col.balance')}</span>
         </div>
 
         {isLoading ? (
           <p className="py-8 text-slate-400">Loading…</p>
-        ) : debtors.length === 0 ? (
+        ) : customers.length === 0 ? (
           <div className="flex flex-col items-center py-16 text-center">
             <span className="grid size-14 place-items-center rounded-2xl bg-slate-100 text-slate-400">
               <UsersIcon className="size-7" />
@@ -139,23 +143,38 @@ function DebtorsList({ token }: { token?: string }) {
             </p>
           </div>
         ) : (
-          debtors.map((d) => (
-            <div
-              key={d.id}
-              className="grid grid-cols-[1fr_auto] items-center gap-4 border-b border-hairline py-3"
-            >
-              <button onClick={() => { setSelected(d.id); qc.invalidateQueries({ queryKey: ['debts', 'statement'] }); }} className="min-w-0 text-left hover:bg-slate-50">
-                <p className="truncate font-medium text-slate-900">{d.name}</p>
-                <p className="truncate font-mono text-xs text-slate-400">{d.phone ?? '—'}</p>
-              </button>
-              <div className="flex items-center gap-3">
-                <p className="tabular text-right font-medium text-amber-700">{money(d.balance)}</p>
-                <Button size="sm" variant="ghost" onClick={() => setSelected(d.id)}>
-                  <Coins className="size-4" /> {t('customers.pay')}
-                </Button>
+          customers.map((c) => {
+            const owes = Number(c.balance) > 0;
+            return (
+              <div
+                key={c.id}
+                className="grid grid-cols-[1fr_auto] items-center gap-4 border-b border-hairline py-3"
+              >
+                <button
+                  onClick={() => {
+                    setSelected(c.id);
+                    qc.invalidateQueries({ queryKey: ['debts', 'statement'] });
+                  }}
+                  className="min-w-0 text-left hover:bg-slate-50"
+                >
+                  <p className="truncate font-medium text-slate-900">{c.name}</p>
+                  <p className="truncate font-mono text-xs text-slate-400">{c.phone ?? '—'}</p>
+                </button>
+                <div className="flex items-center gap-3">
+                  <p
+                    className={`tabular text-right font-medium ${owes ? 'text-amber-700' : 'text-slate-400'}`}
+                  >
+                    {owes ? money(c.balance) : '—'}
+                  </p>
+                  {owes && (
+                    <Button size="sm" variant="ghost" onClick={() => setSelected(c.id)}>
+                      <Coins className="size-4" /> {t('customers.pay')}
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
@@ -164,7 +183,10 @@ function DebtorsList({ token }: { token?: string }) {
           customerId={selected}
           token={token}
           onClose={() => setSelected(null)}
-          onPaid={() => qc.invalidateQueries({ queryKey: ['debts'] })}
+          onPaid={() => {
+            qc.invalidateQueries({ queryKey: ['debts'] });
+            qc.invalidateQueries({ queryKey: ['customers'] });
+          }}
         />
       )}
     </div>

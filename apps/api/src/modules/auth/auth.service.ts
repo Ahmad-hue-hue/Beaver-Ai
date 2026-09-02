@@ -136,7 +136,7 @@ export class AuthService {
 
     const me = await this.prisma.user.findUnique({
       where: { id: user.id },
-      select: { serviceExpiresAt: true },
+      select: { approvedAt: true, serviceExpiresAt: true },
     });
 
     const issued = await this.tokens.issueSession(
@@ -155,7 +155,9 @@ export class AuthService {
       user: { id: user.id, name: user.name, email: user.email, isPlatformAdmin: user.isPlatformAdmin },
       businessId: active?.businessId ?? null,
       role: (active?.role as Role) ?? null,
-      serviceStatus: 'ACTIVE',
+      serviceStatus: AuthService.serviceStatus(
+        me ?? { approvedAt: null, serviceExpiresAt: null },
+      ),
       serviceExpiresAt: me?.serviceExpiresAt?.toISOString() ?? null,
       memberships: memberships.map((m) => ({
         businessId: m.businessId,

@@ -41,6 +41,8 @@ interface NavItem {
 }
 
 const OWNER_MANAGER = ['OWNER', 'MANAGER'];
+/** Roles that can use the AI assistant (matches packages/shared ROLE_PERMISSIONS). */
+const AI_ROLES = OWNER_MANAGER;
 
 const NAV: NavItem[] = [
   { href: '/dashboard', label: 'nav.dashboard', icon: LayoutDashboard },
@@ -53,7 +55,7 @@ const NAV: NavItem[] = [
   { href: '/expenses', label: 'nav.expenses', icon: Wallet },
   { href: '/cash', label: 'nav.cash', icon: Coins },
   { href: '/reports', label: 'nav.reports', icon: BarChart3 },
-  { href: '/assistant', label: 'nav.assistant', icon: Bot },
+  { href: '/assistant', label: 'nav.assistant', icon: Bot, roles: AI_ROLES },
   { href: '/team', label: 'nav.team', icon: UserPlus, roles: OWNER_MANAGER },
   { href: '/settings', label: 'nav.settings', icon: Settings, roles: OWNER_MANAGER },
   { href: '/admin', label: 'nav.admin', icon: Shield, adminOnly: true },
