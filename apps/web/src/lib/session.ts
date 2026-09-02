@@ -11,9 +11,9 @@ export interface Membership {
   businessId: string;
   businessName: string;
   role: string;
-  plan: string;
-  isTrial: boolean;
 }
+
+export type ServiceStatus = 'PENDING' | 'ACTIVE' | 'EXPIRED';
 
 export interface Session {
   accessToken: string;
@@ -21,9 +21,15 @@ export interface Session {
   user: SessionUser;
   businessId: string | null;
   role: string | null;
-  plan: string | null;
-  isTrial: boolean;
+  serviceStatus: ServiceStatus;
+  serviceExpiresAt: string | null;
   memberships: Membership[];
+}
+
+/** Register never issues a session — a new account waits for admin approval. */
+export interface RegisterResult {
+  id: string;
+  status: 'PENDING';
 }
 
 export interface RegisterInput {

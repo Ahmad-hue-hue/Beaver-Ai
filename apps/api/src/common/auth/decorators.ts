@@ -4,7 +4,7 @@ import {
   ForbiddenException,
   SetMetadata,
 } from '@nestjs/common';
-import type { FeatureKey, Permission } from '@beaver/shared';
+import type { Permission } from '@beaver/shared';
 import type { AuthenticatedUser } from './auth.types.js';
 
 /** Marks a route as not requiring authentication. */
@@ -15,11 +15,6 @@ export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 export const PERMISSIONS_KEY = 'requiredPermissions';
 export const RequirePermissions = (...perms: Permission[]) =>
   SetMetadata(PERMISSIONS_KEY, perms);
-
-/** Declares the premium plan feature required to access a route (trial bypasses). */
-export const PLAN_FEATURE_KEY = 'requiredPlanFeature';
-export const RequirePlanFeature = (feature: FeatureKey) =>
-  SetMetadata(PLAN_FEATURE_KEY, feature);
 
 /** Injects the authenticated user (req.user). */
 export const CurrentUser = createParamDecorator(

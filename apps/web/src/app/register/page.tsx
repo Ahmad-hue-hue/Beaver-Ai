@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { ArrowRight } from '@/components/ui/icon';
 import { BrandMark } from '@/components/brand-mark';
 import { Button } from '@/components/ui/button';
@@ -14,11 +13,11 @@ import { useI18n } from '@/lib/i18n';
 export default function RegisterPage() {
   const { register } = useAuth();
   const { t } = useI18n();
-  const router = useRouter();
   const [form, setForm] = React.useState({ name: '', email: '', phone: '', password: '' });
   const [consented, setConsented] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
+  const [submitted, setSubmitted] = React.useState(false);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -38,12 +37,43 @@ export default function RegisterPage() {
         password: form.password,
         phone: form.phone || undefined,
       });
-      router.replace('/onboarding'); // new account → set up the business
+      // A new account is created pending admin approval — nothing to log in to yet.
+      setSubmitted(true);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong. Try again.');
     } finally {
       setLoading(false);
     }
+  }
+
+  if (submitted) {
+    return (
+      <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6 py-12">
+        <div className="mb-8 flex items-center gap-4">
+          <BrandMark size={64} />
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('register.approvalTitle')}</h1>
+            <p className="text-slate-500">{t('register.approvalSubtitle')}</p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-hairline bg-surface p-6">
+          <p className="text-sm leading-relaxed text-slate-600">{t('register.approvalBody')}</p>
+          <div className="mt-6 rounded-xl bg-slate-50 p-4 text-sm text-slate-700">
+            <p className="font-medium text-slate-900">{t('register.approvalCost')}</p>
+            <p className="mt-1 leading-relaxed">{t('register.approvalContact')}</p>
+          </div>
+        </div>
+
+        <Link
+          href="/login"
+          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-brand-700"
+        >
+          {t('register.backToLogin')}
+          <ArrowRight className="size-5" />
+        </Link>
+      </main>
+    );
   }
 
   return (

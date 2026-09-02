@@ -13,7 +13,6 @@ import { AuditService } from '../../common/audit/audit.service.js';
 import { PrismaService } from '../../common/prisma/prisma.service.js';
 import { DomainEvents } from '../../common/events/domain-events.js';
 import { InventoryService } from '../inventory/inventory.service.js';
-import { BillingService } from '../billing/billing.service.js';
 import { saleTotals } from './totals.js';
 import { ReturnValidationError, planReturns, refundTotal as refundTotalOf } from './refund.js';
 import type { PlannedReturn as ReturnPlanned } from './refund.js';
@@ -37,7 +36,6 @@ export class SalesService {
     private readonly inventory: InventoryService,
     private readonly audit: AuditService,
     private readonly events: EventEmitter2,
-    private readonly billing: BillingService,
   ) {}
 
   // ─────────────────────────── Create ───────────────────────────
@@ -93,12 +91,6 @@ export class SalesService {
 
     // Real tenders only (CREDIT is not money received).
     const tenders = (dto.payments ?? []).filter((p) => p.method !== 'CREDIT');
-
-    // Digital tender (mobile money / card / bank) is a paid-plan feature. Trial bypasses.
-    const usesPaidMethod = tenders.some((t) => t.method === 'MOBILE_MONEY' || t.method === 'CARD' || t.method === 'BANK');
-    if (usesPaidMethod) {
-      await this.billing.gatePaidPaymentMethod(businessId);
-    }
 
     const tenderTotal = money(tenders.reduce((s, t) => s.plus(dec(t.amount)), ZERO));
 

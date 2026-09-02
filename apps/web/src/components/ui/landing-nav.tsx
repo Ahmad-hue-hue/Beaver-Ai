@@ -30,12 +30,6 @@ export function LandingNav() {
   return (
     <>
       <nav className="hidden items-center gap-0.5 sm:gap-1.5 md:flex">
-        <Link
-          href="/pricing"
-          className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-        >
-          {t('landing.nav.pricing')}
-        </Link>
         <LanguageToggle />
         <Link
           href="/login"
@@ -81,14 +75,6 @@ export function LandingNav() {
             role="menu"
             aria-label={t('landing.menu')}
           >
-            <Link
-              href="/pricing"
-              onClick={close}
-              role="menuitem"
-              className="block rounded-xl px-3.5 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-100"
-            >
-              {t('landing.nav.pricing')}
-            </Link>
             <Link
               href="/login"
               onClick={close}

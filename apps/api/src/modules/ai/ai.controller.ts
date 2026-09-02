@@ -5,7 +5,6 @@ import {
   BusinessId,
   CurrentUser,
   RequirePermissions,
-  RequirePlanFeature,
 } from '../../common/auth/decorators.js';
 import type { AuthenticatedUser } from '../../common/auth/auth.types.js';
 import { AiService } from './ai.service.js';
@@ -14,7 +13,6 @@ import type { ChatMessage } from '../../common/ai/ai.provider.js';
 
 @ApiTags('ai')
 @Controller('ai')
-@RequirePlanFeature('ai')
 export class AiController {
   constructor(private readonly ai: AiService) {}
 

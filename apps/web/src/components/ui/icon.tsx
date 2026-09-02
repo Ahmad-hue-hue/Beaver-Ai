@@ -48,6 +48,8 @@ import {
   Attachment01Icon,
   GhostIcon,
   HistoryIcon,
+  RefreshCwIcon,
+  Alert02Icon,
 } from '@hugeicons/core-free-icons';
 
 export interface IconProps {
@@ -103,3 +105,5 @@ export const Archive = make(Archive01Icon, 'Archive');
 export const Paperclip = make(Attachment01Icon, 'Paperclip');
 export const Ghost = make(GhostIcon, 'Ghost');
 export const History = make(HistoryIcon, 'History');
+export const RefreshCw = make(RefreshCwIcon, 'RefreshCw');
+export const TriangleAlert = make(Alert02Icon, 'TriangleAlert');

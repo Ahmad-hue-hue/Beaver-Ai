@@ -11,14 +11,14 @@ export const metadata: Metadata = {
     template: '%s · Beaver',
   },
   description:
-    'Beaver is the AI-powered operating system for your shop — point of sale, stock and reorders, customers and debt, and an assistant that tells you what to do next. Free 14-day trial, no card required, English & Kiswahili.',
+    'Beaver is the AI-powered operating system for your shop — point of sale, stock and reorders, customers and debt, and an assistant that tells you what to do next. A monthly subscription of 50,000 TZS, English & Kiswahili.',
   manifest: '/manifest.webmanifest',
   applicationName: 'Beaver',
   appleWebApp: { capable: true, title: 'Beaver', statusBarStyle: 'default' },
   openGraph: {
     title: 'Beaver — Business OS for Tanzanian shops',
     description:
-      'Sell faster, track everything, know what’s next. Point of sale, stock, customers & debt, and AI insights — free 14-day trial, no card required.',
+      'Sell faster, track everything, know what’s next. Point of sale, stock, customers & debt, and AI insights — a flat 50,000 TZS a month.',
     url: '/',
     siteName: 'Beaver',
     locale: 'en_US',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Beaver — Business OS for Tanzanian shops',
     description:
-      'Point of sale, stock, customers & debt, and AI insights — free 14-day trial, no card required.',
+      'Point of sale, stock, customers & debt, and AI insights — a flat 50,000 TZS a month.',
   },
   robots: { index: true, follow: true },
 };

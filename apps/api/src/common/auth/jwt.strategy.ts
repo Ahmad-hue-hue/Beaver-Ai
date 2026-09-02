@@ -24,8 +24,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       role: payload.role,
       permissions: payload.perms ?? [],
       isPlatformAdmin: payload.adm ?? false,
-      plan: payload.plan ?? null,
-      isTrial: payload.trip ?? false,
     };
   }
 }

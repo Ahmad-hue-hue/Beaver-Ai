@@ -5,7 +5,6 @@ import { JwtService } from '@nestjs/jwt';
 import {
   permissionsForRole,
   type Permission,
-  type PlanKey,
   type Role,
 } from '@beaver/shared';
 import type { AppConfig } from '../../config/configuration.js';
@@ -18,8 +17,6 @@ export interface SessionContext {
   role: Role | null;
   extraPermissions?: string[];
   isPlatformAdmin: boolean;
-  plan: PlanKey | null;
-  isTrial: boolean;
 }
 
 export interface IssuedTokens {
@@ -53,8 +50,6 @@ export class TokenService {
       role: ctx.role,
       perms: TokenService.resolvePermissions(ctx.role, ctx.extraPermissions),
       adm: ctx.isPlatformAdmin,
-      plan: ctx.plan,
-      trip: ctx.isTrial,
     };
     return this.jwt.sign(payload, {
       secret: this.jwtCfg.accessSecret,

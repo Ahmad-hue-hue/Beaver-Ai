@@ -46,8 +46,9 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  async register(@Body() dto: RegisterDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    return this.send(res, await this.auth.register(dto, this.meta(req)));
+  async register(@Body() dto: RegisterDto, @Req() req: Request) {
+    // A new account is created pending admin approval — no session, no cookies.
+    return this.auth.register(dto, this.meta(req));
   }
 
   @Public()

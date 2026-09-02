@@ -19,6 +19,11 @@ export default function LoginPage() {
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
+  const [autofillLock, setAutofillLock] = React.useState(true);
+
+  const unlockAutofill = () => {
+    if (autofillLock) setAutofillLock(false);
+  };
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,7 +33,19 @@ export default function LoginPage() {
       const s = await login(email, password);
       router.replace(s.businessId ? '/dashboard' : '/onboarding');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Something went wrong. Try again.');
+      if (err instanceof ApiError) {
+        if (err.code === 'ACCOUNT_PENDING') {
+          setError(t('login.pending'));
+          return;
+        }
+        if (err.code === 'ACCOUNT_EXPIRED') {
+          setError(t('login.expired'));
+          return;
+        }
+        setError(err.message);
+      } else {
+        setError('Something went wrong. Try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -44,17 +61,20 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-7">
+      <form onSubmit={onSubmit} className="space-y-7" autoComplete="off">
         <Field label={t('login.email')}>
           <Input
             type="email"
             name="email"
-            autoComplete="email"
+            autoComplete="off"
             inputMode="email"
             autoCapitalize="none"
             spellCheck={false}
             placeholder="asha@duka.co.tz"
             value={email}
+            readOnly={autofillLock}
+            onFocus={unlockAutofill}
+            onPointerDown={unlockAutofill}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
@@ -62,9 +82,12 @@ export default function LoginPage() {
         <Field label={t('login.password')} error={error ?? undefined}>
           <PasswordInput
             name="password"
-            autoComplete="current-password"
+            autoComplete="off"
             placeholder={t('login.passwordPlaceholder')}
             value={password}
+            readOnly={autofillLock}
+            onFocus={unlockAutofill}
+            onPointerDown={unlockAutofill}
             onChange={(e) => setPassword(e.target.value)}
             required
           />

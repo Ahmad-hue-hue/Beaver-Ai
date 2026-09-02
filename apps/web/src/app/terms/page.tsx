@@ -19,24 +19,21 @@ const sections: { title: string; body: string }[] = [
     title: '3. The service',
     body:
       'Beaver provides point-of-sale, inventory, purchasing, sales, analytics, reporting and an optional AI ' +
-      'assistant for retail businesses. Features are offered under pricing plans described on our pricing ' +
-      'page, including a limited free plan and paid plans. Paid plan placement is arranged directly with us; ' +
-      'we will contact you to complete payment when you request an upgrade.',
+      'assistant for retail businesses. Access is by subscription as described below, arranged directly with us.',
   },
   {
-    title: '4. Plans, trials and billing',
+    title: '4. Subscription and billing',
     body:
-      'New businesses may receive a free trial covering every feature for a limited period. On expiry, your ' +
-      'plan reverts to the free tier and any locked features are limited accordingly. There is no auto-renewal ' +
-      'and no automatic charge. If you choose to upgrade, we will reach out to you to arrange payment and such ' +
-      'payment is due as agreed. You may cancel or downgrade at any time.',
+      'Beaver is provided on a per-account monthly subscription of 50,000 TZS. New accounts are approved by us ' +
+      'before they can sign in. Each approved account is granted 30 days of access; at the end of the month the ' +
+      'account pauses and must be renewed by payment arranged directly with us. There is no auto-renewal and no ' +
+      'automatic charge. You may stop using Beaver at any time.',
   },
   {
     title: '5. Acceptable use',
     body:
       'You agree not to misuse the service, attempt to break its security, interfere with other tenants, or use ' +
-      'it to store or process content that is unlawful, deceptive, or infringes the rights of others. You must ' +
-      'not attempt to bypass any feature gating applied to your plan.',
+      'it to store or process content that is unlawful, deceptive, or infringes the rights of others.',
   },
   {
     title: '6. Your data',

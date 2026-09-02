@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
-import { isTrialActive, type PlanKey, type Role } from '@beaver/shared';
+import type { Role } from '@beaver/shared';
 import { PrismaService } from '../../common/prisma/prisma.service.js';
 import { TokenService, type IssuedTokens } from './token.service.js';
 import type { ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto } from './dto.js';
@@ -16,13 +16,20 @@ export interface RequestMeta {
   ip?: string;
 }
 
+export type ServiceStatus = 'PENDING' | 'ACTIVE' | 'EXPIRED';
+
 export interface SessionResult extends IssuedTokens {
   user: { id: string; name: string; email: string; isPlatformAdmin: boolean };
   businessId: string | null;
   role: Role | null;
-  plan: PlanKey | null;
-  isTrial: boolean;
-  memberships: { businessId: string; businessName: string; role: Role; plan: PlanKey; isTrial: boolean }[];
+  serviceStatus: ServiceStatus;
+  serviceExpiresAt: string | null;
+  memberships: { businessId: string; businessName: string; role: Role }[];
+}
+
+export interface RegisterResult {
+  id: string;
+  status: 'PENDING';
 }
 
 @Injectable()
@@ -38,7 +45,40 @@ export class AuthService {
     return createHash('sha256').update(token).digest('hex');
   }
 
-  async register(dto: RegisterDto, meta: RequestMeta): Promise<SessionResult> {
+  private static serviceStatus(user: {
+    approvedAt: Date | null;
+    serviceExpiresAt: Date | null;
+  }): ServiceStatus {
+    if (!user.approvedAt) return 'PENDING';
+    if (!user.serviceExpiresAt || user.serviceExpiresAt.getTime() > Date.now()) return 'ACTIVE';
+    return 'EXPIRED';
+  }
+
+  /**
+   * Blocks session issuance for accounts that are pending approval or whose paid month has
+   * lapsed. Called at every token-issuing boundary (login, refresh, switch-business).
+   */
+  private static assertServiceActive(user: {
+    approvedAt: Date | null;
+    serviceExpiresAt: Date | null;
+  }): void {
+    const status = AuthService.serviceStatus(user);
+    if (status === 'PENDING') {
+      throw new UnauthorizedException({
+        code: 'ACCOUNT_PENDING',
+        message: 'Your account is awaiting admin approval.',
+      });
+    }
+    if (status === 'EXPIRED') {
+      throw new UnauthorizedException({
+        code: 'ACCOUNT_EXPIRED',
+        message: 'Your subscription has expired. Contact the admin to renew it.',
+      });
+    }
+  }
+
+  /** Creates a pending account. No session is issued until the admin approves it. */
+  async register(dto: RegisterDto, _meta: RequestMeta): Promise<RegisterResult> {
     const email = dto.email.toLowerCase().trim();
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) throw new ConflictException('An account with this email already exists.');
@@ -47,16 +87,19 @@ export class AuthService {
     const user = await this.prisma.user.create({
       data: { name: dto.name.trim(), email, phone: dto.phone ?? null, passwordHash },
     });
-
-    // No business yet — onboarding creates the first one and re-issues a scoped session.
-    return this.buildSession(user, null, meta);
+    return { id: user.id, status: 'PENDING' };
   }
 
   async login(dto: LoginDto, meta: RequestMeta): Promise<SessionResult> {
     const email = dto.email.toLowerCase().trim();
     const user = await this.prisma.user.findUnique({
       where: { email },
-      include: { memberships: { where: { status: 'ACTIVE' }, include: { business: true } } },
+      include: {
+        memberships: {
+          where: { status: 'ACTIVE' },
+          include: { business: { select: { id: true, name: true } } },
+        },
+      },
     });
     // Constant-ish work whether or not the user exists (avoid user enumeration via timing).
     const hash = user?.passwordHash ?? '$argon2id$v=19$m=65536,t=3,p=4$aaaaaaaaaaaaaaaa$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
@@ -64,6 +107,9 @@ export class AuthService {
     if (!user || !valid || user.deletedAt) {
       throw new UnauthorizedException('Invalid email or password.');
     }
+
+    // A valid password is required before revealing the account's approval state.
+    AuthService.assertServiceActive(user);
 
     // Pick the most recently updated active business as the default active context.
     const active = [...user.memberships].sort(
@@ -81,15 +127,17 @@ export class AuthService {
   ): Promise<SessionResult> {
     const memberships = await this.prisma.membership.findMany({
       where: { userId: user.id, status: 'ACTIVE' },
-      include: { business: true },
+      include: { business: { select: { id: true, name: true } } },
     });
 
     const active = businessId
       ? memberships.find((m) => m.businessId === businessId)
       : undefined;
 
-    const activePlan = (active?.business.plan as PlanKey) ?? null;
-    const activeTrial = isTrialActive(active?.business.trialEndsAt);
+    const me = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      select: { serviceExpiresAt: true },
+    });
 
     const issued = await this.tokens.issueSession(
       {
@@ -98,8 +146,6 @@ export class AuthService {
         role: (active?.role as Role) ?? null,
         extraPermissions: active?.extraPermissions ?? [],
         isPlatformAdmin: user.isPlatformAdmin,
-        plan: activePlan,
-        isTrial: activeTrial,
       },
       meta,
     );
@@ -109,14 +155,12 @@ export class AuthService {
       user: { id: user.id, name: user.name, email: user.email, isPlatformAdmin: user.isPlatformAdmin },
       businessId: active?.businessId ?? null,
       role: (active?.role as Role) ?? null,
-      plan: activePlan,
-      isTrial: activeTrial,
+      serviceStatus: 'ACTIVE',
+      serviceExpiresAt: me?.serviceExpiresAt?.toISOString() ?? null,
       memberships: memberships.map((m) => ({
         businessId: m.businessId,
         businessName: m.business.name,
         role: m.role as Role,
-        plan: (m.business.plan as PlanKey) ?? 'FREE',
-        isTrial: isTrialActive(m.business.trialEndsAt),
       })),
     };
   }
@@ -129,6 +173,7 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({ where: { id: record.userId } });
     if (!user || user.deletedAt) throw new UnauthorizedException('Account is no longer active.');
+    AuthService.assertServiceActive(user);
 
     await this.tokens.revokeRefreshToken(opaque); // rotation
     return this.buildSession(user, record.businessId, meta);
@@ -150,6 +195,7 @@ export class AuthService {
       throw new UnauthorizedException('You are not a member of that business.');
     }
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    AuthService.assertServiceActive(user);
     if (currentRefresh) await this.tokens.revokeRefreshToken(currentRefresh);
     return this.buildSession(user, businessId, meta);
   }

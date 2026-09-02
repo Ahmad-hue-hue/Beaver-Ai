@@ -28,7 +28,6 @@ import { useAuth } from '@/lib/auth-context';
 import { api } from '@/lib/api-client';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { canUseFeature } from '@/lib/plans';
 import { LanguageToggle, useI18n } from '@/lib/i18n';
 
 interface NavItem {
@@ -37,8 +36,8 @@ interface NavItem {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   roles?: string[];
-  /** Premium feature locked on the current plan — show as an upgrade affordance. */
-  locked?: boolean;
+  /** Only visible to the platform (SaaS-owner) admin. */
+  adminOnly?: boolean;
 }
 
 const OWNER_MANAGER = ['OWNER', 'MANAGER'];
@@ -57,6 +56,7 @@ const NAV: NavItem[] = [
   { href: '/assistant', label: 'nav.assistant', icon: Bot },
   { href: '/team', label: 'nav.team', icon: UserPlus, roles: OWNER_MANAGER },
   { href: '/settings', label: 'nav.settings', icon: Settings, roles: OWNER_MANAGER },
+  { href: '/admin', label: 'nav.admin', icon: Shield, adminOnly: true },
 ];
 
 /** Bell icon with an unread dot, wired to the notifications page. */
@@ -105,27 +105,19 @@ function NavRows({
           return (
             <li key={item.href}>
               <Link
-                href={item.locked ? '/settings/billing' : item.href}
+                href={item.href}
                 onClick={onSelect}
-                title={item.locked ? t('nav.locked.upgrade') : label}
+                title={label}
                 className={cn(
                   'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors',
-                  item.locked
-                    ? 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
-                    : active
-                      ? 'bg-brand-50 text-brand-700'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                  active
+                    ? 'bg-brand-50 text-brand-700'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
                 )}
               >
                 <item.icon className="size-5" />
                 <span className="truncate">{label}</span>
-                {item.locked ? (
-                  <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-brand-200 bg-brand-50 px-2 py-0.5 text-[10px] font-semibold text-brand-700">
-                    <Shield className="size-3" /> PRO
-                  </span>
-                ) : active ? (
-                  <span className="ml-auto size-1.5 shrink-0 rounded-full bg-brand-600" />
-                ) : null}
+                {active && <span className="ml-auto size-1.5 shrink-0 rounded-full bg-brand-600" />}
               </Link>
             </li>
           );
@@ -217,18 +209,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const signOut = () => logout().then(() => router.replace('/login'));
   const role = session.role;
-  const aiEnabled = canUseFeature(session.plan, session.isTrial, 'ai');
-  const showUpgrade = !aiEnabled;
 
-  // Keep every nav item visible; premium items render as a "locked → upgrade" row instead
-  // of disappearing, so users know the feature exists and how to unlock it.
+  // Keep every nav item visible. Roles gate privileged items; platform admin sees the admin console.
   const items = NAV.filter((item) => {
+    if (item.adminOnly && !session.user.isPlatformAdmin) return false;
     if (item.roles && role && !item.roles.includes(role)) return false;
     return true;
-  }).map((item) => ({
-    ...item,
-    locked: item.href?.startsWith('/assistant') && !aiEnabled,
-  }));
+  });
 
   const close = () => setMenuOpen(false);
 
@@ -264,18 +251,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <NavBell count={unreadCount} />
         </div>
       </header>
-
-      {showUpgrade && (
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-brand-100 bg-brand-50 px-5 py-2.5 text-sm text-brand-800 sm:px-8 lg:px-10">
-          <span className="flex items-center gap-2">
-            <Shield className="size-4 shrink-0" />
-            {t('upgrade.free.unlock')}
-          </span>
-          <Link href="/settings/billing" className="font-semibold underline underline-offset-2 hover:text-brand-900">
-            {t('app.upgrade')}
-          </Link>
-        </div>
-      )}
 
       <main className="min-w-0 px-5 pb-12 pt-6 sm:px-8 sm:pb-14 lg:px-10 lg:pt-8">{children}</main>
 

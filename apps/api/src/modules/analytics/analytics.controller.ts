@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { PERMISSIONS } from '@beaver/shared';
-import { BusinessId, RequirePermissions, RequirePlanFeature } from '../../common/auth/decorators.js';
+import { BusinessId, RequirePermissions } from '../../common/auth/decorators.js';
 import { AnalyticsService } from './analytics.service.js';
 
 @ApiTags('analytics')
@@ -11,14 +11,12 @@ export class AnalyticsController {
 
   @Get('overview')
   @RequirePermissions(PERMISSIONS.REPORTS_VIEW_FINANCIAL)
-  @RequirePlanFeature('financialReports')
   overview(@BusinessId() businessId: string) {
     return this.analytics.overview(businessId);
   }
 
   @Get('stats')
   @RequirePermissions(PERMISSIONS.REPORTS_VIEW_FINANCIAL)
-  @RequirePlanFeature('financialReports')
   stats(@BusinessId() businessId: string, @Query('period') period?: string) {
     return this.analytics.stats(businessId, period);
   }

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { api } from '@/lib/api-client';
-import type { OnboardInput, RegisterInput, Session } from '@/lib/session';
+import type { OnboardInput, RegisterInput, RegisterResult, Session } from '@/lib/session';
 
 /**
  * Client-side auth state. The access token lives only in memory; the refresh token is an
@@ -12,11 +12,10 @@ import type { OnboardInput, RegisterInput, Session } from '@/lib/session';
 interface AuthState {
   session: Session | null;
   loading: boolean;
-  /** Replace the in-memory session (used when the API re-issues one, e.g. after a plan
-      change re-scores the JWT/refresh cookie so the new plan takes effect immediately). */
+  /** Replace the in-memory session (used when the API re-issues one). */
   setSession: (session: Session | null) => void;
   login: (email: string, password: string) => Promise<Session>;
-  register: (input: RegisterInput) => Promise<Session>;
+  register: (input: RegisterInput) => Promise<RegisterResult>;
   onboard: (input: OnboardInput) => Promise<Session>;
   logout: () => Promise<void>;
 }
@@ -43,9 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const register = React.useCallback(async (input: RegisterInput) => {
-    const s = await api.post<Session>('/auth/register', input);
-    setSession(s);
-    return s;
+    // Registration creates a pending account — no session is issued until the admin approves.
+    return api.post<RegisterResult>('/auth/register', input);
   }, []);
 
   const onboard = React.useCallback(

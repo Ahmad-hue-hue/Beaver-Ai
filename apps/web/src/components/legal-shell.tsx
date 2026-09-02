@@ -12,12 +12,6 @@ export function LegalHeader() {
         </Link>
         <nav className="flex items-center gap-0.5 sm:gap-1.5">
           <Link
-            href="/pricing"
-            className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 sm:inline-flex"
-          >
-            Pricing
-          </Link>
-          <Link
             href="/register"
             className="whitespace-nowrap rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 sm:px-4"
           >
@@ -43,9 +37,6 @@ export function LegalFooter() {
           </Link>
           <Link href="/privacy" className="transition-colors hover:text-slate-600">
             Privacy
-          </Link>
-          <Link href="/pricing" className="transition-colors hover:text-slate-600">
-            Pricing
           </Link>
         </span>
       </div>

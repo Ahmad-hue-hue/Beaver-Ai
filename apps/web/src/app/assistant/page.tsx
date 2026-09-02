@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import Link from 'next/link';
 import {
   Archive,
   Bot,
@@ -10,7 +9,6 @@ import {
   Incognito,
   Paperclip,
   Send,
-  Shield,
   Sparkles,
   Trash2,
   X,
@@ -18,7 +16,6 @@ import {
 import { AppShell } from '@/components/app-shell';
 import { api, ApiError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
-import { canUseFeature } from '@/lib/plans';
 import { useI18n } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import {
@@ -62,35 +59,13 @@ export default function AssistantPage() {
 
 function AssistantContent() {
   const { session } = useAuth();
-  const { t } = useI18n();
   const token = session?.accessToken;
-  const locked = !canUseFeature(session?.plan, session?.isTrial ?? false, 'ai');
 
   const status = useQuery({
     queryKey: ['ai', 'status'],
     queryFn: () => api.get<Status>('/ai/status', { accessToken: token }),
     enabled: !!token,
   });
-
-  // Feature locked on the current plan → guide the user to upgrade instead of showing errors.
-  if (locked) {
-    return (
-      <div className="mx-auto max-w-xl py-12 text-center">
-        <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-brand-50 text-brand-700">
-          <Shield className="size-7" />
-        </span>
-        <h1 className="mt-5 text-2xl font-semibold tracking-tight text-slate-900">{t('assistant.locked.title')}</h1>
-        <p className="mt-2 leading-relaxed text-slate-500">{t('assistant.locked.body')}</p>
-        <Link
-          href="/settings/billing"
-          className="tap mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-brand-700"
-        >
-          {t('assistant.locked.cta')} <Send className="size-4" />
-        </Link>
-        <p className="mt-3 text-sm text-slate-400">{t('assistant.ownerOnly')}</p>
-      </div>
-    );
-  }
 
   return <AssistantWorkspace token={token} live={status.data?.live ?? false} provider={status.data?.provider} />;
 }
@@ -325,8 +300,17 @@ function AssistantWorkspace({ token, live, provider }: { token?: string; live: b
                 ))}
                 {mutation.isPending && (
                   <div className="flex justify-start">
-                    <div className="rounded-2xl rounded-bl-sm bg-slate-100 px-4 py-2.5 text-slate-400">
-                      {t('assistant.thinking')}
+                    <div className="inline-flex items-center gap-2.5 rounded-2xl rounded-bl-sm bg-slate-100 px-4 py-3 text-slate-500">
+                      <span className="relative grid size-7 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-600">
+                        <Bot className="size-4" />
+                        <span className="thinking-ring absolute inset-0 rounded-full bg-brand-400/50" />
+                      </span>
+                      <span className="text-sm font-medium">{t('assistant.thinking')}</span>
+                      <span className="flex items-center gap-1">
+                        <span className="thinking-dot" />
+                        <span className="thinking-dot" />
+                        <span className="thinking-dot" />
+                      </span>
                     </div>
                   </div>
                 )}
