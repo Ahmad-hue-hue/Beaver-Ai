@@ -163,7 +163,7 @@ export class AiService {
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      return { label: call.name, output: `Error: ${message}`, mutated: false };
+      return { label: call.name, output: `Error: ${formatToolError(message)}`, mutated: false };
     }
   }
 
@@ -194,8 +194,7 @@ export class AiService {
   }
 }
 
-/** A short, self-contained one-line summary of a tool result for the transcript. */
-function summarizeOutcome(name: string, output: string): string {
+/** A short, self-contained one-line summary of a tool result for the transcript. */function summarizeOutcome(name: string, output: string): string {
   if (/^Error:/.test(output)) return output;
   if (/create_product|update_product/.test(name)) return 'Product saved.';
   if (/create_customer/.test(name)) return 'Customer added.';
@@ -211,4 +210,16 @@ function summarizeOutcome(name: string, output: string): string {
   if (/create_unit/.test(name)) return 'Unit created.';
   const t = output.replace(/\s+/g, ' ').trim();
   return t.length > 160 ? `${t.slice(0, 160)}…` : t;
+}
+
+/**
+ * Enriches tool errors the model can act on. Lookup failures almost always mean
+ * the model invented or mangled an ID — point it back at the list output where
+ * the exact [id: ...] value is shown.
+ */
+export function formatToolError(message: string): string {
+  if (/not found/i.test(message)) {
+    return `${message} Hint: that ID does not exist — call the matching list tool (e.g. list_products) and copy the exact [id: ...] value; never invent or reformat IDs.`;
+  }
+  return message;
 }

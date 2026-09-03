@@ -55,6 +55,12 @@ const arrOf = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 
 /** Readable, one-line summaries for the list/read tools — never raw JSON blobs. */
 function formatReadOutput(name: string, result: unknown): string {
+  // Every summary carries the exact database id as [id: ...] so follow-up
+  // write tools (adjust_stock, record_sale, …) receive round-trippable IDs.
+  const tag = (v: unknown): string => {
+    const id = strOf((v as Record<string, unknown>)?.id);
+    return id ? `[id: ${id}] ` : '';
+  };
   switch (name) {
     case 'product_lookup': {
       const p = result as Record<string, unknown> | null | undefined;
@@ -62,7 +68,7 @@ function formatReadOutput(name: string, result: unknown): string {
       const unit = (p.unit as Record<string, unknown> | null)?.abbreviation;
       const stock =
         p.trackInventory === false ? 'service' : `stock ${strOf(p.stockQuantity)}${unit ? ` ${unit}` : ''}`;
-      return `Product: ${strOf(p.name)}${p.sku ? ` (SKU ${strOf(p.sku)})` : ''} — sell ${tzs(
+      return `Product ${tag(p)}${strOf(p.name)}${p.sku ? ` (SKU ${strOf(p.sku)})` : ''} — sell ${tzs(
         p.sellingPrice,
       )}${p.costPrice != null ? `, cost ${tzs(p.costPrice)}` : ''} · ${stock} · reorder at ${strOf(
         p.reorderLevel,
@@ -76,7 +82,7 @@ function formatReadOutput(name: string, result: unknown): string {
           const p = r as Record<string, unknown>;
           const unit = (p.unit as Record<string, unknown> | null)?.abbreviation;
           return (
-            `${strOf(p.name)}${p.sku ? ` (${strOf(p.sku)})` : ''} — ${tzs(p.sellingPrice)} · ` +
+            `${tag(p)}${strOf(p.name)}${p.sku ? ` (${strOf(p.sku)})` : ''} — ${tzs(p.sellingPrice)} · ` +
             `stock ${strOf(p.stockQuantity)}${unit ? ` ${unit}` : ''} · reorder ${strOf(p.reorderLevel)}`
           );
         })
@@ -88,7 +94,7 @@ function formatReadOutput(name: string, result: unknown): string {
       return data
         .map((r) => {
           const c = r as Record<string, unknown>;
-          return `${strOf(c.name)}${c.phone ? ` — ${strOf(c.phone)}` : ''} · owes ${tzs(c.debtBalance)}`;
+          return `${tag(c)}${strOf(c.name)}${c.phone ? ` — ${strOf(c.phone)}` : ''} · owes ${tzs(c.debtBalance)}`;
         })
         .join('\n');
     }
@@ -98,14 +104,14 @@ function formatReadOutput(name: string, result: unknown): string {
       return data
         .map((r) => {
           const s = r as Record<string, unknown>;
-          return `${strOf(s.name)}${s.phone ? ` — ${strOf(s.phone)}` : ''}${s.address ? ` · ${strOf(s.address)}` : ''}`;
+          return `${tag(s)}${strOf(s.name)}${s.phone ? ` — ${strOf(s.phone)}` : ''}${s.address ? ` · ${strOf(s.address)}` : ''}`;
         })
         .join('\n');
     }
     case 'list_categories': {
       const data = arrOf(result);
       if (data.length === 0) return 'No categories found.';
-      return data.map((r) => strOf((r as Record<string, unknown>).name)).join(', ');
+      return data.map((r) => `${tag(r)}${strOf((r as Record<string, unknown>).name)}`).join(', ');
     }
     default:
       return JSON.stringify(result ?? null);
@@ -124,6 +130,10 @@ function schema(
 const str = { type: 'string' };
 const num = { type: 'number' };
 const bool = { type: 'boolean' };
+
+/** Appended to every tool that takes an entity ID — invented IDs never resolve. */
+const ID_HINT =
+  ' Pass the exact id value shown as [id: ...] in list/lookup output — never invent, shorten, uppercase, or reformat an ID.';
 
 const asStr = (v: unknown): string | undefined =>
   v === undefined || v === null || v === '' ? undefined : String(v);
@@ -193,7 +203,7 @@ export class AgentToolRegistry {
         ({ businessId }, a) => products.list(businessId, { search: asStr(a.search), limit: asNum(a.limit) }),
       ),
       product_lookup: t(
-        schema('product_lookup', 'Get one product by ID (with stock, price, reorder level).', { productId: str }, ['productId']),
+        schema('product_lookup', 'Get one product by ID (with stock, price, reorder level).' + ID_HINT, { productId: str }, ['productId']),
         PERMISSIONS.PRODUCTS_VIEW,
         ({ businessId }, a) => products.findOne(businessId, asStr(a.productId) as string),
       ),
@@ -203,7 +213,7 @@ export class AgentToolRegistry {
         ({ businessId }, a) => customers.list(businessId, { search: asStr(a.search), limit: asNum(a.limit) }),
       ),
       customer_statement: t(
-        schema('customer_statement', 'Get a customer’s balance and full debit/credit ledger.', { customerId: str }, ['customerId']),
+        schema('customer_statement', 'Get a customer’s balance and full debit/credit ledger.' + ID_HINT, { customerId: str }, ['customerId']),
         PERMISSIONS.DEBTS_VIEW,
         ({ businessId }, a) => debts.statement(businessId, asStr(a.customerId) as string),
       ),
@@ -234,7 +244,7 @@ export class AgentToolRegistry {
       update_product: t(
         schema(
           'update_product',
-          'Update details of an existing product (name, prices, reorder level, category, etc). Does NOT change stock — use adjust_stock or receive_stock for that.',
+          'Update details of an existing product (name, prices, reorder level, category, etc). Does NOT change stock — use adjust_stock or receive_stock for that.' + ID_HINT,
           { productId: str, name: str, sellingPrice: num, costPrice: num, description: str, categoryId: str, unitId: str, reorderLevel: num },
           ['productId'],
         ),
@@ -268,7 +278,7 @@ export class AgentToolRegistry {
       record_sale: t(
         schema(
           'record_sale',
-          'Ring up a sale. items is a list of {productId, quantity, unitPrice?}; payments is a list of {method, amount, reference?} with method one of CASH, MOBILE_MONEY, BANK, CARD, CREDIT. For a credit sale set the payment method CREDIT (customerId required). Confirm prices/amounts are sensible.',
+          'Ring up a sale. items is a list of {productId, quantity, unitPrice?}; payments is a list of {method, amount, reference?} with method one of CASH, MOBILE_MONEY, BANK, CARD, CREDIT. For a credit sale set the payment method CREDIT (customerId required). Confirm prices/amounts are sensible.' + ID_HINT,
           { items: { type: 'array', items: { type: 'object', properties: { productId: str, quantity: num, unitPrice: num }, required: ['productId', 'quantity'] } }, payments: { type: 'array', items: { type: 'object', properties: { method: str, amount: num, reference: str }, required: ['method', 'amount'] } }, customerId: str, note: str },
           ['items'],
         ),
@@ -278,7 +288,7 @@ export class AgentToolRegistry {
           meta()),
       ),
       void_sale: t(
-        schema('void_sale', 'Void/cancel a completed sale (restocks items, reverses credit). Use only for mistaken sales.', { saleId: str }, ['saleId']),
+        schema('void_sale', 'Void/cancel a completed sale (restocks items, reverses credit). Use only for mistaken sales.' + ID_HINT, { saleId: str }, ['saleId']),
         PERMISSIONS.SALES_CANCEL,
         (ctx, a) => sales.void(ctx.businessId, ctx.actor, asStr(a.saleId) as string, meta()),
       ),
@@ -302,22 +312,22 @@ export class AgentToolRegistry {
           meta()),
       ),
       receive_purchase: t(
-        schema('receive_purchase', 'Receive goods from a purchase order: adds stock and updates cost. Call after record_purchase.', { purchaseId: str }, ['purchaseId']),
+        schema('receive_purchase', 'Receive goods from a purchase order: adds stock and updates cost. Call after record_purchase.' + ID_HINT, { purchaseId: str }, ['purchaseId']),
         PERMISSIONS.PURCHASES_MANAGE,
         (ctx, a) => purchases.receive(ctx.businessId, ctx.actor.userId, asStr(a.purchaseId) as string, meta()),
       ),
       receive_stock: t(
-        schema('receive_stock', 'Manually add stock to a product (stock-in, not purchase-linked).', { productId: str, quantity: num, unitCost: num }, ['productId', 'quantity']),
+        schema('receive_stock', 'Manually add stock to a product (stock-in, not purchase-linked).' + ID_HINT, { productId: str, quantity: num, unitCost: num }, ['productId', 'quantity']),
         PERMISSIONS.INVENTORY_RECEIVE,
         (ctx, a) => inventory.receive(ctx.businessId, ctx.actor.userId, { productId: asStr(a.productId) as string, quantity: asNum(a.quantity) as number, unitCost: asNum(a.unitCost) }, meta()),
       ),
       adjust_stock: t(
-        schema('adjust_stock', 'Correct a product’s stock by a signed quantity (positive adds, negative removes).', { productId: str, quantity: num, reason: str }, ['productId', 'quantity']),
+        schema('adjust_stock', 'Correct a product’s stock by a signed quantity (positive adds, negative removes).' + ID_HINT, { productId: str, quantity: num, reason: str }, ['productId', 'quantity']),
         PERMISSIONS.INVENTORY_ADJUST,
         (ctx, a) => inventory.adjust(ctx.businessId, ctx.actor.userId, { productId: asStr(a.productId) as string, quantity: asNum(a.quantity) as number, reason: asStr(a.reason) }, meta()),
       ),
       write_off_stock: t(
-        schema('write_off_stock', 'Remove damaged/expired/lost stock. type is one of DAMAGE, EXPIRY, LOSS.', { productId: str, quantity: num, type: str, reason: str }, ['productId', 'quantity', 'type']),
+        schema('write_off_stock', 'Remove damaged/expired/lost stock. type is one of DAMAGE, EXPIRY, LOSS.' + ID_HINT, { productId: str, quantity: num, type: str, reason: str }, ['productId', 'quantity', 'type']),
         PERMISSIONS.INVENTORY_ADJUST,
         (ctx, a) => inventory.writeOff(ctx.businessId, ctx.actor.userId, { productId: asStr(a.productId) as string, quantity: asNum(a.quantity) as number, type: asStr(a.type) as 'DAMAGE', reason: asStr(a.reason) }, meta()),
       ),
@@ -329,7 +339,7 @@ export class AgentToolRegistry {
         (ctx, a) => expenses.create(ctx.businessId, ctx.actor.userId, { category: asStr(a.category) as 'RENT', amount: asNum(a.amount) as number, method: asStr(a.method), payee: asStr(a.payee), note: asStr(a.note) }, meta()),
       ),
       record_debt_payment: t(
-        schema('record_debt_payment', 'Record a debt payment from a customer (reduces their balance). amount is what they paid.', { customerId: str, amount: num, method: str, note: str }, ['customerId', 'amount']),
+        schema('record_debt_payment', 'Record a debt payment from a customer (reduces their balance). amount is what they paid.' + ID_HINT, { customerId: str, amount: num, method: str, note: str }, ['customerId', 'amount']),
         PERMISSIONS.DEBTS_MANAGE,
         (ctx, a) => debts.recordPayment(ctx.businessId, ctx.actor.userId, asStr(a.customerId) as string, { amount: asNum(a.amount) as number, method: asStr(a.method) as never, note: asStr(a.note) }, meta()),
       ),
