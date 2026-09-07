@@ -5,6 +5,12 @@ import { AuditService } from '../../common/audit/audit.service.js';
 import { PrismaService } from '../../common/prisma/prisma.service.js';
 import { CreateSupplierDto, ListSuppliersQuery } from './dto.js';
 
+/** Trim each product entry and drop blanks so we never store empty strings. */
+function normalizeProducts(products?: string[]): string[] {
+  if (!products) return [];
+  return [...new Set(products.map((p) => p.trim()).filter(Boolean))];
+}
+
 /**
  * Supplier directory for M4. References purchase documents, so removal is a soft delete
  * (deletedAt) rather than a physical delete — a supplier with history keeps its rows.
@@ -60,6 +66,7 @@ export class SuppliersService {
         phone: dto.phone?.trim() || null,
         address: dto.address?.trim() || null,
         note: dto.note?.trim() || null,
+        products: normalizeProducts(dto.products),
       },
     });
 
@@ -93,6 +100,7 @@ export class SuppliersService {
         phone: dto.phone !== undefined ? dto.phone?.trim() || null : undefined,
         address: dto.address !== undefined ? dto.address?.trim() || null : undefined,
         note: dto.note !== undefined ? dto.note?.trim() || null : undefined,
+        products: dto.products !== undefined ? normalizeProducts(dto.products) : undefined,
       },
     });
 

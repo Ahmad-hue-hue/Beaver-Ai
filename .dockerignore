@@ -1,11 +1,25 @@
+# Dependencies
 node_modules
-**/node_modules
-apps/api/dist
-apps/web/.next
-apps/web/out
-.git
-.env
-**/.env
-apps/api/.env
+apps/*/node_modules
+
+# Build outputs (host may contain stale .next/trace-rooted standalone trees)
+apps/*/.next
+apps/*/dist
+apps/*/build
+
+# Runtime data
+coverage
+backups
 *.log
 bun-debug
+apps/web/out
+
+# Secrets — never ship them into a build context
+.env
+.env.*
+!.env.example
+
+# VCS/metadata
+.git
+.gitignore
+.tsbuildinfo

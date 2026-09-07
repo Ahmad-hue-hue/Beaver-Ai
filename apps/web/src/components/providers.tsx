@@ -5,8 +5,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/lib/auth-context';
 import { I18nProvider } from '@/lib/i18n';
 import { ThemeModeProvider } from '@/lib/theme';
+import { ServiceWorkerRegistrar } from '@/components/sw-register';
 
-/** App-wide client providers: theme + TanStack Query + auth session + i18n. */
+/** App-wide client providers: theme + TanStack Query + auth session + i18n + service worker. */
 export function Providers({ children }: { children: React.ReactNode }) {
   const [client] = React.useState(
     () =>
@@ -19,7 +20,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={client}>
       <AuthProvider>
         <I18nProvider>
-          <ThemeModeProvider>{children}</ThemeModeProvider>
+          <ThemeModeProvider>
+            <ServiceWorkerRegistrar />
+            {children}
+          </ThemeModeProvider>
         </I18nProvider>
       </AuthProvider>
     </QueryClientProvider>

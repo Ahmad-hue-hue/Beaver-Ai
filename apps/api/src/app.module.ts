@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { LoggerModule } from 'nestjs-pino';
 import { configuration } from './config/configuration.js';
+import type { AppConfig } from './config/configuration.js';
 import { CacheModule } from './common/cache/cache.module.js';
 import { EventsModule } from './common/events/events.module.js';
 import { AiModule as CommonAiModule } from './common/ai/ai.module.js';
@@ -27,12 +30,37 @@ import { AiModule } from './modules/ai/ai.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { MembersModule } from './modules/members/members.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
+import { MaintenanceModule } from './modules/maintenance/maintenance.module.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [configuration], cache: true }),
     EventEmitterModule.forRoot({ wildcard: false, maxListeners: 50 }),
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 120 }] }),
+    // Structured JSON logs with per-request correlation ids and header redaction.
+    LoggerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        pinoHttp: {
+          name: 'beaver-api',
+          level: config.get<AppConfig['observability']>('observability')!.logLevel,
+          redact: {
+            paths: [
+              'req.headers.authorization',
+              'req.headers.cookie',
+              'res.headers["set-cookie"]',
+              'req.headers["x-api-key"]',
+            ],
+            censor: '[REDACTED]',
+          },
+          autoLogging: {
+            // Keep the noisy visited-every-few-seconds probes out of the logs.
+            ignore: (req: unknown) =>
+              (req as { url?: string }).url?.startsWith('/api/v1/health') === true,
+          },
+        },
+      }),
+    }),
     PrismaModule,
     CacheModule,
     EventsModule,
@@ -57,6 +85,11 @@ import { AdminModule } from './modules/admin/admin.module.js';
     NotificationsModule,
     MembersModule,
     AdminModule,
+    MaintenanceModule,
+  ],
+  providers: [
+    // Global rate limiting. Per-route overrides (e.g. stricter auth limits) use @Throttle().
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
 export class AppModule {}

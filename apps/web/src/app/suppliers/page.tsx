@@ -16,6 +16,7 @@ interface Supplier {
   phone: string | null;
   address: string | null;
   note: string | null;
+  products?: string[];
   _count?: { purchases: number };
 }
 interface SupplierList { data: Supplier[]; pagination: { total: number } }
@@ -78,8 +79,9 @@ function SuppliersContent() {
       </div>
 
       <div className="mt-6">
-        <div className="grid grid-cols-[1fr_auto_auto] gap-4 border-b border-hairline pb-2 text-xs font-medium uppercase tracking-wide text-slate-400 sm:grid-cols-[1fr_auto_auto_auto]">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-4 border-b border-hairline pb-2 text-xs font-medium uppercase tracking-wide text-slate-400 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto]">
           <span>{t('suppliers.col.supplier')}</span>
+          <span>{t('suppliers.col.products')}</span>
           <span className="text-right">{t('suppliers.col.purchases')}</span>
           <span className="hidden text-right sm:block">{t('suppliers.col.phone')}</span>
           <span className="w-9" />
@@ -99,13 +101,14 @@ function SuppliersContent() {
           </div>
         ) : (
           suppliers.map((s) => (
-            <div key={s.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-hairline py-3 sm:grid-cols-[1fr_auto_auto_auto]">
+            <div key={s.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-4 border-b border-hairline py-3 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto]">
               <div className="min-w-0">
                 <p className="truncate font-medium text-slate-900">{s.name}</p>
                 <p className="truncate font-mono text-xs text-slate-400">
                   {s.address || '—'}
                 </p>
               </div>
+              <p title={s.products?.join(', ')} className="max-w-40 truncate text-slate-500">{s.products?.length ? s.products.join(', ') : '—'}</p>
               <p className="tabular text-right text-slate-500">{s._count?.purchases ?? 0}</p>
               <p className="tabular hidden text-right text-slate-500 sm:block">{s.phone ?? '—'}</p>
               <DeleteSupplier supplier={s} token={token} />
@@ -141,7 +144,7 @@ function DeleteSupplier({ supplier, token }: { supplier: Supplier; token?: strin
 
 function AddSupplier({ token, onDone }: { token?: string; onDone: () => void }) {
   const { t } = useI18n();
-  const [form, setForm] = React.useState({ name: '', phone: '', address: '', note: '' });
+  const [form, setForm] = React.useState({ name: '', phone: '', address: '', note: '', products: '' });
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -152,6 +155,7 @@ function AddSupplier({ token, onDone }: { token?: string; onDone: () => void }) 
         phone: form.phone.trim() || undefined,
         address: form.address.trim() || undefined,
         note: form.note.trim() || undefined,
+        products: form.products.split(',').map((p) => p.trim()).filter(Boolean),
       }, { accessToken: token }),
     onSuccess: onDone,
   });
@@ -173,6 +177,11 @@ function AddSupplier({ token, onDone }: { token?: string; onDone: () => void }) 
         <div className="sm:col-span-2">
           <Field label={t('suppliers.field.address')} hint="Optional">
             <Input placeholder="Street, area, city" value={form.address} onChange={set('address')} />
+          </Field>
+        </div>
+        <div className="sm:col-span-2">
+          <Field label={t('suppliers.field.products')} hint="Optional">
+            <Input placeholder="e.g. Rice, Sugar, Cooking Oil" value={form.products} onChange={set('products')} />
           </Field>
         </div>
         <div className="sm:col-span-2">

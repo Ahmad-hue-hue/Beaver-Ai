@@ -35,6 +35,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://beaver:beaver_dev_password@localhost:5432/beaver?schema=public
+      DIRECT_URL: postgresql://beaver:beaver_dev_password@localhost:5432/beaver?schema=public
       REDIS_URL: redis://localhost:6379
 
     steps:
@@ -66,9 +67,16 @@ jobs:
 
       - name: Test (API)
         working-directory: apps/api
-        run: bun test
+        run: bun test --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
+
+      - name: Upload API coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-coverage
+          path: apps/api/coverage
+          if-no-files-found: warn
 
       - name: Test (shared)
         working-directory: packages/shared
@@ -76,13 +84,7 @@ jobs:
 
       - name: Test (web)
         working-directory: apps/web
-        # The web app has no unit tests; `bun test` exits non-zero when zero files match.
-        run: |
-          if ls src/**/*.test.* src/**/*.spec.* src/*.test.* 2>/dev/null | grep -q .; then
-            bun test
-          else
-            echo "No web test files found — skipping."
-          fi
+        run: bun test
 
       - name: Typecheck
         run: bun run typecheck
@@ -94,3 +96,33 @@ jobs:
         run: bun run build
         env:
           NEXT_TELEMETRY_DISABLED: "1"
+
+  docker-build:
+    name: Docker build (api + web images)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: api
+          push: false
+          load: true
+          tags: beaver-api:ci
+
+      - name: Build web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: web
+          push: false
+          load: true
+          tags: beaver-web:ci
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://localhost:3001

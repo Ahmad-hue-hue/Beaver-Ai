@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsInt,
   IsOptional,
   IsString,
@@ -14,6 +15,7 @@ export class CreateSupplierDto {
   @IsOptional() @IsString() @MaxLength(40) phone?: string;
   @IsOptional() @IsString() @MaxLength(300) address?: string;
   @IsOptional() @IsString() @MaxLength(500) note?: string;
+  @IsOptional() @IsArray() @IsString({ each: true }) @MaxLength(160, { each: true }) products?: string[];
 }
 
 export type UpdateSupplierDto = Partial<CreateSupplierDto>;

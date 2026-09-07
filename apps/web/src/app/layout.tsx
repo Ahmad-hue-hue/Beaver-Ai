@@ -45,11 +45,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" data-theme="beaver" suppressHydrationWarning>
       <head>
         {/* Apply the saved theme before first paint to avoid a light/dark flash. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('beaver-theme');if(t==='beaver'||t==='beaver-dark')document.documentElement.dataset.theme=t;}catch(e){}})();`,
-          }}
-        />
+        {/* eslint-disable-next-line @next/next/no-sync-scripts -- external pre-hydration file; next/script beforeInteractive is App-Router-unsupported and inline is blocked by our CSP */}
+        <script src="/theme-init.js" />
         {/* General Sans (UI) + JetBrains Mono (receipts/IDs) — modern, non-generic. */}
         <link
           rel="stylesheet"

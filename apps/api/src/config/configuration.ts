@@ -28,6 +28,15 @@ const envSchema = z.object({
   AI_VISION_MODEL: z.string().default('minimax/minimax-m3:free'),
   AI_MAX_OUTPUT_TOKENS: z.coerce.number().default(4096),
 
+  // Observability — both optional. No DSN → Sentry stays a no-op; LOG_LEVEL
+  // controls Pino verbosity (trace|debug|info|warn|error), default info.
+  SENTRY_DSN: z.string().optional().default(''),
+  LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error']).default('info'),
+
+  // Data retention for unbounded-growth tables. 0 disables the cleanup sweep.
+  AUDIT_RETENTION_DAYS: z.coerce.number().int().min(0).default(365),
+  MOVEMENT_RETENTION_DAYS: z.coerce.number().int().min(0).default(730),
+
   // First platform admin — created at startup when no admin exists yet.
   ADMIN_PHONE: z.string().optional().default(''),
   ADMIN_PASSWORD: z.string().optional().default(''),
@@ -63,6 +72,14 @@ function buildConfig(env: z.infer<typeof envSchema>) {
       fallbackModel: env.AI_FALLBACK_MODEL,
       visionModel: env.AI_VISION_MODEL,
       maxOutputTokens: env.AI_MAX_OUTPUT_TOKENS,
+    },
+    observability: {
+      sentryDsn: env.SENTRY_DSN,
+      logLevel: env.LOG_LEVEL,
+    },
+    retention: {
+      auditDays: env.AUDIT_RETENTION_DAYS,
+      movementDays: env.MOVEMENT_RETENTION_DAYS,
     },
   };
 }

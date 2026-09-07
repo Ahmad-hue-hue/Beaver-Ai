@@ -6,7 +6,7 @@ export type Locale = 'en' | 'sw';
 
 type Dict = Record<string, string>;
 
-const EN: Dict = {
+export const EN: Dict = {
   /* AppShell */
   'nav.dashboard': 'Dashboard',
   'nav.pos': 'Point of sale',
@@ -287,6 +287,7 @@ const EN: Dict = {
   'suppliers.add': 'Add supplier',
   'suppliers.searchPlaceholder': 'Search suppliers…',
   'suppliers.col.supplier': 'Supplier',
+  'suppliers.col.products': 'Products',
   'suppliers.col.purchases': 'Purchases',
   'suppliers.col.phone': 'Phone',
   'suppliers.loading': 'Loading suppliers…',
@@ -298,6 +299,7 @@ const EN: Dict = {
   'suppliers.field.phone': 'Phone',
   'suppliers.field.address': 'Address',
   'suppliers.field.note': 'Note',
+  'suppliers.field.products': 'Products they supply',
   'suppliers.saveError': 'Could not save supplier.',
   'suppliers.save': 'Save supplier',
 
@@ -683,7 +685,7 @@ const EN: Dict = {
   'adminLogin.failed': 'Something went wrong. Try again.',
 };
 
-const SW: Dict = {
+export const SW: Dict = {
   /* AppShell */
   'nav.dashboard': 'Dashibodi',
   'nav.pos': 'Sehemu ya mauzo',
@@ -964,6 +966,7 @@ const SW: Dict = {
   'suppliers.add': 'Ongeza muuzaji',
   'suppliers.searchPlaceholder': 'Tafuta wauzaji…',
   'suppliers.col.supplier': 'Muuzaji',
+  'suppliers.col.products': 'Bidhaa',
   'suppliers.col.purchases': 'Ununuzi',
   'suppliers.col.phone': 'Simu',
   'suppliers.loading': 'Inapakia wauzaji…',
@@ -975,6 +978,7 @@ const SW: Dict = {
   'suppliers.field.phone': 'Simu',
   'suppliers.field.address': 'Anwani',
   'suppliers.field.note': 'Maelezo',
+  'suppliers.field.products': 'Bidhaa wanazozitoa',
   'suppliers.saveError': 'Imeshindwa kuhifadhi muuzaji.',
   'suppliers.save': 'Hifadhi muuzaji',
 

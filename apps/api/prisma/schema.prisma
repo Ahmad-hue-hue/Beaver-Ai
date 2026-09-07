@@ -9,6 +9,9 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Production uses PgBouncer (transaction pooling) for the runtime URL; migrations
+  // must bypass the pooler, so they run against this direct connection.
+  directUrl = env("DIRECT_URL")
 }
 
 // ─────────────────────────── Enums ───────────────────────────
@@ -575,6 +578,7 @@ model Supplier {
   phone      String?
   address    String?
   note       String?
+  products   String[]  // products this supplier distributes
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime?

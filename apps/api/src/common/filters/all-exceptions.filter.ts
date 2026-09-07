@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import * as Sentry from '@sentry/node';
 import { Prisma } from '@prisma/client';
 import type { Request, Response } from 'express';
 
@@ -48,6 +49,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     if (status >= 500) {
+      // No-op unless a SENTRY_DSN is configured (SDK stays inert without init).
+      Sentry.captureException(exception as Error, {
+        tags: { code, path: req.url },
+        contexts: { request: { method: req.method, url: req.url } },
+      });
       this.logger.error(
         `${req.method} ${req.url} → ${status} ${code}: ${(exception as Error)?.message}`,
         (exception as Error)?.stack,
