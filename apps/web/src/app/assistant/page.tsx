@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Archive,
   Bot,
   History,
   Incognito,
@@ -21,19 +20,17 @@ import { cn } from '@/lib/utils';
 import { invalidateAfterAgentMutations } from '@/lib/agent-cache';
 import {
   type SavedMessage,
-  archiveConversation,
-  clearArchive,
-  loadArchive,
-  loadHistory,
-  removeFromHistory,
-  restoreConversation,
-  upsertConversation,
+  type ThreadSummary,
+  createThread,
+  deleteThread,
+  listThreads,
+  loadThread,
 } from '@/lib/chat-store';
 interface Status { provider: string; live: boolean }
 interface ChatAction { tool: string; label: string; summary: string; mutated: boolean }
-interface ChatReply { reply: string; actions: ChatAction[]; provider: string; live: boolean }
+interface ChatReply { reply: string; actions: ChatAction[]; provider: string; live: boolean; conversationId?: string }
 
-type Panel = 'history' | 'archive' | null;
+type Panel = 'history' | null;
 interface Attachment { name: string; dataUrl: string }
 
 /** Strip any accidental raw JSON fragments a model reply may contain. */
@@ -77,29 +74,47 @@ function AssistantWorkspace({ token, live, provider }: { token?: string; live: b
   const [messages, setMessages] = React.useState<SavedMessage[]>([]);
   const [input, setInput] = React.useState('');
   const [attachment, setAttachment] = React.useState<Attachment | null>(null);
-  const [threadId, setThreadId] = React.useState<string>(() => crypto.randomUUID());
+  // Server-owned private thread for this user + shop; null until the first
+  // saved turn creates it (incognito never creates one).
+  const [threadId, setThreadId] = React.useState<string | null>(null);
   const [incognito, setIncognito] = React.useState(false);
   const [panel, setPanel] = React.useState<Panel>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
+  const threads = useQuery({
+    queryKey: ['ai', 'threads'],
+    queryFn: () => listThreads(token),
+    enabled: !!token,
+  });
+
+  // One-time cleanup: drop the legacy device-local thread pools. Threads now
+  // live server-side per user, so the old shared browser copies must go.
+  React.useEffect(() => {
+    try {
+      window.localStorage.removeItem('beaver.chat.history');
+      window.localStorage.removeItem('beaver.chat.archive');
+    } catch {
+      /* storage unavailable — nothing to clean */
+    }
+  }, []);
+
   const mutation = useMutation({
-    mutationFn: ({ text, images }: { text: string; images?: string[] }) =>
+    mutationFn: ({ text, images, convId }: { text: string; images?: string[]; convId: string | null }) =>
       api.post<ChatReply>(
         '/ai/chat',
         {
-          messages: [
-            ...messages.map(({ content, images }) => ({
-              content,
-              images: images && images.length > 0 ? images : undefined,
-            })),
-            { content: text, images },
-          ],
+          // Only the newest turn travels; history loads server-side from the
+          // caller's own thread (or nothing at all in incognito mode).
+          messages: [{ content: text, images }],
+          ...(convId ? { conversationId: convId } : {}),
         },
         { accessToken: token },
       ),
     onSuccess: (data) => {
       invalidateAfterAgentMutations(qc, data.actions ?? []);
+      if (data.conversationId && data.conversationId !== threadId) setThreadId(data.conversationId);
+      qc.invalidateQueries({ queryKey: ['ai', 'threads'] });
       setMessages((m) => [
         ...m,
         { role: 'user', content: inputAtSend.current, images: imageAtSend.current },
@@ -116,37 +131,28 @@ function AssistantWorkspace({ token, live, provider }: { token?: string; live: b
   const inputAtSend = React.useRef('');
   const imageAtSend = React.useRef<string[] | undefined>(undefined);
 
-  // Persist each finished exchange so History/Archive can restore a thread later.
-  const persist = React.useCallback(
-    (msgs: SavedMessage[]) => {
-      if (msgs.length === 0 || incognito) return;
-      upsertConversation('history', {
-        id: threadId,
-        title: msgs[0]?.content.slice(0, 48) || t('assistant.history.noTitle'),
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        messages: msgs,
-      });
-    },
-    [threadId, incognito, t],
-  );
-  const prevLen = React.useRef(0);
-  React.useEffect(() => {
-    if (messages.length > prevLen.current) persist(messages);
-    prevLen.current = messages.length;
-  }, [messages, persist]);
-
-  const submit = (raw: string) => {
+  const submit = async (raw: string) => {
     const base = raw.trim();
     const images = attachment ? [attachment.dataUrl] : undefined;
     const attachedNote = attachment ? t('assistant.attach.note', { name: attachment.name }) : '';
     const message = [base, attachedNote].filter(Boolean).join('\n\n');
     if ((!message.trim() && !images) || mutation.isPending) return;
+    // First saved turn opens the private server thread; incognito stays stateless.
+    let convId = threadId;
+    if (!incognito && !convId && token) {
+      try {
+        const thread = await createThread(token);
+        convId = thread.id;
+        setThreadId(thread.id);
+      } catch {
+        convId = null; // fall back to a stateless turn rather than losing the question
+      }
+    }
     inputAtSend.current = message;
     imageAtSend.current = images;
     setInput('');
     setAttachment(null);
-    mutation.mutate({ text: message, images });
+    mutation.mutate({ text: message, images, convId: incognito ? null : convId });
   };
 
   const scrollToBottom = React.useCallback(() => {
@@ -160,16 +166,35 @@ function AssistantWorkspace({ token, live, provider }: { token?: string; live: b
     setMessages([]);
     setInput('');
     setAttachment(null);
-    setThreadId(crypto.randomUUID());
-    prevLen.current = 0;
+    setThreadId(null);
   }, []);
 
-  const resumeThread = (id: string, msgs: SavedMessage[]) => {
-    setThreadId(id);
-    setMessages(msgs);
-    prevLen.current = msgs.length;
-    setPanel(null);
-  };
+  const resumeThread = React.useCallback(
+    async (id: string) => {
+      try {
+        const msgs = await loadThread(token, id);
+        setThreadId(id);
+        setMessages(msgs);
+      } catch {
+        // Thread gone (or never ours) — stay on the current view.
+      }
+      setPanel(null);
+    },
+    [token],
+  );
+
+  const removeThread = React.useCallback(
+    async (id: string) => {
+      try {
+        await deleteThread(token, id);
+      } catch {
+        // Already gone — treat as deleted.
+      }
+      if (id === threadId) newChat();
+      qc.invalidateQueries({ queryKey: ['ai', 'threads'] });
+    },
+    [token, threadId, newChat, qc],
+  );
 
   const incognitoToggle = () => {
     setIncognito((v) => !v);
@@ -177,12 +202,6 @@ function AssistantWorkspace({ token, live, provider }: { token?: string; live: b
     if (!incognito) {
       newChat();
     }
-  };
-
-  const archiveCurrent = () => {
-    if (messages.length === 0) return;
-    archiveConversation(threadId);
-    newChat();
   };
 
   const pickAttachment = (files: FileList | null) => {
@@ -197,12 +216,12 @@ function AssistantWorkspace({ token, live, provider }: { token?: string; live: b
 
   const rightPanel = panel ? (
     <SidePanel
-      mode={panel}
       currentId={threadId}
-      currentMessages={messages}
+      threads={threads.data ?? []}
+      loading={threads.isLoading}
       onNewChat={newChat}
       onResume={resumeThread}
-      onArchiveCurrent={archiveCurrent}
+      onDelete={removeThread}
       onClose={() => setPanel(null)}
     />
   ) : null;
@@ -388,13 +407,6 @@ function ChatHeader({
       active: panel === 'history',
       onClick: () => onTogglePanel(panel === 'history' ? null : 'history'),
     },
-    {
-      key: 'archive',
-      icon: Archive,
-      label: t('assistant.archive.title'),
-      active: panel === 'archive',
-      onClick: () => onTogglePanel(panel === 'archive' ? null : 'archive'),
-    },
   ];
 
   return (
@@ -522,54 +534,30 @@ function Composer({
 }
 
 function SidePanel({
-  mode,
   currentId,
-  currentMessages,
+  threads,
+  loading,
   onNewChat,
   onResume,
-  onArchiveCurrent,
+  onDelete,
   onClose,
 }: {
-  mode: Exclude<Panel, null>;
-  currentId: string;
-  currentMessages: SavedMessage[];
+  currentId: string | null;
+  threads: ThreadSummary[];
+  loading: boolean;
   onNewChat: () => void;
-  onResume: (id: string, msgs: SavedMessage[]) => void;
-  onArchiveCurrent: () => void;
+  onResume: (id: string) => void;
+  onDelete: (id: string) => void;
   onClose: () => void;
 }) {
   const { t } = useI18n();
-  const [, force] = React.useReducer((x: number) => x + 1, 0);
-  const items = mode === 'history' ? loadHistory() : loadArchive();
-  const isArchive = mode === 'archive';
-
-  const doArchiveCurrent = () => {
-    onArchiveCurrent();
-    force();
-  };
-  const doResume = (id: string, msgs: SavedMessage[]) => {
-    if (isArchive) {
-      restoreConversation(id);
-      force();
-    }
-    onResume(id, msgs);
-  };
-  const doDelete = (id: string) => {
-    removeFromHistory(id);
-    if (id === currentId) onNewChat();
-    force();
-  };
-  const doClearAll = () => {
-    clearArchive();
-    force();
-  };
 
   return (
     <aside className="flex w-80 shrink-0 flex-col border-l border-hairline bg-surface">
       <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-          {isArchive ? <Archive className="size-4 text-slate-400" /> : <History className="size-4 text-slate-400" />}
-          {isArchive ? t('assistant.archive.title') : t('assistant.history.title')}
+          <History className="size-4 text-slate-400" />
+          {t('assistant.history.title')}
         </h2>
         <button
           type="button"
@@ -582,45 +570,31 @@ function SidePanel({
       </div>
 
       <div className="flex-1 overflow-y-auto p-2">
-        {!isArchive && (
-          <>
-            <button
-              type="button"
-              onClick={() => {
-                onNewChat();
-                onClose();
-              }}
-              className="tap mb-2 flex w-full items-center justify-between rounded-xl bg-brand-50 px-3 py-2.5 text-sm font-medium text-brand-700 transition-colors hover:bg-brand-100"
-            >
-              <span>{t('assistant.history.newChat')}</span>
-              <Send className="size-4" />
-            </button>
-            {currentMessages.length > 0 && (
-              <button
-                type="button"
-                onClick={doArchiveCurrent}
-                className="tap mb-2 flex w-full items-center justify-center gap-2 rounded-xl border border-hairline px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-800"
-              >
-                <Archive className="size-4" />
-                {t('assistant.archive.save')}
-              </button>
-            )}
-          </>
-        )}
+        <button
+          type="button"
+          onClick={() => {
+            onNewChat();
+            onClose();
+          }}
+          className="tap mb-2 flex w-full items-center justify-between rounded-xl bg-brand-50 px-3 py-2.5 text-sm font-medium text-brand-700 transition-colors hover:bg-brand-100"
+        >
+          <span>{t('assistant.history.newChat')}</span>
+          <Send className="size-4" />
+        </button>
 
-        {items.length === 0 ? (
-          <p className="px-3 py-8 text-center text-sm text-slate-400">
-            {isArchive ? t('assistant.archive.empty') : t('assistant.history.empty')}
-          </p>
+        {loading ? (
+          <p className="px-3 py-8 text-center text-sm text-slate-400">{t('assistant.history.loading')}</p>
+        ) : threads.length === 0 ? (
+          <p className="px-3 py-8 text-center text-sm text-slate-400">{t('assistant.history.empty')}</p>
         ) : (
           <ul className="space-y-1">
-            {items.map((c) => {
-              const isCurrent = !isArchive && c.id === currentId;
+            {threads.map((c) => {
+              const isCurrent = c.id === currentId;
               return (
                 <li key={c.id} className="flex items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => doResume(c.id, c.messages)}
+                    onClick={() => onResume(c.id)}
                     className={cn(
                       'flex min-w-0 flex-1 items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors',
                       isCurrent ? 'bg-brand-50 text-brand-700' : 'text-slate-700 hover:bg-slate-100',
@@ -630,18 +604,12 @@ function SidePanel({
                       <span className="block truncate font-medium">{c.title || t('assistant.history.noTitle')}</span>
                       <span className="block truncate text-xs text-slate-400">{shortTime(c.updatedAt)}</span>
                     </span>
-                    {isArchive ? (
-                      <span className="shrink-0 rounded-full border border-hairline px-2 py-0.5 text-[10px] font-medium text-slate-500">
-                        {t('assistant.archive.restore')}
-                      </span>
-                    ) : (
-                      <span className="size-3 shrink-0 rounded-full" />
-                    )}
+                    <span className="size-3 shrink-0 rounded-full" />
                   </button>
-                  {!isArchive && !isCurrent && (
+                  {!isCurrent && (
                     <button
                       type="button"
-                      onClick={() => doDelete(c.id)}
+                      onClick={() => onDelete(c.id)}
                       className="tap grid size-8 shrink-0 place-items-center rounded-lg text-slate-300 transition-colors hover:bg-red-50 hover:text-red-600"
                       title={t('assistant.clearThread')}
                       aria-label={t('assistant.clearThread')}
@@ -655,24 +623,11 @@ function SidePanel({
           </ul>
         )}
       </div>
-
-      {isArchive && items.length > 0 && (
-        <div className="border-t border-hairline p-2">
-          <button
-            type="button"
-            onClick={doClearAll}
-            className="tap flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
-          >
-            <Trash2 className="size-4" />
-            {t('assistant.archive.clear')}
-          </button>
-        </div>
-      )}
     </aside>
   );
 }
 
-function shortTime(ts: number) {
+function shortTime(ts: string | number) {
   const d = new Date(ts);
   const now = new Date();
   const sameDay = d.toDateString() === now.toDateString();

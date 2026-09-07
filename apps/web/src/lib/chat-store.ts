@@ -1,5 +1,7 @@
 'use client';
 
+import { api } from '@/lib/api-client';
+
 export interface SavedAction {
   tool: string;
   label: string;
@@ -16,83 +18,44 @@ export interface SavedMessage {
   actions?: SavedAction[];
 }
 
-export interface Conversation {
+/** One private thread of the signed-in user in the active shop (server-owned). */
+export interface ThreadSummary {
   id: string;
   title: string;
-  createdAt: number;
-  updatedAt: number;
-  messages: SavedMessage[];
+  createdAt: string;
+  updatedAt: string;
 }
 
-const HISTORY_KEY = 'beaver.chat.history';
-const ARCHIVE_KEY = 'beaver.chat.archive';
-const MAX_HISTORY = 50;
-const MAX_ARCHIVE = 100;
-
-function read(key: string): Conversation[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as Conversation[]) : [];
-  } catch {
-    return [];
-  }
+interface ServerMessage {
+  id: string;
+  role: string;
+  content: string;
+  images: string[] | null;
+  createdAt: string;
 }
 
-function write(key: string, value: Conversation[]) {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* storage full / unavailable — fail silently */
-  }
+/** Private thread list for this user + shop, newest first. */
+export async function listThreads(token: string | undefined): Promise<ThreadSummary[]> {
+  if (!token) return [];
+  return api.get<ThreadSummary[]>('/ai/conversations', { accessToken: token });
 }
 
-export function loadHistory(): Conversation[] {
-  return read(HISTORY_KEY);
-}
-export function loadArchive(): Conversation[] {
-  return read(ARCHIVE_KEY);
+/** Start a new private thread for this user + shop. */
+export async function createThread(token: string | undefined): Promise<ThreadSummary> {
+  return api.post<ThreadSummary>('/ai/conversations', {}, { accessToken: token });
 }
 
-/** Upsert a conversation into a named store (history or archive), capped by max. */
-export function upsertConversation(storeKey: 'history' | 'archive', conv: Conversation): void {
-  const key = storeKey === 'history' ? HISTORY_KEY : ARCHIVE_KEY;
-  const max = storeKey === 'history' ? MAX_HISTORY : MAX_ARCHIVE;
-  const list = read(key);
-  const idx = list.findIndex((c) => c.id === conv.id);
-  const next = [...list];
-  if (idx >= 0) next[idx] = conv;
-  else next.unshift(conv);
-  write(key, next.slice(0, max));
+/** Readable transcript (user + assistant turns) of an owned thread. */
+export async function loadThread(token: string | undefined, id: string): Promise<SavedMessage[]> {
+  const rows = await api.get<ServerMessage[]>(`/ai/conversations/${id}/messages`, { accessToken: token });
+  return rows.map((m) => ({
+    role: m.role as 'user' | 'assistant',
+    content: m.content,
+    ...(m.images && m.images.length > 0 ? { images: m.images } : {}),
+  }));
 }
 
-/** Move (and keep) a conversation into the archive store by id. */
-export function archiveConversation(id: string): void {
-  const list = read(HISTORY_KEY);
-  const conv = list.find((c) => c.id === id);
-  if (!conv) return;
-  const kept = { ...conv, updatedAt: Date.now() };
-  upsertConversation('archive', kept);
-  write(HISTORY_KEY, list.filter((c) => c.id !== id));
-}
-
-/** Restore an archived conversation back into the history store. */
-export function restoreConversation(id: string): void {
-  const list = read(ARCHIVE_KEY);
-  const conv = list.find((c) => c.id === id);
-  if (!conv) return;
-  write(ARCHIVE_KEY, list.filter((c) => c.id !== id));
-  upsertConversation('history', { ...conv, updatedAt: Date.now() });
-}
-
-export function removeFromHistory(id: string): void {
-  write(HISTORY_KEY, read(HISTORY_KEY).filter((c) => c.id !== id));
-}
-
-export function clearHistory(): void {
-  write(HISTORY_KEY, []);
-}
-export function clearArchive(): void {
-  write(ARCHIVE_KEY, []);
+/** Delete an owned thread. */
+export async function deleteThread(token: string | undefined, id: string): Promise<void> {
+  await api.del(`/ai/conversations/${id}`, { accessToken: token });
 }

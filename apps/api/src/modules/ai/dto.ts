@@ -20,6 +20,22 @@ export class AiChatDto {
   @ValidateNested({ each: true })
   @Type(() => AiChatMessage)
   messages!: AiChatMessage[];
+
+  /**
+   * Private thread to continue. When set, history is loaded server-side from
+   * the caller's own conversation (ownership enforced) and this turn is
+   * persisted; client-supplied `messages` are then ignored.
+   */
+  @IsOptional()
+  @IsString()
+  conversationId?: string;
+}
+
+export class CreateConversationDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  title?: string;
 }
 
 export class InsightsQuery {

@@ -150,6 +150,7 @@ model Business {
   debtTransactions   CustomerDebtTransaction[]
   notifications      Notification[]
   subscriptionPayments SubscriptionPayment[]
+  aiConversations      AiConversation[]
 
   @@index([deletedAt])
 }
@@ -202,6 +203,7 @@ model User {
   memberships    Membership[]
   refreshTokens  RefreshToken[]
   auditLogs      AuditLog[]
+  aiConversations AiConversation[]
   sales          Sale[]
   returns        Return[]
   // Platform subscription payments (recorded by a platform admin, paid by this account).
@@ -776,4 +778,40 @@ model Notification {
   @@index([businessId, createdAt])
   @@index([businessId, readAt])
   @@index([businessId, refKey])
+}
+
+// ─────────────────────────── AI conversations (private per user) ───────────────────────────
+
+// Assistant threads are strictly private: every read/write filters by BOTH
+// userId and businessId from the JWT. No endpoint lists or opens another
+// user's threads — not owners, not platform admins.
+model AiConversation {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessId String
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  title      String    @default("New chat")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  messages AiMessage[]
+
+  @@index([userId, businessId, updatedAt])
+}
+
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String // user | assistant | tool
+  content        String
+  images         Json? // base64 data URLs (vision turns)
+  toolCalls      Json? // assistant tool-call payloads for transcript replay
+  toolCallId     String? // tool turns: the call id (replays as tool_call_id)
+  toolName       String? // tool turns: which tool produced this result
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId, createdAt])
 }

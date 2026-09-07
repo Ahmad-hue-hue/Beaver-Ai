@@ -38,6 +38,25 @@ export class AiController {
     @CurrentUser() actor: AuthenticatedUser,
     @Body() dto: AiChatDto,
   ) {
+    // Private thread: history comes from the caller's own conversation.
+    if (dto.conversationId) {
+      const latest = dto.messages
+        .map((m) => ({ content: m.content.trim(), images: m.images }))
+        .filter((m) => m.content.length > 0 || (m.images?.length ?? 0) > 0)
+        .at(-1);
+      if (!latest) {
+        return { reply: 'Ask me something to continue this thread.', actions: [], steps: 0, conversationId: dto.conversationId };
+      }
+      const result = await this.ai.chatInConversation(
+        businessId,
+        actor,
+        dto.conversationId,
+        latest.content,
+        latest.images,
+      );
+      return { ...result, provider: this.ai.providerName, live: this.ai.isLive };
+    }
+    // Stateless turn (incognito): client-supplied transcript, nothing persisted.
     const history: ChatMessage[] = dto.messages
       .map((m) => ({ ...m, content: m.content.trim() }))
       .filter((m) => m.content.length > 0 || (m.images?.length ?? 0) > 0)

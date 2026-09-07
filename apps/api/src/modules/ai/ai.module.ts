@@ -15,6 +15,8 @@ import { AiController } from './ai.controller.js';
 import { AiService } from './ai.service.js';
 import { AgentsService } from './agents.service.js';
 import { AgentToolRegistry } from './tools/registry.js';
+import { ConversationsController } from './conversations.controller.js';
+import { ConversationsService } from './conversations.service.js';
 
 @Module({
   imports: [
@@ -31,8 +33,8 @@ import { AgentToolRegistry } from './tools/registry.js';
     InventoryModule,
     UnitsModule,
   ],
-  controllers: [AiController],
-  providers: [AiService, AgentsService, AgentToolRegistry],
+  controllers: [AiController, ConversationsController],
+  providers: [AiService, AgentsService, AgentToolRegistry, ConversationsService],
   exports: [AiService, AgentsService],
 })
 export class AiModule {}

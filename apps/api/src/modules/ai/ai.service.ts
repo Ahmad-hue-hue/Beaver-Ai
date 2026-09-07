@@ -7,6 +7,7 @@ import type { AiProvider, ChatMessage, ToolCall } from '../../common/ai/ai.provi
 import type { AuthenticatedUser } from '../../common/auth/auth.types.js';
 import { AgentsService } from './agents.service.js';
 import { AgentToolRegistry } from './tools/registry.js';
+import { ConversationsService, type PersistedTurn } from './conversations.service.js';
 
 const money = (v: Prisma.Decimal | string | number): string => {
   const d = new Prisma.Decimal(String(v));
@@ -55,6 +56,7 @@ export class AiService {
     private readonly analytics: AnalyticsService,
     private readonly agents: AgentsService,
     private readonly registry: AgentToolRegistry,
+    private readonly conversations: ConversationsService,
   ) {}
 
   get providerName(): string {
@@ -71,11 +73,50 @@ export class AiService {
   }
 
   /**
+   * Continue a private thread. History is loaded server-side from the
+   * caller's OWN conversation (ownership enforced — foreign ids 404), the
+   * new question is persisted before the agent runs, and the resulting
+   * assistant/tool transcript is persisted after (even on agent failure, so
+   * the question is never lost).
+   */
+  async chatInConversation(
+    businessId: string,
+    actor: AuthenticatedUser,
+    conversationId: string,
+    content: string,
+    images?: string[],
+  ): Promise<AgentReply & { conversationId: string }> {
+    await this.conversations.requireOwned(actor.userId, businessId, conversationId);
+    const history = await this.conversations.history(actor.userId, businessId, conversationId);
+    await this.conversations.saveUserMessage(conversationId, content, images);
+
+    const turn: PersistedTurn[] = [];
+    try {
+      const reply = await this.chat(
+        businessId,
+        actor,
+        [...history, { role: 'user', content, images }],
+        turn,
+      );
+      return { ...reply, conversationId };
+    } finally {
+      await this.conversations.saveAssistantTurn(conversationId, turn);
+    }
+  }
+
+  /**
    * Autonomous agent chat. Grounds the model in a live business snapshot, then lets it call
    * business-scoped tools (create products, record sales, adjust stock, …) until it produces a
    * final answer. All tool calls run as `actor` scoped to `businessId` from the JWT.
+   * When `collect` is given, the assistant/tool transcript of this turn is recorded into it
+   * (scrubbed + size-capped for storage).
    */
-  async chat(businessId: string, actor: AuthenticatedUser, history: ChatMessage[]): Promise<AgentReply> {
+  async chat(
+    businessId: string,
+    actor: AuthenticatedUser,
+    history: ChatMessage[],
+    collect?: PersistedTurn[],
+  ): Promise<AgentReply> {
     const business = await this.prisma.business.findUnique({
       where: { id: businessId },
       select: { name: true },
@@ -111,23 +152,27 @@ export class AiService {
 
       if (result.toolCalls.length === 0) {
         const reply = scrubReply(result.text || 'Done.');
+        collect?.push({ role: 'assistant', content: reply });
         return { reply, actions, steps };
       }
 
       if (steps >= MAX_STEPS) {
-        return {
-          reply:
-            scrubReply(result.text) ||
-            'I took several actions but hit my step limit. Here is where things stand — let me know if you want me to continue.',
-          actions,
-          steps,
-        };
+        const reply =
+          scrubReply(result.text) ||
+          'I took several actions but hit my step limit. Here is where things stand — let me know if you want me to continue.';
+        collect?.push({ role: 'assistant', content: reply, toolCalls: result.toolCalls });
+        return { reply, actions, steps };
       }
 
       steps += 1;
       messages.push({
         role: 'assistant',
         content: result.text,
+        toolCalls: result.toolCalls,
+      });
+      collect?.push({
+        role: 'assistant',
+        content: scrubReply(result.text),
         toolCalls: result.toolCalls,
       });
 
@@ -145,6 +190,12 @@ export class AiService {
           role: 'tool',
           name: call.id,
           content: outcome?.output ?? `Success: ${call.name} completed.`,
+        });
+        collect?.push({
+          role: 'tool',
+          content: capStored(outcome?.output ?? `Success: ${call.name} completed.`),
+          callId: call.id,
+          toolName: call.name,
         });
       }
     }
@@ -192,6 +243,11 @@ export class AiService {
     }
     return lines.join('\n') || 'No business data recorded yet.';
   }
+}
+
+/** Cap stored tool outputs so long list results don't bloat the transcript table. */
+function capStored(text: string, max = 4000): string {
+  return text.length > max ? `${text.slice(0, max)}…` : text;
 }
 
 /** A short, self-contained one-line summary of a tool result for the transcript. */function summarizeOutcome(name: string, output: string): string {
