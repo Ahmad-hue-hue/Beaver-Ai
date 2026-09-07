@@ -34,7 +34,6 @@ export class OnboardBusinessDto {
   currency = 'TZS';
 
   @IsOptional() @IsString() @MaxLength(30) phone?: string;
-  @IsOptional() @IsString() @MaxLength(160) email?: string;
   @IsOptional() @IsString() @MaxLength(300) address?: string;
   @IsOptional() @IsString() @MaxLength(60) taxId?: string;
   @IsOptional() @IsISO8601() openingDate?: string;

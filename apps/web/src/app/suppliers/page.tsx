@@ -14,7 +14,6 @@ interface Supplier {
   id: string;
   name: string;
   phone: string | null;
-  email: string | null;
   address: string | null;
   note: string | null;
   _count?: { purchases: number };
@@ -104,7 +103,7 @@ function SuppliersContent() {
               <div className="min-w-0">
                 <p className="truncate font-medium text-slate-900">{s.name}</p>
                 <p className="truncate font-mono text-xs text-slate-400">
-                  {[s.email, s.address].filter(Boolean).join(' · ') || '—'}
+                  {s.address || '—'}
                 </p>
               </div>
               <p className="tabular text-right text-slate-500">{s._count?.purchases ?? 0}</p>
@@ -142,7 +141,7 @@ function DeleteSupplier({ supplier, token }: { supplier: Supplier; token?: strin
 
 function AddSupplier({ token, onDone }: { token?: string; onDone: () => void }) {
   const { t } = useI18n();
-  const [form, setForm] = React.useState({ name: '', phone: '', email: '', address: '', note: '' });
+  const [form, setForm] = React.useState({ name: '', phone: '', address: '', note: '' });
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -151,7 +150,6 @@ function AddSupplier({ token, onDone }: { token?: string; onDone: () => void }) 
       api.post('/suppliers', {
         name: form.name.trim(),
         phone: form.phone.trim() || undefined,
-        email: form.email.trim() || undefined,
         address: form.address.trim() || undefined,
         note: form.note.trim() || undefined,
       }, { accessToken: token }),
@@ -171,9 +169,6 @@ function AddSupplier({ token, onDone }: { token?: string; onDone: () => void }) 
         </div>
         <Field label={t('suppliers.field.phone')} hint="Optional">
           <Input placeholder="+255 7xx xxx xxx" value={form.phone} onChange={set('phone')} />
-        </Field>
-        <Field label={t('suppliers.field.email')} hint="Optional">
-          <Input type="email" placeholder="orders@mtitu.co.tz" value={form.email} onChange={set('email')} />
         </Field>
         <div className="sm:col-span-2">
           <Field label={t('suppliers.field.address')} hint="Optional">

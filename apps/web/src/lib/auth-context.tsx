@@ -14,7 +14,7 @@ interface AuthState {
   loading: boolean;
   /** Replace the in-memory session (used when the API re-issues one). */
   setSession: (session: Session | null) => void;
-  login: (email: string, password: string) => Promise<Session>;
+  login: (phone: string, password: string) => Promise<Session>;
   register: (input: RegisterInput) => Promise<RegisterResult>;
   onboard: (input: OnboardInput) => Promise<Session>;
   logout: () => Promise<void>;
@@ -35,8 +35,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = React.useCallback(async (email: string, password: string) => {
-    const s = await api.post<Session>('/auth/login', { email, password });
+  const login = React.useCallback(async (phone: string, password: string) => {
+    const s = await api.post<Session>('/auth/login', { phone, password });
     setSession(s);
     return s;
   }, []);

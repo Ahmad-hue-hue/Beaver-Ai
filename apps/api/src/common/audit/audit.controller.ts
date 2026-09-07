@@ -29,7 +29,7 @@ export class AuditController {
       orderBy: [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
       take: take + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-      include: { user: { select: { id: true, name: true, email: true } } },
+      include: { user: { select: { id: true, name: true, phone: true } } },
     });
 
     const hasMore = rows.length > take;

@@ -56,7 +56,6 @@ export class CustomersService {
         businessId,
         name: dto.name.trim(),
         phone: dto.phone?.trim() || null,
-        email: dto.email?.trim() || null,
         note: dto.note?.trim() || null,
         creditLimit: dto.creditLimit !== undefined ? dec(dto.creditLimit) : null,
       },

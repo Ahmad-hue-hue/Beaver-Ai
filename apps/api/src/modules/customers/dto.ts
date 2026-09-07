@@ -4,7 +4,6 @@ import { Type } from 'class-transformer';
 export class CreateCustomerDto {
   @IsString() @MinLength(1) @MaxLength(160) name!: string;
   @IsOptional() @IsString() @MaxLength(40) phone?: string;
-  @IsOptional() @IsString() @MaxLength(160) email?: string;
   @IsOptional() @IsString() @MaxLength(500) note?: string;
   @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) creditLimit?: number;
 }

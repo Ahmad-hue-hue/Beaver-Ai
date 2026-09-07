@@ -13,8 +13,7 @@ interface Member {
   membershipId: string;
   userId: string;
   name: string;
-  email: string;
-  phone: string | null;
+  phone: string;
   role: 'OWNER' | 'MANAGER' | 'CASHIER' | 'INVENTORY_STAFF';
   status: 'ACTIVE' | 'SUSPENDED';
 }
@@ -127,13 +126,13 @@ function InviteForm({
   const { t } = useI18n();
   const qc = useQueryClient();
   const [name, setName] = React.useState('');
-  const [email, setEmail] = React.useState('');
+  const [phone, setPhone] = React.useState('');
   const [role, setRole] = React.useState<Member['role']>('CASHIER');
   const [tempPassword, setTempPassword] = React.useState<string | null>(null);
 
   const invite = useMutation({
     mutationFn: () =>
-      api.post<{ temporaryPassword?: string | null }>('/members', { name, email, role }, { accessToken: token }),
+      api.post<{ temporaryPassword?: string | null }>('/members', { name, phone, role }, { accessToken: token }),
     onSuccess: (res) => {
       setTempPassword(res.temporaryPassword ?? null);
       qc.invalidateQueries({ queryKey: ['members'] });
@@ -186,10 +185,11 @@ function InviteForm({
             className="tap h-10 rounded-lg border border-hairline bg-surface px-3 text-sm outline-none focus:border-brand-400"
           />
           <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={t('team.field.email')}
-            type="email"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder={t('team.field.phone')}
+            type="tel"
+            inputMode="tel"
             required
             className="tap h-10 rounded-lg border border-hairline bg-surface px-3 text-sm outline-none focus:border-brand-400"
           />
@@ -284,7 +284,7 @@ function MemberRow({
           </p>
           {isOwner && <Shield className="size-4 text-brand-600" />}
         </div>
-        <p className="truncate text-sm text-slate-500">{m.email}</p>
+        <p className="truncate text-sm tabular-nums text-slate-500">{m.phone}</p>
       </div>
 
       {canManage && !isOwner ? (

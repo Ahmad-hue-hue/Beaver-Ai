@@ -15,7 +15,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const { t } = useI18n();
   const router = useRouter();
-  const [email, setEmail] = React.useState('');
+  const [phone, setPhone] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
@@ -30,8 +30,9 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const s = await login(email, password);
-      router.replace(s.businessId ? '/dashboard' : '/onboarding');
+      const s = await login(phone, password);
+      // Platform admins belong to their own console, not the shop.
+      router.replace(s.user.isPlatformAdmin ? '/admin' : s.businessId ? '/dashboard' : '/onboarding');
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.code === 'ACCOUNT_PENDING') {
@@ -62,20 +63,20 @@ export default function LoginPage() {
       </div>
 
       <form onSubmit={onSubmit} className="space-y-7" autoComplete="off">
-        <Field label={t('login.email')}>
+        <Field label={t('login.phone')}>
           <Input
-            type="email"
-            name="email"
+            type="tel"
+            name="phone"
             autoComplete="off"
-            inputMode="email"
+            inputMode="tel"
             autoCapitalize="none"
             spellCheck={false}
-            placeholder="asha@duka.co.tz"
-            value={email}
+            placeholder="+255 774 899 262"
+            value={phone}
             readOnly={autofillLock}
             onFocus={unlockAutofill}
             onPointerDown={unlockAutofill}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => setPhone(e.target.value)}
             required
           />
         </Field>

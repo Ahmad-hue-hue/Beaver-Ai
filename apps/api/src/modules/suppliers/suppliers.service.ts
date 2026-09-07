@@ -26,7 +26,6 @@ export class SuppliersService {
       where.OR = [
         { name: { contains: s, mode: 'insensitive' } },
         { phone: { contains: s, mode: 'insensitive' } },
-        { email: { contains: s, mode: 'insensitive' } },
       ];
     }
 
@@ -59,7 +58,6 @@ export class SuppliersService {
         businessId,
         name: dto.name.trim(),
         phone: dto.phone?.trim() || null,
-        email: dto.email?.trim() || null,
         address: dto.address?.trim() || null,
         note: dto.note?.trim() || null,
       },
@@ -93,7 +91,6 @@ export class SuppliersService {
       data: {
         name: dto.name !== undefined ? dto.name.trim() : undefined,
         phone: dto.phone !== undefined ? dto.phone?.trim() || null : undefined,
-        email: dto.email !== undefined ? dto.email?.trim() || null : undefined,
         address: dto.address !== undefined ? dto.address?.trim() || null : undefined,
         note: dto.note !== undefined ? dto.note?.trim() || null : undefined,
       },

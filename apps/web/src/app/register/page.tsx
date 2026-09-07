@@ -13,7 +13,7 @@ import { useI18n } from '@/lib/i18n';
 export default function RegisterPage() {
   const { register } = useAuth();
   const { t } = useI18n();
-  const [form, setForm] = React.useState({ name: '', email: '', phone: '', password: '' });
+  const [form, setForm] = React.useState({ name: '', phone: '', password: '' });
   const [consented, setConsented] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
@@ -33,9 +33,8 @@ export default function RegisterPage() {
     try {
       await register({
         name: form.name,
-        email: form.email,
+        phone: form.phone,
         password: form.password,
-        phone: form.phone || undefined,
       });
       // A new account is created pending admin approval — nothing to log in to yet.
       setSubmitted(true);
@@ -62,6 +61,12 @@ export default function RegisterPage() {
           <div className="mt-6 rounded-xl bg-slate-50 p-4 text-sm text-slate-700">
             <p className="font-medium text-slate-900">{t('register.approvalCost')}</p>
             <p className="mt-1 leading-relaxed">{t('register.approvalContact')}</p>
+            <a
+              href="tel:+255774899262"
+              className="tap mt-3 inline-flex w-full items-center justify-center rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-base font-semibold tabular-nums text-brand-700 transition-colors hover:bg-brand-100"
+            >
+              0774899262
+            </a>
           </div>
         </div>
 
@@ -90,11 +95,8 @@ export default function RegisterPage() {
         <Field label={t('register.name')}>
           <Input placeholder="Asha Mushi" value={form.name} onChange={set('name')} required />
         </Field>
-        <Field label={t('register.email')}>
-          <Input type="email" autoComplete="email" placeholder="asha@duka.co.tz" value={form.email} onChange={set('email')} required />
-        </Field>
-        <Field label={t('register.phone')} hint="Optional">
-          <Input placeholder="+255 700 000 000" value={form.phone} onChange={set('phone')} />
+        <Field label={t('register.phone')}>
+          <Input type="tel" inputMode="tel" autoComplete="tel" placeholder="+255 700 000 000" value={form.phone} onChange={set('phone')} required />
         </Field>
         <Field label={t('register.password')} hint={t('register.passwordHint')} error={error ?? undefined}>
           <PasswordInput autoComplete="new-password" placeholder="Create a password" value={form.password} onChange={set('password')} required minLength={8} />

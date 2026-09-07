@@ -254,14 +254,14 @@ export class AgentToolRegistry {
           meta()),
       ),
       create_customer: t(
-        schema('create_customer', 'Add a new customer. Provide name; phone, email, creditLimit optional.', { name: str, phone: str, email: str, creditLimit: num }, ['name']),
+        schema('create_customer', 'Add a new customer. Provide name; phone, creditLimit optional.', { name: str, phone: str, creditLimit: num }, ['name']),
         PERMISSIONS.CUSTOMERS_MANAGE,
-        (ctx, a) => customers.create(ctx.businessId, ctx.actor.userId, { name: asStr(a.name) as string, phone: asStr(a.phone), email: asStr(a.email), creditLimit: asNum(a.creditLimit) }, meta()),
+        (ctx, a) => customers.create(ctx.businessId, ctx.actor.userId, { name: asStr(a.name) as string, phone: asStr(a.phone), creditLimit: asNum(a.creditLimit) }, meta()),
       ),
       create_supplier: t(
-        schema('create_supplier', 'Add a new supplier. Provide name; phone, email, address, note optional.', { name: str, phone: str, email: str, address: str }, ['name']),
+        schema('create_supplier', 'Add a new supplier. Provide name; phone, address, note optional.', { name: str, phone: str, address: str }, ['name']),
         PERMISSIONS.SUPPLIERS_MANAGE,
-        (ctx, a) => suppliers.create(ctx.businessId, ctx.actor.userId, { name: asStr(a.name) as string, phone: asStr(a.phone), email: asStr(a.email), address: asStr(a.address) }, meta()),
+        (ctx, a) => suppliers.create(ctx.businessId, ctx.actor.userId, { name: asStr(a.name) as string, phone: asStr(a.phone), address: asStr(a.address) }, meta()),
       ),
       create_category: t(
         schema('create_category', 'Add a new product category.', { name: str }, ['name']),

@@ -16,7 +16,6 @@ interface Business {
   country: string;
   currency: string;
   phone: string | null;
-  email: string | null;
   address: string | null;
   taxId: string | null;
   settings: {

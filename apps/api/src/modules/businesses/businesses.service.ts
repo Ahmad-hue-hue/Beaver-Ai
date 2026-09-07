@@ -28,7 +28,6 @@ export class BusinessesService {
           country: dto.country.toUpperCase(),
           currency: dto.currency.toUpperCase(),
           phone: dto.phone ?? null,
-          email: dto.email ?? null,
           address: dto.address ?? null,
           taxId: dto.taxId ?? null,
           openingDate: dto.openingDate ? new Date(dto.openingDate) : null,

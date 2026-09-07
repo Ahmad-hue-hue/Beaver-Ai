@@ -9,6 +9,7 @@ import { randomBytes } from 'node:crypto';
 import * as argon2 from 'argon2';
 import { MembershipRole, MembershipStatus } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service.js';
+import { normalizePhone } from '../../common/phone.js';
 import { InviteMemberDto, UpdateMemberRoleDto } from './dto.js';
 
 const MEMBERSHIP_ROLES: MembershipRole[] = [
@@ -29,14 +30,13 @@ export class MembersService {
   async list(businessId: string) {
     const memberships = await this.prisma.membership.findMany({
       where: { businessId },
-      include: { user: { select: { id: true, name: true, email: true, phone: true } } },
+      include: { user: { select: { id: true, name: true, phone: true } } },
       orderBy: [{ role: 'asc' as const }, { createdAt: 'asc' as const }],
     });
     return memberships.map((m) => ({
       membershipId: m.id,
       userId: m.user.id,
       name: m.user.name,
-      email: m.user.email,
       phone: m.user.phone,
       role: m.role,
       status: m.status,
@@ -46,20 +46,20 @@ export class MembersService {
 
   /** Invite a person to the business as a member. Returns an auto-generated password for a brand-new account. */
   async invite(businessId: string, dto: InviteMemberDto) {
-    const email = dto.email.toLowerCase().trim();
+    const phone = normalizePhone(dto.phone);
     if (!MEMBERSHIP_ROLES.includes(dto.role)) {
       throw new BadRequestException('Invalid role.');
     }
 
     return this.prisma.$transaction(async (tx) => {
-      let user = await tx.user.findUnique({ where: { email } });
+      let user = await tx.user.findUnique({ where: { phone } });
       let newPassword: string | null = null;
 
       if (!user) {
         newPassword = tempPassword();
         user = await tx.user.create({
           data: {
-            email,
+            phone,
             name: dto.name.trim(),
             passwordHash: await argon2.hash(newPassword, { type: argon2.argon2id }),
           },

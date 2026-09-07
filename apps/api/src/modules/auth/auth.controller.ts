@@ -6,7 +6,7 @@ import type { AppConfig } from '../../config/configuration.js';
 import type { AuthenticatedUser } from '../../common/auth/auth.types.js';
 import { CurrentUser, Public } from '../../common/auth/decorators.js';
 import { AuthService, type RequestMeta, type SessionResult } from './auth.service.js';
-import { ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto } from './dto.js';
+import { ChangePasswordDto, LoginDto, RegisterDto } from './dto.js';
 
 const REFRESH_COOKIE = 'refresh_token';
 
@@ -87,16 +87,14 @@ export class AuthController {
     return this.send(res, result);
   }
 
-  @Public()
-  @Post('forgot-password')
-  forgotPassword(@Body() dto: ForgotPasswordDto) {
-    return this.auth.requestPasswordReset(dto);
-  }
-
-  @Public()
-  @Post('reset-password')
-  async resetPassword(@Body() dto: ResetPasswordDto) {
-    await this.auth.resetPassword(dto);
+  /** Change the caller's own password (verifies current password, keeps this session). */
+  @Post('change-password')
+  async changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ChangePasswordDto,
+    @Req() req: Request,
+  ) {
+    await this.auth.changePassword(user.userId, dto, req.cookies?.[REFRESH_COOKIE]);
     return { success: true };
   }
 

@@ -27,6 +27,11 @@ const envSchema = z.object({
   AI_FALLBACK_MODEL: z.string().default('minimax/minimax-m2.7:free'),
   AI_VISION_MODEL: z.string().default('minimax/minimax-m3:free'),
   AI_MAX_OUTPUT_TOKENS: z.coerce.number().default(4096),
+
+  // First platform admin — created at startup when no admin exists yet.
+  ADMIN_PHONE: z.string().optional().default(''),
+  ADMIN_PASSWORD: z.string().optional().default(''),
+  ADMIN_NAME: z.string().default('Platform Admin'),
 });
 
 export type AppConfig = ReturnType<typeof buildConfig>;
@@ -45,6 +50,11 @@ function buildConfig(env: z.infer<typeof envSchema>) {
       refreshTtl: env.JWT_REFRESH_TTL,
     },
     cookie: { domain: env.COOKIE_DOMAIN, secure: env.COOKIE_SECURE },
+    adminBootstrap: {
+      phone: env.ADMIN_PHONE,
+      password: env.ADMIN_PASSWORD,
+      name: env.ADMIN_NAME,
+    },
     ai: {
       // No key → mock; OpenRouter key auto-selects OpenRouter; otherwise mock.
       provider: env.OPENROUTER_API_KEY ? 'openrouter' : 'mock',

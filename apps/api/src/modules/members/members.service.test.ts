@@ -15,7 +15,7 @@ describe('MembersService tempPassword', () => {
     }
   });
 
-  it('uses URL-safe characters only (safe for email/SMS and login)', () => {
+  it('uses URL-safe characters only (safe for SMS handover and login)', () => {
     expect(new RegExp('^[A-Za-z0-9_-]+$').test(tempPassword())).toBe(true);
   });
 });

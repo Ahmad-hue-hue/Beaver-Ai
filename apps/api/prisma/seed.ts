@@ -13,7 +13,7 @@ import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
 
-const DEMO_OWNER_EMAIL = 'demo@beaver.local';
+const DEMO_OWNER_PHONE = '+255700000001';
 const DEMO_OWNER_PASSWORD = 'demo1234';
 const BUSINESS_NAME = 'Acme Duka';
 const SERVICE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
@@ -48,7 +48,7 @@ async function main() {
           serviceExpiresAt: new Date(now.getTime() + SERVICE_MONTH_MS),
         },
       });
-      console.log(`Demo owner ${DEMO_OWNER_EMAIL} patched with active subscription.`);
+      console.log(`Demo owner ${DEMO_OWNER_PHONE} patched with active subscription.`);
     } else {
       console.log(`Demo business "${BUSINESS_NAME}" already exists — nothing to do.`);
     }
@@ -61,7 +61,7 @@ async function main() {
   const owner = await prisma.user.create({
     data: {
       name: 'Demo Owner',
-      email: DEMO_OWNER_EMAIL,
+      phone: DEMO_OWNER_PHONE,
       passwordHash: ownerPasswordHash,
       approvedAt: now,
       serviceExpiresAt: new Date(now.getTime() + SERVICE_MONTH_MS),
@@ -311,7 +311,7 @@ async function main() {
 Demo business seeded successfully.
 
   Business: ${BUSINESS_NAME}
-  Owner login: ${DEMO_OWNER_EMAIL} / ${DEMO_OWNER_PASSWORD}
+  Owner login: ${DEMO_OWNER_PHONE} / ${DEMO_OWNER_PASSWORD}
 
 Created: 2 categories, 2 units, 6 products (with stock), 1 supplier + purchase,
 1 customer (with credit debt), 4 sales across recent days, 2 expenses, 1 open till.

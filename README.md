@@ -8,7 +8,9 @@ business (English & Kiswahili). Built multi-tenant and mobile-first for Tanzania
 > Status: **in active construction** (milestone-based). M0–M9 complete (infra, auth/tenancy/RBAC,
 > products/inventory, POS & sales, suppliers/purchases/expenses/cash/debt, analytics/reports,
 > AI assistant + agents, notifications/employees/admin/security, M8 polish/tests/docs/seed/
-> deployment, and M9 SaaS plan gating + 14-day trial). See [`docs/ROADMAP.md`](docs/ROADMAP.md)
+> deployment, and M9 SaaS plan gating + 14-day trial). The platform-admin console (`/admin`)
+> is a Material UI dashboard with full user/business CRUD and an admin-recorded subscription
+> payments ledger. See [`docs/ROADMAP.md`](docs/ROADMAP.md)
 > for milestone scope.
 
 ## Stack

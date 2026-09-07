@@ -53,8 +53,8 @@ function SubscriptionContent() {
             </dd>
           </div>
           <div className="flex items-baseline justify-between gap-4 border-b border-hairline pb-3">
-            <dt className="text-sm text-slate-500">{t('billing.accountEmail')}</dt>
-            <dd className="truncate font-mono text-sm text-slate-800">{session?.user.email}</dd>
+            <dt className="text-sm text-slate-500">{t('billing.accountPhone')}</dt>
+            <dd className="truncate font-mono text-sm text-slate-800">{session?.user.phone}</dd>
           </div>
         </dl>
       </section>

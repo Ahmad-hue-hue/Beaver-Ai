@@ -1,5 +1,4 @@
 import {
-  IsEmail,
   IsInt,
   IsOptional,
   IsString,
@@ -13,7 +12,6 @@ import { Type } from 'class-transformer';
 export class CreateSupplierDto {
   @IsString() @MinLength(1) @MaxLength(160) name!: string;
   @IsOptional() @IsString() @MaxLength(40) phone?: string;
-  @IsOptional() @IsEmail() @MaxLength(160) email?: string;
   @IsOptional() @IsString() @MaxLength(300) address?: string;
   @IsOptional() @IsString() @MaxLength(500) note?: string;
 }

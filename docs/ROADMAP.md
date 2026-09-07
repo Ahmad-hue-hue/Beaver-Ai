@@ -116,7 +116,7 @@ and Docker self-hosting.
   host (postgres + redis internal-only, api :3001, web :80). Same-origin or split-origin web/API
   with build-time `NEXT_PUBLIC_API_URL`.
 - **Demo seed** (`bun --filter api db:seed`): idempotent "Acme Duka" business + owner login
-  `demo@beaver.local` / `demo1234`, products with opening stock, a supplier + goods-received
+  `+255700000001` / `demo1234`, products with opening stock, a supplier + goods-received
   purchase, a customer with credit debt, sales across recent days, expenses, and an open till —
   so every screen has realistic data out of the box.
 - **Expanded pure-logic tests** (deterministic, no DB/HTTP), extracted from services so the maths
@@ -203,4 +203,33 @@ helpers), unit-tested in `plans.test.ts`.
 - **Hygiene:** removed dead assets `preview.html`, `beaver-logo.jpg`, `beaver-hero.png` from `public/`.
 
 
-Test suite grew from 98 → ~130 pure unit tests, all passing alongside typecheck and web lint.
+Test suite grew from 98 → 157 pure unit tests (incl. stubbed AdminService
+review/CRUD/payment suites), all passing alongside typecheck and web lint.
+
+## ✅ Platform-admin console: MUI dashboard + CRUD + subscription payments
+
+- **MUI dashboard (no invented style).** `/admin` was rebuilt with Material UI
+  (`@mui/material` + `@mui/x-data-grid` + `@mui/icons-material`, Beaver brand theme in
+  `apps/web/src/app/admin/mui-theme.ts`) in a Berry/Toolpad-style layout: responsive
+  drawer (temporary slide-in on phones, permanent rail on `lg+`), stat cards
+  (2-up → 3-up → 4-up), and DataGrid tables with mobile column-hiding.
+  MUI is scoped to `/admin` only — the shop app keeps Tailwind/Hugeicons.
+  (Toolpad Core was evaluated and rejected: its peer range is Next 14/15 and this
+  repo runs Next 16.)
+- **CRUD on everything admin sees.** `PATCH`/`DELETE /admin/users/:id` (audited;
+  self-delete, self-demotion and last-admin removal refused), `PATCH`/`DELETE`
+  `/admin/businesses/:id` (delete detaches the whole team in the same atomic
+  transaction — membership rows dropped, accounts and shop history kept),
+  `POST /admin/reviews/:userId/reject` for pending signups. Activity stays
+  read-only (tamper-evident).
+- **Subscription payments.** New `SubscriptionPayment` ledger
+  (`m14_subscription_payments`; `User.lastPaymentAmount` adopted from the orphan
+  `m13` column and now maintained): `GET/POST /admin/payments`,
+  `PATCH /admin/payments/:id` (money fields only — granted period immutable),
+  `DELETE /admin/payments/:id` (void with LIFO discipline + exact expiry reversal).
+  Recording extends `serviceExpiresAt` by `months × 30d` (never shortens) and
+  auto-approves pending accounts. Pure period math lives in
+  `admin/subscription-period.ts` with unit tests; every write is audited and emits
+  `subscription.paid` / `subscription.payment_voided`.
+- Web Payments tab: record dialog (payer search, 50,000 default, M-Pesa/cash/bank/card,
+  months, receipt no.), correct/void actions, printable receipt. Fully bilingual (EN+SW).

@@ -1,15 +1,15 @@
-import { randomBytes, createHash } from 'node:crypto';
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
-  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import type { Role } from '@beaver/shared';
 import { PrismaService } from '../../common/prisma/prisma.service.js';
+import { normalizePhone } from '../../common/phone.js';
 import { TokenService, type IssuedTokens } from './token.service.js';
-import type { ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto } from './dto.js';
+import type { ChangePasswordDto, LoginDto, RegisterDto } from './dto.js';
 
 export interface RequestMeta {
   userAgent?: string;
@@ -19,7 +19,7 @@ export interface RequestMeta {
 export type ServiceStatus = 'PENDING' | 'ACTIVE' | 'EXPIRED';
 
 export interface SessionResult extends IssuedTokens {
-  user: { id: string; name: string; email: string; isPlatformAdmin: boolean };
+  user: { id: string; name: string; phone: string; isPlatformAdmin: boolean };
   businessId: string | null;
   role: Role | null;
   serviceStatus: ServiceStatus;
@@ -34,16 +34,10 @@ export interface RegisterResult {
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokens: TokenService,
   ) {}
-
-  private static hashToken(token: string): string {
-    return createHash('sha256').update(token).digest('hex');
-  }
 
   private static serviceStatus(user: {
     approvedAt: Date | null;
@@ -79,33 +73,41 @@ export class AuthService {
 
   /** Creates a pending account. No session is issued until the admin approves it. */
   async register(dto: RegisterDto, _meta: RequestMeta): Promise<RegisterResult> {
-    const email = dto.email.toLowerCase().trim();
-    const existing = await this.prisma.user.findUnique({ where: { email } });
-    if (existing) throw new ConflictException('An account with this email already exists.');
+    const phone = normalizePhone(dto.phone);
+    const existing = await this.prisma.user.findUnique({ where: { phone } });
+    if (existing) throw new ConflictException('An account with this phone number already exists.');
 
     const passwordHash = await argon2.hash(dto.password, { type: argon2.argon2id });
     const user = await this.prisma.user.create({
-      data: { name: dto.name.trim(), email, phone: dto.phone ?? null, passwordHash },
+      data: { name: dto.name.trim(), phone, passwordHash },
     });
     return { id: user.id, status: 'PENDING' };
   }
 
   async login(dto: LoginDto, meta: RequestMeta): Promise<SessionResult> {
-    const email = dto.email.toLowerCase().trim();
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-      include: {
-        memberships: {
-          where: { status: 'ACTIVE' },
-          include: { business: { select: { id: true, name: true } } },
+    let phone: string;
+    try {
+      phone = normalizePhone(dto.phone);
+    } catch {
+      // Fall through to the generic failure below (no identity probing via errors).
+      phone = '';
+    }
+    const user = phone
+      ? await this.prisma.user.findUnique({
+        where: { phone },
+        include: {
+          memberships: {
+            where: { status: 'ACTIVE' },
+            include: { business: { select: { id: true, name: true } } },
+          },
         },
-      },
-    });
+      })
+      : null;
     // Constant-ish work whether or not the user exists (avoid user enumeration via timing).
     const hash = user?.passwordHash ?? '$argon2id$v=19$m=65536,t=3,p=4$aaaaaaaaaaaaaaaa$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
     const valid = await argon2.verify(hash, dto.password).catch(() => false);
     if (!user || !valid || user.deletedAt) {
-      throw new UnauthorizedException('Invalid email or password.');
+      throw new UnauthorizedException('Invalid phone number or password.');
     }
 
     // A valid password is required before revealing the account's approval state.
@@ -121,7 +123,7 @@ export class AuthService {
 
   /** Build a session scoped to a business (or none), computing role + permissions. */
   async buildSession(
-    user: { id: string; name: string; email: string; isPlatformAdmin: boolean },
+    user: { id: string; name: string; phone: string; isPlatformAdmin: boolean },
     businessId: string | null,
     meta: RequestMeta,
   ): Promise<SessionResult> {
@@ -152,7 +154,7 @@ export class AuthService {
 
     return {
       ...issued,
-      user: { id: user.id, name: user.name, email: user.email, isPlatformAdmin: user.isPlatformAdmin },
+      user: { id: user.id, name: user.name, phone: user.phone, isPlatformAdmin: user.isPlatformAdmin },
       businessId: active?.businessId ?? null,
       role: (active?.role as Role) ?? null,
       serviceStatus: AuthService.serviceStatus(
@@ -203,43 +205,36 @@ export class AuthService {
   }
 
   /**
-   * Begin password reset. Always returns the same response (no user enumeration). Returns the
-   * raw token only in non-production so dev/tests can complete the flow without email.
+   * Change the caller's own password. Verifies the current password first and
+   * invalidates every other session — the path users take after receiving an
+   * admin-issued temporary password.
    */
-  async requestPasswordReset(dto: ForgotPasswordDto): Promise<{ devToken?: string }> {
-    const email = dto.email.toLowerCase().trim();
-    const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) return {};
-
-    const raw = randomBytes(32).toString('hex');
-    await this.prisma.passwordResetToken.create({
-      data: {
-        userId: user.id,
-        tokenHash: AuthService.hashToken(raw),
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
-      },
-    });
-    // TODO(M7): deliver via email/SMS. For now surfaced only in non-prod.
-    this.logger.log(`Password reset requested for ${email}`);
-    return process.env.NODE_ENV === 'production' ? {} : { devToken: raw };
-  }
-
-  async resetPassword(dto: ResetPasswordDto): Promise<void> {
-    const record = await this.prisma.passwordResetToken.findUnique({
-      where: { tokenHash: AuthService.hashToken(dto.token) },
-    });
-    if (!record || record.usedAt || record.expiresAt.getTime() < Date.now()) {
-      throw new UnauthorizedException('Invalid or expired reset link.');
+  async changePassword(
+    userId: string,
+    dto: ChangePasswordDto,
+    currentRefresh: string | undefined,
+  ): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.deletedAt) throw new UnauthorizedException('Account is no longer active.');
+    const valid = await argon2.verify(user.passwordHash, dto.currentPassword).catch(() => false);
+    if (!valid) throw new UnauthorizedException('Current password is incorrect.');
+    if (dto.currentPassword === dto.newPassword) {
+      throw new BadRequestException('New password must be different from the current one.');
     }
-    const passwordHash = await argon2.hash(dto.password, { type: argon2.argon2id });
-    await this.prisma.$transaction([
-      this.prisma.user.update({ where: { id: record.userId }, data: { passwordHash } }),
-      this.prisma.passwordResetToken.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
-      // Invalidate all existing sessions on password change.
-      this.prisma.refreshToken.updateMany({
-        where: { userId: record.userId, revokedAt: null },
+
+    const passwordHash = await argon2.hash(dto.newPassword, { type: argon2.argon2id });
+    const currentHash = currentRefresh ? TokenService.hashOpaque(currentRefresh) : null;
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({ where: { id: userId }, data: { passwordHash } });
+      // Invalidate all sessions except the one making this call.
+      await tx.refreshToken.updateMany({
+        where: {
+          userId,
+          revokedAt: null,
+          ...(currentHash ? { tokenHash: { not: currentHash } } : {}),
+        },
         data: { revokedAt: new Date() },
-      }),
-    ]);
+      });
+    });
   }
 }

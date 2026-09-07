@@ -3,7 +3,7 @@
 export interface SessionUser {
   id: string;
   name: string;
-  email: string;
+  phone: string;
   isPlatformAdmin: boolean;
 }
 
@@ -34,9 +34,8 @@ export interface RegisterResult {
 
 export interface RegisterInput {
   name: string;
-  email: string;
+  phone: string;
   password: string;
-  phone?: string;
 }
 
 export interface OnboardInput {

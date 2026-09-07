@@ -11,7 +11,7 @@ const sections: { title: string; body: string }[] = [
   {
     title: '2. What we collect',
     body:
-      'When you register we collect your name, email address and, optionally, phone number. For your business we ' +
+      'When you register we collect your name and phone number. For your business we ' +
       'collect the details you enter to run it — products, prices, stock, suppliers, customers, sales, purchases, ' +
       'expenses and related records. We may also collect basic technical data such as IP address and browser type ' +
       'to secure and operate the service.',
@@ -72,7 +72,7 @@ const sections: { title: string; body: string }[] = [
   {
     title: '11. Contact',
     body:
-      'For any privacy questions or requests, contact our data protection contact at privacy@beaver.example. We ' +
+      'For any privacy questions or requests, call our data protection contact at 0774 899 262. We ' +
       'are based in Dar es Salaam, Tanzania.',
   },
 ];
@@ -97,9 +97,9 @@ export default function PrivacyPage() {
         </div>
 
         <div className="mt-14 border-t border-hairline pt-6 text-sm text-slate-400">
-          Questions about this policy? Reach out at{' '}
-          <a href="mailto:privacy@beaver.example" className="text-brand-700 hover:text-brand-800">
-            privacy@beaver.example
+          Questions about this policy? Call us at{' '}
+          <a href="tel:+255774899262" className="text-brand-700 hover:text-brand-800">
+            0774 899 262
           </a>
           .
         </div>

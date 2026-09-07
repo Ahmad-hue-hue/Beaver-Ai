@@ -15,6 +15,8 @@ export const DomainEvents = {
   ExpenseRecorded: 'expense.recorded',
   CashSessionClosed: 'cash.session_closed',
   ProductPriceChanged: 'product.price_changed',
+  SubscriptionPaid: 'subscription.paid',
+  SubscriptionPaymentVoided: 'subscription.payment_voided',
 } as const;
 
 export type DomainEventName = (typeof DomainEvents)[keyof typeof DomainEvents];

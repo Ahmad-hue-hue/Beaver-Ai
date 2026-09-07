@@ -120,7 +120,6 @@ model Business {
   country        String       @default("TZ")
   currency       String       @default("TZS")
   phone          String?
-  email          String?
   address        String?
   taxId          String?
   openingDate    DateTime?
@@ -150,6 +149,7 @@ model Business {
   customerPayments   CustomerPayment[]
   debtTransactions   CustomerDebtTransaction[]
   notifications      Notification[]
+  subscriptionPayments SubscriptionPayment[]
 
   @@index([deletedAt])
 }
@@ -188,26 +188,27 @@ model Branch {
 
 model User {
   id              String    @id @default(cuid())
-  email           String    @unique
-  phone           String?
+  phone           String    @unique // login identity — normalized to +255…
   name            String
   passwordHash    String
   isPlatformAdmin Boolean   @default(false)
   approvedAt      DateTime? // null = account pending admin approval
   serviceExpiresAt DateTime? // null = never activated; past date = needs renewal
-  emailVerifiedAt DateTime?
+  lastPaymentAmount Decimal? @db.Decimal(14, 2) // last recorded subscription payment (admin console)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   deletedAt       DateTime?
 
   memberships    Membership[]
   refreshTokens  RefreshToken[]
-  passwordResets PasswordResetToken[]
   auditLogs      AuditLog[]
   sales          Sale[]
   returns        Return[]
+  // Platform subscription payments (recorded by a platform admin, paid by this account).
+  subscriptionPayments SubscriptionPayment[] @relation("PaymentPayer")
+  recordedPayments     SubscriptionPayment[] @relation("PaymentRecorder")
 
-  @@index([email])
+  @@index([phone])
 }
 
 model Membership {
@@ -242,16 +243,35 @@ model RefreshToken {
   @@index([userId])
 }
 
-model PasswordResetToken {
-  id        String    @id @default(cuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String    @unique
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
+// ─────────────────────────── Platform subscriptions (admin-recorded) ───────────────────────────
+
+// A platform subscription payment: a shop account pays the flat monthly fee and the
+// platform admin records it here. Recording extends the payer's serviceExpiresAt.
+// Rows are never hard-deleted — corrections are edits, cancellations are voids
+// (voidedAt), so the money trail stays tamper-evident like the audit log.
+model SubscriptionPayment {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation("PaymentPayer", fields: [userId], references: [id], onDelete: Restrict)
+  businessId   String?
+  business     Business?     @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  amount       Decimal       @db.Decimal(14, 2)
+  method       PaymentMethod @default(CASH)
+  referenceNo  String?
+  paidAt       DateTime      @default(now())
+  months       Int           @default(1)
+  periodStart  DateTime
+  periodEnd    DateTime
+  note         String?
+  recordedById String
+  recordedBy   User          @relation("PaymentRecorder", fields: [recordedById], references: [id], onDelete: Restrict)
+  voidedAt     DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   @@index([userId])
+  @@index([businessId])
+  @@index([recordedById])
 }
 
 // ─────────────────────────── Audit ───────────────────────────
@@ -420,7 +440,6 @@ model Customer {
   business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
   name        String
   phone       String?
-  email       String?
   note        String?
   balance     Decimal   @default(0) @db.Decimal(14, 2) // outstanding debt owed to the business
   creditLimit Decimal?  @db.Decimal(14, 2)
@@ -552,7 +571,6 @@ model Supplier {
   business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
   name       String
   phone      String?
-  email      String?
   address    String?
   note       String?
   createdAt  DateTime  @default(now())

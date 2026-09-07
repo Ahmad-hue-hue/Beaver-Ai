@@ -1,9 +1,12 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { MembershipRole } from '@prisma/client';
 
 export class InviteMemberDto {
-  @IsEmail()
-  email!: string;
+  /** Tanzanian mobile — flexible input, normalized server-side. */
+  @IsString()
+  @MinLength(9)
+  @MaxLength(20)
+  phone!: string;
 
   @IsString()
   @MinLength(1)

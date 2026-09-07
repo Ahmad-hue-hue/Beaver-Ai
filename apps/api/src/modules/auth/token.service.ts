@@ -57,7 +57,7 @@ export class TokenService {
     });
   }
 
-  private static hash(token: string): string {
+  static hashOpaque(token: string): string {
     return createHash('sha256').update(token).digest('hex');
   }
 
@@ -73,7 +73,7 @@ export class TokenService {
       data: {
         userId,
         businessId,
-        tokenHash: TokenService.hash(opaque),
+        tokenHash: TokenService.hashOpaque(opaque),
         userAgent: meta.userAgent ?? null,
         ip: meta.ip ?? null,
         expiresAt,
@@ -92,7 +92,7 @@ export class TokenService {
   /** Validate an opaque refresh token; returns the stored row or null if invalid/expired/revoked. */
   async findValidRefreshToken(opaque: string) {
     const record = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash: TokenService.hash(opaque) },
+      where: { tokenHash: TokenService.hashOpaque(opaque) },
     });
     if (!record) return null;
     if (record.revokedAt || record.expiresAt.getTime() < Date.now()) return null;
@@ -101,7 +101,7 @@ export class TokenService {
 
   async revokeRefreshToken(opaque: string): Promise<void> {
     await this.prisma.refreshToken.updateMany({
-      where: { tokenHash: TokenService.hash(opaque), revokedAt: null },
+      where: { tokenHash: TokenService.hashOpaque(opaque), revokedAt: null },
       data: { revokedAt: new Date() },
     });
   }
