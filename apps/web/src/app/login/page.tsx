@@ -57,8 +57,8 @@ export default function LoginPage() {
       <div className="mb-10 flex items-center gap-4">
         <BrandMark size={64} />
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('login.welcome')}</h1>
-          <p className="text-slate-500">{t('login.subtitle')}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-base-content">{t('login.welcome')}</h1>
+          <p className="text-base-content/60">{t('login.subtitle')}</p>
         </div>
       </div>
 
@@ -100,9 +100,9 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <div className="divider mt-10 pt-5 text-slate-500">
+      <div className="divider mt-10 pt-5 text-base-content/60">
         {t('login.newHere')}{' '}
-        <Link href="/register" className="font-medium text-brand-700 hover:text-brand-800">
+        <Link href="/register" className="font-medium text-primary hover:text-primary">
           {t('login.createAccount')}
         </Link>
       </div>

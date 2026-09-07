@@ -143,7 +143,7 @@ function Pos() {
         <header className="mb-4">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('pos.title')}</h1>
         </header>
-        <div className="mb-4 flex items-center gap-2.5 border-b border-hairline py-2 focus-within:border-brand-600">
+        <div className="mb-4 flex items-center gap-2.5 border-b border-hairline py-2 focus-within:border-primary">
           <Search className="size-5 text-slate-400" />
           <input
             autoFocus
@@ -165,7 +165,7 @@ function Pos() {
                   key={p.id}
                   onClick={() => addToCart(p)}
                   disabled={out}
-                  className="tap flex flex-col justify-between rounded-xl border border-hairline p-3 text-left transition-colors hover:border-brand-600 hover:bg-brand-50/40 disabled:opacity-40"
+                  className="tap flex flex-col justify-between rounded-xl border border-hairline p-3 text-left transition-colors hover:border-brand-600 hover:bg-primary/10/40 disabled:opacity-40"
                 >
                   <span className="line-clamp-2 text-sm font-medium text-slate-800">{p.name}</span>
                   <span className="mt-2 flex items-baseline justify-between">
@@ -187,13 +187,13 @@ function Pos() {
       <div
         className={cn(
           'flex flex-col bg-slate-50 p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] transition-transform duration-300',
-          'fixed inset-0 z-50 lg:static lg:z-auto lg:min-h-0 lg:translate-y-0 lg:rounded-2xl lg:bg-slate-50/70',
+          'fixed inset-0 z-50 lg:static lg:z-auto lg:min-h-0 lg:translate-y-0 lg:rounded-2xl lg:bg-base-100/70',
           cartOpen ? 'translate-y-0' : 'translate-y-full lg:translate-y-0',
         )}
       >
         <div className="mb-2 flex items-center justify-between">
           <p className="flex items-center gap-2 font-medium text-slate-700">
-            <ShoppingCart className="size-5 text-brand-600" /> {t('pos.cart')}
+            <ShoppingCart className="size-5 text-primary" /> {t('pos.cart')}
           </p>
           <div className="flex items-center gap-4">
             {lines.length > 0 && (
@@ -288,7 +288,7 @@ function Pos() {
               <div className="flex items-center justify-between text-sm">
                 <button
                   onClick={() => setTenders((ts) => [...ts, { method: 'MOBILE_MONEY', amount: '' }])}
-                  className="text-brand-700 hover:text-brand-800"
+                  className="text-brand-700 hover:text-primary"
                 >
                   + {t('pos.splitPayment')}
                 </button>
@@ -306,8 +306,8 @@ function Pos() {
                 </p>
               )}
               {due > 0 && (
-                <div className="rounded-lg bg-amber-50 px-3 py-2">
-                  <p className="flex justify-between text-sm text-amber-700">
+                <div className="rounded-lg bg-error/10 px-3 py-2">
+                  <p className="flex justify-between text-sm text-primary">
                     <span>{t('pos.onCredit')}</span><span className="tabular font-medium">{money(due)}</span>
                   </p>
                   <CustomerPicker token={token} customer={customer} onPick={setCustomer} />
@@ -337,7 +337,7 @@ function Pos() {
       {lines.length > 0 && !cartOpen && (
         <button
           onClick={() => setCartOpen(true)}
-          className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] z-40 flex items-center justify-between rounded-xl bg-brand-600 px-5 py-3.5 text-white shadow-lg sm:inset-x-auto sm:right-6 sm:left-[92px] sm:bottom-6 lg:hidden"
+          className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] z-40 flex items-center justify-between rounded-xl bg-primary px-5 py-3.5 text-primary-content shadow-lg sm:inset-x-auto sm:right-6 sm:left-[92px] sm:bottom-6 lg:hidden"
         >
           <span className="flex items-center gap-2 font-medium">
             <ShoppingCart className="size-5" />
@@ -356,7 +356,7 @@ function Stepper({ onClick, children }: { onClick: () => void; children: React.R
   return (
     <button
       onClick={onClick}
-      className="grid size-7 place-items-center rounded-md border border-hairline text-slate-500 hover:border-brand-600 hover:text-brand-700"
+      className="grid size-7 place-items-center rounded-md border border-hairline text-slate-500 hover:border-brand-600 hover:text-primary"
     >
       {children}
     </button>

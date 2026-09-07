@@ -69,7 +69,7 @@ function NavBell({ count, label, onNavigate }: { count: number; label?: string; 
       onClick={onNavigate}
       className={cn(
         'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors',
-        label ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' : 'text-slate-500 hover:text-slate-700',
+        label ? 'text-base-content/70 hover:bg-base-200 hover:text-base-content' : 'text-base-content/60 hover:text-base-content/80',
       )}
     >
       <span className="relative">
@@ -112,14 +112,14 @@ function NavRows({
                 title={label}
                 className={cn(
                   'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors',
-                  active
-                    ? 'bg-brand-50 text-brand-700'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+active
+  ? 'bg-primary/10 text-primary'
+  : 'text-base-content/70 hover:bg-base-200 hover:text-base-content',
                 )}
               >
                 <item.icon className="size-5" />
                 <span className="truncate">{label}</span>
-                {active && <span className="ml-auto size-1.5 shrink-0 rounded-full bg-brand-600" />}
+                {active && <span className="ml-auto size-1.5 shrink-0 rounded-full bg-primary" />}
               </Link>
             </li>
           );
@@ -143,7 +143,7 @@ function SidebarFooter({
 }) {
   const { t } = useI18n();
   return (
-    <div className="border-t border-hairline p-3">
+    <div className="border-t border-base-300 p-3">
       <ul className="space-y-0.5">
         <li>
           <NavBell count={unread} label={notificationsLabel} onNavigate={onNavigate} />
@@ -154,7 +154,7 @@ function SidebarFooter({
         <li>
           <button
             onClick={onSignOut}
-            className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+            className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-base-content/70 transition-colors hover:bg-base-200 hover:text-base-content"
           >
             <LogOut className="size-5" />
             {t('app.signOut')}
@@ -224,7 +224,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh lg:pl-64">
       {/* ─── Persistent sidebar — large screens only ─── */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-hairline bg-surface lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-base-300 bg-base-100 lg:flex">
         <Link href="/dashboard" className="flex items-center gap-2.5 px-5 py-5">
           <BrandMark size={36} />
           <span className="text-lg font-semibold tracking-tight text-slate-900">Beaver</span>
@@ -234,18 +234,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* ─── Top bar — small/medium screens only ─── */}
-      <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-hairline bg-surface/95 px-4 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-base-300 bg-base-100/95 px-4 backdrop-blur lg:hidden">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setMenuOpen(true)}
             aria-label={t('app.openMenu')}
-            className="grid size-10 place-items-center rounded-xl text-slate-600 transition-colors hover:bg-slate-100"
+            className="grid size-10 place-items-center rounded-xl text-base-content/70 transition-colors hover:bg-base-200"
           >
             <Menu className="size-6" />
           </button>
           <Link href="/dashboard" className="flex items-center gap-2">
             <BrandMark size={30} />
-            <span className="text-lg font-semibold tracking-tight text-slate-900">Beaver</span>
+<span className="text-lg font-semibold tracking-tight text-base-content">Beaver</span>
           </Link>
         </div>
         <div className="flex items-center gap-1">
@@ -280,7 +280,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between border-b border-hairline pr-3">
             <Link href="/dashboard" onClick={close} className="flex items-center gap-2.5 px-5 py-5">
               <BrandMark size={32} />
-              <span className="text-lg font-semibold tracking-tight text-slate-900">Beaver</span>
+<span className="text-lg font-semibold tracking-tight text-base-content">Beaver</span>
             </Link>
             <button
               onClick={close}

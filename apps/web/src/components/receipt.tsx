@@ -54,36 +54,36 @@ export function Receipt({
     <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4 backdrop-blur-sm print:static print:bg-white print:p-0 print:backdrop-blur-none">
       <style>{`@media print { body * { visibility: hidden !important; } #receipt, #receipt * { visibility: visible !important; } #receipt { position: absolute; inset: 0; margin: 0 auto; box-shadow: none !important; } .no-print { display: none !important; } }`}</style>
 
-      <div className="w-full max-w-sm rounded-2xl bg-white p-7 shadow-xl print:max-w-none print:rounded-none print:shadow-none">
-        <div className="no-print mb-5 flex items-center gap-2 text-brand-700">
-          <span className="grid size-8 place-items-center rounded-full bg-brand-50">
+      <div className="w-full max-w-sm rounded-2xl bg-base-100 p-7 shadow-xl print:max-w-none print:rounded-none print:shadow-none">
+        <div className="no-print mb-5 flex items-center gap-2 text-primary">
+          <span className="grid size-8 place-items-center rounded-full bg-primary/10">
             <Check className="size-5" strokeWidth={2.5} />
           </span>
           <p className="font-medium">{t('receipt.completed')}</p>
         </div>
 
-        <div id="receipt" className="font-mono text-[13px] leading-relaxed text-slate-800">
+        <div id="receipt" className="font-mono text-[13px] leading-relaxed text-base-content">
           <div className="text-center">
             <p className="text-base font-semibold tracking-tight">{businessName}</p>
-            <p className="text-slate-500">{sale.reference}</p>
-            <p className="text-slate-400">
+            <p className="text-base-content/60">{sale.reference}</p>
+            <p className="text-base-content/50">
               {sale.soldAt ? new Date(sale.soldAt).toLocaleString('en-GB') : ''}
             </p>
           </div>
 
-          <div className="my-3 border-t border-dashed border-slate-300" />
+          <div className="my-3 border-t border-dashed border-base-300" />
 
           {sale.items.map((it) => (
             <div key={it.id} className="mb-1.5">
               <p className="truncate">{it.nameSnapshot}</p>
-              <div className="flex justify-between text-slate-500">
+              <div className="flex justify-between text-base-content/60">
                 <span>{Number(it.quantity)} × {money(it.unitPrice)}</span>
-                <span className="tabular text-slate-800">{money(it.lineTotal)}</span>
+                <span className="tabular text-base-content">{money(it.lineTotal)}</span>
               </div>
             </div>
           ))}
 
-          <div className="my-3 border-t border-dashed border-slate-300" />
+          <div className="my-3 border-t border-dashed border-base-300" />
 
           <Row label={t('receipt.subtotal')} value={money(sale.subtotal)} />
           {Number(sale.discountTotal) > 0 && <Row label={t('receipt.discount')} value={`- ${money(sale.discountTotal)}`} />}
@@ -93,7 +93,7 @@ export function Receipt({
             <span className="tabular">{money(sale.total)}</span>
           </div>
 
-          <div className="my-3 border-t border-dashed border-slate-300" />
+          <div className="my-3 border-t border-dashed border-base-300" />
 
           {sale.payments.map((p, i) => (
             <Row key={i} label={t(METHOD_KEY[p.method] ?? p.method)} value={money(p.amount)} />
@@ -106,14 +106,14 @@ export function Receipt({
             />
           )}
 
-          <p className="mt-4 text-center text-slate-400">{t('receipt.thanks')}</p>
+          <p className="mt-4 text-center text-base-content/50">{t('receipt.thanks')}</p>
         </div>
 
         <div className="no-print mt-6 flex gap-2">
-          <Button variant="subtle" size="sm" className="flex-1" onClick={() => window.print()}>
+          <Button variant="subtle" size="sm" className="flex-1 btn-soft" onClick={() => window.print()}>
             <Printer className="size-4" /> Print
           </Button>
-          <Button size="sm" className="flex-1" onClick={onNewSale}>
+          <Button size="sm" className="flex-1 btn-primary" onClick={onNewSale}>
             <Plus className="size-4" strokeWidth={2.5} /> New sale
           </Button>
         </div>
@@ -124,7 +124,7 @@ export function Receipt({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between text-slate-600">
+    <div className="flex justify-between text-base-content/70">
       <span>{label}</span>
       <span className="tabular">{value}</span>
     </div>

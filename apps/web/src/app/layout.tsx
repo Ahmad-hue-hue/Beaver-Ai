@@ -42,8 +42,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="beaver" suppressHydrationWarning>
       <head>
+        {/* Apply the saved theme before first paint to avoid a light/dark flash. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('beaver-theme');if(t==='beaver'||t==='beaver-dark')document.documentElement.dataset.theme=t;}catch(e){}})();`,
+          }}
+        />
         {/* General Sans (UI) + JetBrains Mono (receipts/IDs) — modern, non-generic. */}
         <link
           rel="stylesheet"

@@ -74,10 +74,10 @@ function DashboardContent() {
     <div className="mx-auto max-w-5xl">
       <header className="flex items-baseline justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-semibold tracking-tight text-base-content">
             {t('dashboard.greeting', { name: firstName(session?.user.name ?? '') })}
           </h1>
-          <p className="mt-1 text-slate-500">
+          <p className="mt-1 text-base-content/60">
             {today} · {session?.memberships[0]?.businessName}
           </p>
         </div>
@@ -109,11 +109,11 @@ function DashboardContent() {
       </div>
 
       {/* Data-derived insight — a taste of the autonomous layer. */}
-      <div className="mt-12 rounded-r-xl border-l-[3px] border-brand-600 bg-brand-50 px-6 py-5">
-        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand-700">
+      <div className="mt-12 rounded-r-xl border-l-[3px] border-primary bg-primary/10 px-6 py-5">
+        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
           <Sparkles className="size-3.5" /> {t('dashboard.aiInsight')}
         </p>
-        <p className="mt-1.5 leading-relaxed text-slate-700">
+        <p className="mt-1.5 leading-relaxed text-base-content/80">
           {isLoading
             ? t('dashboard.studying')
             : lowStock.length > 0
@@ -130,16 +130,16 @@ function DashboardContent() {
       {/* Empty state / quick action */}
       {!isLoading && totalItems === 0 && (
         <div className="mt-12 flex flex-col items-center py-10 text-center">
-          <span className="grid size-16 place-items-center rounded-2xl bg-slate-100 text-slate-400">
+          <span className="grid size-16 place-items-center rounded-2xl bg-base-200 text-base-content/50">
             <Package className="size-8" />
           </span>
-          <p className="mt-4 text-lg font-medium text-slate-800">{t('dashboard.catalogueEmpty')}</p>
-          <p className="mt-1 max-w-sm text-slate-500">
+          <p className="mt-4 text-lg font-medium text-base-content">{t('dashboard.catalogueEmpty')}</p>
+          <p className="mt-1 max-w-sm text-base-content/60">
             {t('dashboard.catalogueEmptyBody')}
           </p>
           <Link
             href="/products"
-            className="tap mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 font-medium text-white transition hover:bg-brand-700"
+            className="tap mt-6 inline-flex items-center gap-2 rounded-xl btn btn-primary px-6 font-medium text-primary-content transition hover:bg-primary"
           >
             {t('dashboard.addProducts')} <ArrowRight className="size-5" />
           </Link>
@@ -165,11 +165,11 @@ function Kpi({
   divide?: boolean;
 }) {
   return (
-    <div className={divide ? 'sm:border-l sm:border-hairline sm:pl-6' : ''}>
-      <p className="text-sm font-medium text-slate-500">{label}</p>
+    <div className={divide ? 'sm:border-l sm:border-base-300 sm:pl-6' : ''}>
+      <p className="text-sm font-medium text-base-content/60">{label}</p>
       <p
         className={`tabular mt-1.5 text-2xl font-semibold tracking-tight ${
-          muted ? 'text-slate-300' : 'text-slate-900'
+          muted ? 'text-slate-300' : 'text-base-content'
         }`}
       >
         {value}
@@ -177,7 +177,7 @@ function Kpi({
       {sub && (
         <p
           className={`mt-1 text-sm ${
-            tone === 'warn' ? 'text-amber-600' : tone === 'ok' ? 'text-brand-600' : 'text-slate-400'
+            tone === 'warn' ? 'text-warning' : tone === 'ok' ? 'text-primary' : 'text-base-content/60'
           }`}
         >
           {sub}

@@ -51,8 +51,8 @@ export default function RegisterPage() {
         <div className="mb-8 flex items-center gap-4">
           <BrandMark size={64} />
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{t('register.approvalTitle')}</h1>
-            <p className="text-slate-500">{t('register.approvalSubtitle')}</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-base-content">{t('register.approvalTitle')}</h1>
+            <p className="text-base-content/60">{t('register.approvalSubtitle')}</p>
           </div>
         </div>
 
