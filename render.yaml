@@ -1,0 +1,81 @@
+# Render Blueprint for Beaver's API + Redis.
+#
+# Postgres is NOT here — it's Neon (external to Render), so DATABASE_URL and
+# DIRECT_URL are `sync: false` (Render prompts for the value once at Blueprint-apply
+# time rather than storing it in this file).
+#
+# To use: commit this file at the repo root, then in the Render Dashboard:
+#   New > Blueprint > connect this repo > review the plan > Apply
+#
+# After the one-time apply, env vars can be managed via the Render API or dashboard.
+
+services:
+  - type: web
+    runtime: docker
+    name: beaver-api
+    repo: https://github.com/Ahmad-hue-hue/Beaver-Ai.git
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # Upgraded to `starter` once past prototyping (avoids 15-min idle spin-down + 30-60s cold starts).
+    plan: free
+    healthCheckPath: /api/v1/health/ready
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # Neon pooled connection string — set once in the dashboard
+      - key: DIRECT_URL
+        sync: false # Neon direct (unpooled) connection string — for migrations
+      - key: REDIS_HOST
+        fromService:
+          type: keyvalue
+          name: beaver-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: keyvalue
+          name: beaver-redis
+          property: port
+      - key: CORS_ORIGINS
+        sync: false # e.g. https://app.beaver.app
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TTL
+        value: 900
+      - key: JWT_REFRESH_TTL
+        value: 1209600
+      - key: COOKIE_DOMAIN
+        sync: false # e.g. .beaver.app
+      - key: COOKIE_SECURE
+        value: true
+      - key: COOKIE_SAMESITE
+        value: none
+      - key: ADMIN_PHONE
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: AI_MODEL
+        value: minimax/minimax-m3:free
+      - key: AI_FALLBACK_MODEL
+        value: minimax/minimax-m2.7:free
+      - key: AI_VISION_MODEL
+        value: minimax/minimax-m3:free
+      - key: AI_MAX_OUTPUT_TOKENS
+        value: 4096
+      - key: LOG_LEVEL
+        value: info
+      - key: AUDIT_RETENTION_DAYS
+        value: 365
+      - key: MOVEMENT_RETENTION_DAYS
+        value: 730
+
+  - type: keyvalue
+    name: beaver-redis
+    plan: free # in-memory-only (data lost on restart); switch to `starter` for persistence
+    ipAllowList: [] # only reachable from other Render services in this workspace
+    maxmemoryPolicy: allkeys-lru

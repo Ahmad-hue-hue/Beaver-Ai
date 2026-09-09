@@ -3,6 +3,7 @@ import { z } from 'zod';
 /** Environment schema — validated at boot so misconfig fails fast (never leaks secrets). */
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  PORT: z.coerce.number().optional(),
   API_PORT: z.coerce.number().default(3001),
   CORS_ORIGINS: z.string().default('http://localhost:3000'),
 
@@ -20,6 +21,7 @@ const envSchema = z.object({
     .string()
     .default('false')
     .transform((v) => v === 'true'),
+  COOKIE_SAMESITE: z.enum(['lax', 'none', 'strict']).default('lax'),
 
   AI_PROVIDER: z.enum(['openrouter', 'mock']).default('openrouter'),
   OPENROUTER_API_KEY: z.string().optional().default(''),
@@ -48,7 +50,7 @@ export type AppConfig = ReturnType<typeof buildConfig>;
 function buildConfig(env: z.infer<typeof envSchema>) {
   return {
     env: env.NODE_ENV,
-    port: env.API_PORT,
+    port: env.PORT ?? env.API_PORT,
     corsOrigins: env.CORS_ORIGINS.split(',').map((o) => o.trim()),
     database: { url: env.DATABASE_URL },
     redis: { host: env.REDIS_HOST, port: env.REDIS_PORT },
@@ -58,7 +60,7 @@ function buildConfig(env: z.infer<typeof envSchema>) {
       accessTtl: env.JWT_ACCESS_TTL,
       refreshTtl: env.JWT_REFRESH_TTL,
     },
-    cookie: { domain: env.COOKIE_DOMAIN, secure: env.COOKIE_SECURE },
+    cookie: { domain: env.COOKIE_DOMAIN, secure: env.COOKIE_SECURE, sameSite: env.COOKIE_SAMESITE },
     adminBootstrap: {
       phone: env.ADMIN_PHONE,
       password: env.ADMIN_PASSWORD,

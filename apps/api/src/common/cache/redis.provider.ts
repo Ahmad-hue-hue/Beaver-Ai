@@ -5,7 +5,7 @@ import type { AppConfig } from '../../config/configuration.js';
 
 export const REDIS_CLIENT = Symbol('REDIS_CLIENT');
 
-/** Shared ioredis connection (used by CacheService; BullMQ uses its own from the same config). */
+/** Shared ioredis connection used by CacheService. */
 export const RedisProvider: Provider = {
   provide: REDIS_CLIENT,
   inject: [ConfigService],

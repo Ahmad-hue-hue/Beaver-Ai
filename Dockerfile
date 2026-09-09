@@ -26,25 +26,6 @@ COPY packages/shared packages/shared
 WORKDIR /app/apps/api
 RUN bun run prisma generate
 
-# ── api: runtime ──
-FROM oven/bun:1.4.0 AS api
-WORKDIR /app
-COPY --from=prisma /app/node_modules ./node_modules
-COPY --from=prisma /app/apps ./apps
-COPY --from=prisma /app/packages ./packages
-# tsconfig.base.json is extended by apps/*/tsconfig.json; Bun needs it to
-# enable experimentalDecorators (native TC39 decorators break Nest's @OnEvent).
-COPY --from=prisma /app/tsconfig.base.json ./tsconfig.base.json
-COPY --from=prisma /app/bunfig.toml ./bunfig.toml
-WORKDIR /app/apps/api
-ENV NODE_ENV=production HOME=/home/bun
-EXPOSE 3001
-# Apply migrations, then start. Override CMD (e.g. to seed) at runtime.
-# Ownership must land on the non-root `bun` user (Prisma writes .cache etc.).
-RUN chown -R bun:bun /app
-USER bun
-CMD ["sh", "-c", "bun run db:deploy && bun src/main.ts"]
-
 # ── web-builder: build the Next.js app (standalone output) ──
 FROM deps AS web-builder
 WORKDIR /app
@@ -70,3 +51,27 @@ EXPOSE 3000
 RUN chown -R bun:bun /app
 USER bun
 CMD ["node", "app/apps/web/server.js"]
+
+# ── api: runtime ──
+# Kept as the LAST stage on purpose — Render (unlike plain `docker build --target`)
+# has no way to select a specific stage of a multi-stage Dockerfile; it always builds
+# whichever stage is defined last. `docker-compose.prod.yml` is unaffected: it
+# targets stages by name (`target: api` / `target: web`), which works regardless of
+# file order.
+FROM oven/bun:1.4.0 AS api
+WORKDIR /app
+COPY --from=prisma /app/node_modules ./node_modules
+COPY --from=prisma /app/apps ./apps
+COPY --from=prisma /app/packages ./packages
+# tsconfig.base.json is extended by apps/*/tsconfig.json; Bun needs it to
+# enable experimentalDecorators (native TC39 decorators break Nest's @OnEvent).
+COPY --from=prisma /app/tsconfig.base.json ./tsconfig.base.json
+COPY --from=prisma /app/bunfig.toml ./bunfig.toml
+WORKDIR /app/apps/api
+ENV NODE_ENV=production HOME=/home/bun
+EXPOSE 3001
+# Apply migrations, then start. Override CMD (e.g. to seed) at runtime.
+# Ownership must land on the non-root `bun` user (Prisma writes .cache etc.).
+RUN chown -R bun:bun /app
+USER bun
+CMD ["sh", "-c", "bun run db:deploy && bun src/main.ts"]

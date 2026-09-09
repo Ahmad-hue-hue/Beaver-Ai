@@ -32,7 +32,7 @@ export class BusinessesController {
     return {
       httpOnly: true,
       secure: this.cookieCfg.secure,
-      sameSite: 'lax',
+      sameSite: this.cookieCfg.sameSite,
       domain: this.cookieCfg.domain,
       path: '/api/v1/auth',
       ...(maxAgeSeconds ? { maxAge: maxAgeSeconds * 1000 } : {}),

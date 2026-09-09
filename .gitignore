@@ -23,6 +23,7 @@ apps/api/prisma/migrations/dev.db*
 .env.local
 .env.*.local
 *.pem
+infra/paas/
 
 # Logs
 logs/
