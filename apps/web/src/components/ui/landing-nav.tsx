@@ -33,13 +33,13 @@ export function LandingNav() {
         <LanguageToggle />
         <Link
           href="/login"
-          className="rounded-lg px-3 py-2 text-sm font-medium text-base-content/70 transition-colors hover:text-base-content sm:px-4"
+          className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 sm:px-4"
         >
           {t('landing.nav.signIn')}
         </Link>
         <Link
           href="/register"
-          className="whitespace-nowrap btn btn-primary px-3.5 py-2 text-sm font-medium transition-colors sm:px-4"
+          className="whitespace-nowrap rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 sm:px-4"
         >
           {t('landing.nav.getStarted')}
         </Link>
@@ -52,7 +52,7 @@ export function LandingNav() {
           aria-label={t('app.openMenu')}
           aria-haspopup="menu"
           aria-expanded={open}
-          className="grid size-10 place-items-center rounded-xl text-base-content/70 transition-colors hover:bg-base-200"
+          className="grid size-10 place-items-center rounded-xl text-slate-600 transition-colors hover:bg-slate-100"
         >
           <Menu className="size-6" />
         </button>
@@ -71,7 +71,7 @@ export function LandingNav() {
 
         {open && (
           <div
-            className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-2xl border border-base-300 bg-base-100 p-2 shadow-[0_20px_50px_-12px_rgba(2,44,34,0.35)]"
+            className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-2xl border border-hairline bg-surface p-2 shadow-[0_20px_50px_-12px_rgba(2,44,34,0.35)]"
             role="menu"
             aria-label={t('landing.menu')}
           >
@@ -79,7 +79,7 @@ export function LandingNav() {
               href="/login"
               onClick={close}
               role="menuitem"
-              className="block rounded-xl px-3.5 py-2.5 text-base font-medium text-base-content/80 transition-colors hover:bg-base-200"
+              className="block rounded-xl px-3.5 py-2.5 text-base font-medium text-slate-700 transition-colors hover:bg-slate-100"
             >
               {t('landing.nav.signIn')}
             </Link>
@@ -87,11 +87,11 @@ export function LandingNav() {
               href="/register"
               onClick={close}
               role="menuitem"
-              className="mt-1 block rounded-xl btn btn-primary px-3.5 py-2.5 text-center text-base font-medium transition-colors"
+              className="mt-1 block rounded-xl bg-brand-600 px-3.5 py-2.5 text-center text-base font-medium text-white transition-colors hover:bg-brand-700"
             >
               {t('landing.nav.getStarted')}
             </Link>
-            <div className="mt-2 border-t border-base-300 pt-1">
+            <div className="mt-2 border-t border-hairline pt-1">
               <LanguageToggle />
             </div>
           </div>

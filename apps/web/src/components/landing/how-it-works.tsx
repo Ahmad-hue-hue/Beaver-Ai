@@ -45,14 +45,14 @@ export function HowItWorks() {
   }, []);
 
   return (
-    <section className="bg-base-100">
+    <section className="bg-white">
       <div className="mx-auto max-w-6xl px-6 py-20">
         <Reveal className="max-w-xl">
-          <p className="font-mono text-xs uppercase tracking-[0.22em] text-primary">{t('landing.how.section')}</p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-base-content sm:text-4xl">
+          <p className="font-mono text-xs uppercase tracking-[0.22em] text-brand-600">{t('landing.how.section')}</p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
             {t('landing.how.title')}
           </h2>
-          <p className="mt-3 text-base-content/60">{t('landing.how.body')}</p>
+          <p className="mt-3 text-slate-500">{t('landing.how.body')}</p>
         </Reveal>
 
         <div ref={railRef} className="mt-14">
@@ -60,12 +60,12 @@ export function HowItWorks() {
             {/* Timeline rail — continuous connector for the whole process. */}
             <div
               aria-hidden
-              className="absolute left-[27px] top-3 bottom-3 w-px -translate-x-1/2 bg-primary/20 sm:left-[31px]"
+              className="absolute left-[27px] top-3 bottom-3 w-px -translate-x-1/2 bg-brand-100 sm:left-[31px]"
             >
               {/* Animated progress fill (grows toward the node on scroll-in). */}
               <div
                 className={cn(
-                  'absolute inset-x-0 top-0 h-full origin-top bg-primary transition-transform duration-1000 ease-out',
+                  'absolute inset-x-0 top-0 h-full origin-top bg-brand-600 transition-transform duration-1000 ease-out',
                   progressed ? 'scale-y-100' : 'scale-y-0',
                 )}
               />
@@ -73,19 +73,19 @@ export function HowItWorks() {
 
             {STEPS.map((s, i) => (
               <li key={s.n} className="relative">
-                {i > 0 ? <div aria-hidden className="absolute left-[27px] top-0 bottom-0 w-px -translate-x-1/2 bg-primary/20 sm:left-[31px]" /> : null}
+                {i > 0 ? <div aria-hidden className="absolute left-[27px] top-0 bottom-0 w-px -translate-x-1/2 bg-brand-100 sm:left-[31px]" /> : null}
                 <Reveal delay={i * 140}>
                   <div className="relative flex items-start gap-5 pb-10 last:pb-0 sm:gap-6">
                     {/* Icon node — sits on the rail. */}
-                    <div className="relative z-10 grid size-14 shrink-0 place-items-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/20 sm:size-16">
+                    <div className="relative z-10 grid size-14 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100 sm:size-16">
                       <s.icon className="size-7 sm:size-8" />
                     </div>
                     <div className="pt-1">
-                      <p className="font-mono text-sm font-semibold text-primary">
+                      <p className="font-mono text-sm font-semibold text-brand-600">
                         {t('landing.how.step', { n: s.n })}
                       </p>
-                      <h3 className="mt-1.5 text-xl font-semibold tracking-tight text-base-content">{t(s.titleKey)}</h3>
-                      <p className="mt-2 leading-relaxed text-base-content/60">{t(s.bodyKey)}</p>
+                      <h3 className="mt-1.5 text-xl font-semibold tracking-tight text-slate-900">{t(s.titleKey)}</h3>
+                      <p className="mt-2 leading-relaxed text-slate-500">{t(s.bodyKey)}</p>
                     </div>
                   </div>
                 </Reveal>
@@ -97,7 +97,7 @@ export function HowItWorks() {
         <Reveal className="mt-12" delay={200}>
           <Link
             href="/register"
-            className="tap inline-flex items-center gap-2 rounded-xl btn btn-primary px-7 text-base font-medium text-primary-content transition-colors hover:bg-primary hover:text-primary-content"
+            className="tap inline-flex items-center gap-2 rounded-xl bg-brand-600 px-7 text-base font-medium text-white transition-colors hover:bg-brand-700"
           >
             {t('landing.how.cta')} <ArrowRight className="size-5" />
           </Link>
