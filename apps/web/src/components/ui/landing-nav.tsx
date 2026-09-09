@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { LanguageToggle, useI18n } from '@/lib/i18n';
 import { Menu } from '@/components/ui/icon';
@@ -45,7 +44,7 @@ export function LandingNav() {
         </Link>
       </nav>
 
-      <div className="relative md:hidden">
+      <div className="relative z-50 md:hidden">
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
@@ -57,21 +56,19 @@ export function LandingNav() {
           <Menu className="size-6" />
         </button>
 
-        {open &&
-          createPortal(
-            <button
-              type="button"
-              aria-label={t('app.closeMenu')}
-              onClick={close}
-              tabIndex={-1}
-              className="fixed inset-0 z-40 cursor-default"
-            />,
-            document.body,
-          )}
+        {open && (
+          <button
+            type="button"
+            aria-label={t('app.closeMenu')}
+            onClick={close}
+            tabIndex={-1}
+            className="fixed inset-0 z-0 cursor-default"
+          />
+        )}
 
         {open && (
           <div
-            className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-2xl border border-hairline bg-surface p-2 shadow-[0_20px_50px_-12px_rgba(2,44,34,0.35)]"
+            className="absolute right-0 top-[calc(100%+0.5rem)] z-10 w-64 rounded-2xl border border-hairline bg-surface p-2 shadow-[0_20px_50px_-12px_rgba(2,44,34,0.35)]"
             role="menu"
             aria-label={t('landing.menu')}
           >

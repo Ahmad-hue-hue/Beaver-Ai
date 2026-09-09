@@ -47,3 +47,5 @@ test-results/
 
 # Docker volumes (local)
 .docker-data/
+.vercel
+.env*

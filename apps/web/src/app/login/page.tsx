@@ -19,11 +19,6 @@ export default function LoginPage() {
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
-  const [autofillLock, setAutofillLock] = React.useState(true);
-
-  const unlockAutofill = () => {
-    if (autofillLock) setAutofillLock(false);
-  };
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -73,9 +68,6 @@ export default function LoginPage() {
             spellCheck={false}
             placeholder="+255 774 899 262"
             value={phone}
-            readOnly={autofillLock}
-            onFocus={unlockAutofill}
-            onPointerDown={unlockAutofill}
             onChange={(e) => setPhone(e.target.value)}
             required
           />
@@ -86,9 +78,6 @@ export default function LoginPage() {
             autoComplete="off"
             placeholder={t('login.passwordPlaceholder')}
             value={password}
-            readOnly={autofillLock}
-            onFocus={unlockAutofill}
-            onPointerDown={unlockAutofill}
             onChange={(e) => setPassword(e.target.value)}
             required
           />

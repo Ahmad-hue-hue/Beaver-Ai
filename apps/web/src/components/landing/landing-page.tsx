@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useI18n } from '@/lib/i18n';
 import { Reveal } from '@/components/ui/reveal';
 import { LandingNav } from '@/components/ui/landing-nav';
-import { CanvasRevealEffect } from '@/components/ui/canvas-reveal-effect';
+import { HeroDots } from '@/components/ui/hero-dots';
 import { HowItWorks } from '@/components/landing/how-it-works';
 import {
   ShoppingCart,
@@ -49,13 +49,9 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero — Aceternity interactive canvas-reveal dot background with overlaid copy. */}
+      {/* Hero — lightweight 2D-canvas dot background with overlaid copy. */}
       <section className="relative min-h-[34rem] overflow-hidden bg-white sm:min-h-[38rem] lg:min-h-[44rem]">
-        <CanvasRevealEffect
-          containerClassName="absolute inset-0"
-          showGradient={false}
-          colors={[[3, 152, 85]]}
-        />
+        <HeroDots className="absolute inset-0 h-full w-full" />
         <div className="relative z-10 mx-auto flex min-h-[34rem] max-w-6xl flex-col justify-center px-6 py-24 sm:min-h-[38rem] lg:min-h-[44rem]">
           <div className="max-w-2xl">
             <h1
