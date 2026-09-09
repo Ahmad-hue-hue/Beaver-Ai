@@ -13,30 +13,6 @@ jobs:
   test-and-build:
     name: Install · test · typecheck · build
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: pgvector/pgvector:pg18
-        env:
-          POSTGRES_USER: beaver
-          POSTGRES_PASSWORD: beaver_dev_password
-          POSTGRES_DB: beaver
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U beaver -d beaver"
-          --health-interval 5s --health-timeout 5s --health-retries 10
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s --health-timeout 5s --health-retries 10
-
-    env:
-      DATABASE_URL: postgresql://beaver:beaver_dev_password@localhost:5432/beaver?schema=public
-      DIRECT_URL: postgresql://beaver:beaver_dev_password@localhost:5432/beaver?schema=public
-      REDIS_URL: redis://localhost:6379
 
     steps:
       - name: Checkout
@@ -61,15 +37,11 @@ jobs:
         working-directory: apps/api
         run: bun run prisma generate
 
-      - name: Apply migrations
-        working-directory: apps/api
-        run: bun run db:deploy
-
       - name: Test (API)
         working-directory: apps/api
-        run: bun test --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage
-        env:
-          DATABASE_URL: ${{ env.DATABASE_URL }}
+        # E2E tests require an isolated Neon database. Unit tests must not
+        # connect to the production Neon instance or a local Postgres service.
+        run: bun test --path-ignore-patterns='test/e2e/**' --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage
 
       - name: Upload API coverage report
         uses: actions/upload-artifact@v4
