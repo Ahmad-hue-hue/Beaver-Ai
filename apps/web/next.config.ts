@@ -8,14 +8,15 @@ const isDev = process.env.NODE_ENV === 'development';
 // origin explicitly so standalone API hosts keep working.
 const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-// SRI hash-based CSP (experimental.sri): keeps static generation + CDN caching
-// while still enabling a strict policy with no 'unsafe-inline' for scripts.
+// Next.js App Router emits small inline hydration scripts for streamed pages.
+// They must be allowed or the page renders as static HTML with no working
+// client-side controls (menus, links, forms, and password visibility toggles).
 const cspHeader = `
   default-src 'self';
-  script-src 'self'${isDev ? " 'unsafe-eval'" : ''};
-  style-src 'self' 'unsafe-inline';
+  script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''};
+  style-src 'self' 'unsafe-inline' https://api.fontshare.com;
   img-src 'self' blob: data:;
-  font-src 'self' https://api.fontshare.com;
+  font-src 'self' https://api.fontshare.com https://cdn.fontshare.com;
   connect-src 'self' ${apiOrigin};
   object-src 'none';
   base-uri 'self';
