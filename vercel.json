@@ -1,6 +1,5 @@
 {
   "installCommand": "bun install",
   "buildCommand": "bun run --filter web build",
-  "framework": "nextjs",
-  "outputDirectory": ".next"
+  "framework": "nextjs"
 }
