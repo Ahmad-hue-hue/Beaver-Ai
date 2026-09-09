@@ -41,7 +41,7 @@ const nextConfig: NextConfig = {
   // Slim, self-contained production output for the Docker image.
   output: 'standalone',
   // Trace files from the monorepo root so the standalone bundle keeps workspace deps.
-  outputFileTracingRoot: path.join(__dirname, '../../..'),
+  outputFileTracingRoot: path.join(__dirname, '..', '..'),
   experimental: {
     // Keep server actions/body limits sane for POS payloads.
     serverActions: { bodySizeLimit: '2mb' },
