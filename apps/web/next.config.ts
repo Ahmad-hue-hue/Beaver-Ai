@@ -46,9 +46,6 @@ const nextConfig: NextConfig = {
   experimental: {
     // Keep server actions/body limits sane for POS payloads.
     serverActions: { bodySizeLimit: '2mb' },
-    // Hash-based integrity attributes so a strict CSP needs no 'unsafe-inline'
-    // for scripts while pages stay statically renderable.
-    sri: { algorithm: 'sha256' },
   },
   async headers() {
     return [

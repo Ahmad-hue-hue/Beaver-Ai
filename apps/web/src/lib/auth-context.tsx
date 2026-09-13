@@ -25,29 +25,40 @@ const AuthContext = React.createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = React.useState<Session | null>(null);
   const [loading, setLoading] = React.useState(true);
+  // Guards the one-time session restore: if the user logs in (or registers,
+  // onboarded, signs out) while the initial /auth/refresh is still in flight,
+  // the (stale) refresh result must not clobber the fresher session.
+  const userActionStarted = React.useRef(false);
 
   React.useEffect(() => {
     // Restore a session from the refresh cookie, if any.
     api
       .post<Session>('/auth/refresh')
-      .then(setSession)
-      .catch(() => setSession(null))
+      .then((s) => {
+        if (!userActionStarted.current) setSession(s);
+      })
+      .catch(() => {
+        if (!userActionStarted.current) setSession(null);
+      })
       .finally(() => setLoading(false));
   }, []);
 
   const login = React.useCallback(async (phone: string, password: string) => {
+    userActionStarted.current = true;
     const s = await api.post<Session>('/auth/login', { phone, password });
     setSession(s);
     return s;
   }, []);
 
   const register = React.useCallback(async (input: RegisterInput) => {
+    userActionStarted.current = true;
     // Registration creates a pending account — no session is issued until the admin approves.
     return api.post<RegisterResult>('/auth/register', input);
   }, []);
 
   const onboard = React.useCallback(
     async (input: OnboardInput) => {
+      userActionStarted.current = true;
       const s = await api.post<Session>('/onboarding', input, {
         accessToken: session?.accessToken,
       });
@@ -58,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = React.useCallback(async () => {
+    userActionStarted.current = true;
     await api.post('/auth/logout', undefined, { accessToken: session?.accessToken }).catch(() => {});
     setSession(null);
   }, [session?.accessToken]);
