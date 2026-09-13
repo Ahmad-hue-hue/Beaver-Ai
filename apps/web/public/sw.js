@@ -7,7 +7,7 @@
 //
 // The CACHE_NAME must be bumped on deploy to invalidate the shell cache.
 
-const CACHE_NAME = 'beaver-shell-v2';
+const CACHE_NAME = 'beaver-shell-v3';
 
 // Minimal offline shell: the root, login (unauthenticated entry), manifest,
 // and the boot script. Bumps invalidate via the versioned CACHE_NAME above.
