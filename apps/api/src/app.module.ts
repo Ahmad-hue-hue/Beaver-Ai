@@ -12,6 +12,7 @@ import { AiModule as CommonAiModule } from './common/ai/ai.module.js';
 import { PrismaModule } from './common/prisma/prisma.module.js';
 import { AuditModule } from './common/audit/audit.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { KeepAliveModule } from './common/keepalive/keepalive.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { BusinessesModule } from './modules/businesses/businesses.module.js';
 import { CategoriesModule } from './modules/categories/categories.module.js';
@@ -64,6 +65,7 @@ import { MaintenanceModule } from './modules/maintenance/maintenance.module.js';
     PrismaModule,
     CacheModule,
     EventsModule,
+    KeepAliveModule,
     CommonAiModule,
     AuditModule,
     AuthModule,

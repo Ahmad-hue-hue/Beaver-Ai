@@ -23,6 +23,13 @@ const envSchema = z.object({
     .transform((v) => v === 'true'),
   COOKIE_SAMESITE: z.enum(['lax', 'none', 'strict']).default('lax'),
 
+  // Public address the API taps to keep itself warm. Render free web services
+  // spin down after ~15 min without inbound traffic; the keepalive self-ping
+  // counts as inbound so the first request of a session (e.g. login) never
+  // hits a cold start. Only active when NODE_ENV=production.
+  PUBLIC_BASE_URL: z.string().url().default('https://beaver-api-97zs.onrender.com'),
+  KEEPALIVE_INTERVAL_MS: z.coerce.number().default(480_000),
+
   AI_PROVIDER: z.enum(['openrouter', 'mock']).default('openrouter'),
   OPENROUTER_API_KEY: z.string().optional().default(''),
   AI_MODEL: z.string().default('minimax/minimax-m3:free'),
@@ -61,6 +68,10 @@ function buildConfig(env: z.infer<typeof envSchema>) {
       refreshTtl: env.JWT_REFRESH_TTL,
     },
     cookie: { domain: env.COOKIE_DOMAIN, secure: env.COOKIE_SECURE, sameSite: env.COOKIE_SAMESITE },
+    keepalive: {
+      publicBaseUrl: env.PUBLIC_BASE_URL,
+      intervalMs: env.KEEPALIVE_INTERVAL_MS,
+    },
     adminBootstrap: {
       phone: env.ADMIN_PHONE,
       password: env.ADMIN_PASSWORD,
