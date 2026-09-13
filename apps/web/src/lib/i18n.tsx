@@ -504,6 +504,7 @@ export const EN: Dict = {
   'login.createAccount': 'Create an account',
   'login.pending': 'Your account is awaiting admin approval. You’ll be able to sign in once it’s approved.',
   'login.expired': 'Your subscription has expired. Contact the admin to renew it before signing in.',
+  'login.serverWaking': 'Server is waking up — tap Sign in again in a few seconds.',
 
   /* Register */
   'register.title': 'Create your account',
@@ -1183,6 +1184,7 @@ export const SW: Dict = {
   'login.createAccount': 'Unda akaunti',
   'login.pending': 'Akaunti yako inasubiri idhini ya msimamizi. Utaweza kuingia ikishakubaliwa.',
   'login.expired': 'Usajili wako umeisha. Wasiliana na msimamizi ili kuusasisha kabla ya kuingia.',
+  'login.serverWaking': 'Seva inaamka — gusa Ingia tena baada ya sekunde chache.',
 
   /* Register */
   'register.title': 'Unda akaunti yako',

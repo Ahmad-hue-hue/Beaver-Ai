@@ -39,6 +39,8 @@ export default function LoginPage() {
           return;
         }
         setError(err.message);
+      } else if (err instanceof TypeError) {
+        setError(t('login.serverWaking'));
       } else {
         setError('Something went wrong. Try again.');
       }

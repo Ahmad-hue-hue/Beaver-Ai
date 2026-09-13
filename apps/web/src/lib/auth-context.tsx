@@ -45,7 +45,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = React.useCallback(async (phone: string, password: string) => {
     userActionStarted.current = true;
-    const s = await api.post<Session>('/auth/login', { phone, password });
+    let s: Session;
+    try {
+      s = await api.post<Session>('/auth/login', { phone, password });
+    } catch (err) {
+      // The API host scales to zero after idle, so the first request can die
+      // mid cold-boot. Retry once after the container has had time to wake.
+      if (err instanceof TypeError) {
+        await new Promise((r) => setTimeout(r, 6000));
+        s = await api.post<Session>('/auth/login', { phone, password });
+      } else {
+        throw err;
+      }
+    }
     setSession(s);
     return s;
   }, []);
