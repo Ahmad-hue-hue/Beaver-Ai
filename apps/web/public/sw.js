@@ -7,11 +7,12 @@
 //
 // The CACHE_NAME must be bumped on deploy to invalidate the shell cache.
 
-const CACHE_NAME = 'beaver-shell-v3';
+const CACHE_NAME = 'beaver-shell-v4';
 
-// Minimal offline shell: the root, login (unauthenticated entry), manifest,
-// and the boot script. Bumps invalidate via the versioned CACHE_NAME above.
-const SHELL = ['/', '/login', '/manifest.webmanifest', '/theme-init.js'];
+// Minimal offline shell: the root, manifest, and the boot script. The login page
+// is deliberately NOT cached so an offline blip can never resurrect a stale
+// pre-install copy of the app for the user.
+const SHELL = ['/', '/manifest.webmanifest', '/theme-init.js'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(SHELL)));
@@ -30,10 +31,11 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const { request } = e;
 
-  // Navigation requests: network first, cache fallback to /login.
+  // Navigation requests: network first, offline fallback to the cached root
+  // (a minimal branded offline page — never a stale copy of a real screen).
   if (request.mode === 'navigate') {
     e.respondWith(
-      fetch(request).catch(() => caches.match('/login')),
+      fetch(request).catch(() => caches.match(request).then((c) => c || caches.match('/'))),
     );
     return;
   }
