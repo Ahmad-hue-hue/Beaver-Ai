@@ -52,6 +52,7 @@ import {
   Alert02Icon,
   Sun03Icon,
   Moon02Icon,
+  Download01Icon,
 } from '@hugeicons/core-free-icons';
 
 export interface IconProps {
@@ -111,3 +112,4 @@ export const RefreshCw = make(RefreshCwIcon, 'RefreshCw');
 export const TriangleAlert = make(Alert02Icon, 'TriangleAlert');
 export const Sun = make(Sun03Icon, 'Sun');
 export const Moon = make(Moon02Icon, 'Moon');
+export const Download = make(Download01Icon, 'Download');

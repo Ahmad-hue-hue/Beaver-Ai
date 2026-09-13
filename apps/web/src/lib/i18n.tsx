@@ -505,6 +505,11 @@ export const EN: Dict = {
   'login.pending': 'Your account is awaiting admin approval. You’ll be able to sign in once it’s approved.',
   'login.expired': 'Your subscription has expired. Contact the admin to renew it before signing in.',
   'login.serverWaking': 'Server is waking up — tap Sign in again in a few seconds.',
+  'install.button': 'Install app',
+  'install.working': 'Installing…',
+  'install.done': 'Beaver is installed on your device.',
+  'install.hint': 'If nothing opens, use the browser menu → Install app.',
+  'install.menuPath': 'Install on your phone: Android Chrome → ⋮ → Install app · iPhone → Share → Add to Home Screen.',
 
   /* Register */
   'register.title': 'Create your account',
@@ -1185,6 +1190,11 @@ export const SW: Dict = {
   'login.pending': 'Akaunti yako inasubiri idhini ya msimamizi. Utaweza kuingia ikishakubaliwa.',
   'login.expired': 'Usajili wako umeisha. Wasiliana na msimamizi ili kuusasisha kabla ya kuingia.',
   'login.serverWaking': 'Seva inaamka — gusa Ingia tena baada ya sekunde chache.',
+  'install.button': 'Sakinisha programu',
+  'install.working': 'Inasakinisha…',
+  'install.done': 'Beaver imewekwa kwenye kifaa chako.',
+  'install.hint': 'Ikiwa hakitafunguka, tumia menyu ya kivinjari → Sakinisha programu.',
+  'install.menuPath': 'Sakinisha kwenye simu: Android Chrome → ⋮ → Sakinisha programu · iPhone → Share → Add to Home Screen.',
 
   /* Register */
   'register.title': 'Unda akaunti yako',

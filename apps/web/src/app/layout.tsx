@@ -15,6 +15,11 @@ export const metadata: Metadata = {
   manifest: '/manifest.webmanifest',
   applicationName: 'Beaver',
   appleWebApp: { capable: true, title: 'Beaver', statusBarStyle: 'default' },
+  icons: {
+    icon: '/icons/icon-192.png',
+    shortcut: '/icons/icon-512.png',
+    apple: '/icons/icon-192.png',
+  },
   openGraph: {
     title: 'Beaver — Business OS for Tanzanian shops',
     description:
