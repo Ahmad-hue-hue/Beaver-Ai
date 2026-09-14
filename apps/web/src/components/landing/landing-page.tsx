@@ -51,8 +51,9 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero — interactive brand-green particle network confined to the hero;
-          the original light hero copy sits untouched on top. */}
+      {/* Hero — Aceternity-style particles: soft brand-green bokeh drift upward,
+          particles gently follow the cursor. Canvas bounded to hero section;
+          original light hero copy untouched. */}
       <section className="relative min-h-[34rem] overflow-hidden bg-white sm:min-h-[38rem] lg:min-h-[44rem]">
         <HeroBackground />
         <div className="relative z-10 mx-auto flex min-h-[34rem] max-w-6xl flex-col justify-center px-6 py-24 sm:min-h-[38rem] lg:min-h-[44rem]">
