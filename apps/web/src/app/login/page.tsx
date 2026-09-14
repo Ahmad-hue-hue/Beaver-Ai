@@ -10,7 +10,6 @@ import { Field, Input, PasswordInput } from '@/components/ui/field';
 import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api-client';
 import { useI18n } from '@/lib/i18n';
-import { InstallApp } from '@/components/install-app';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -91,10 +90,6 @@ export default function LoginPage() {
           <ArrowRight className="size-5" />
         </Button>
       </form>
-
-      <div className="mt-8">
-        <InstallApp />
-      </div>
 
       <div className="divider mt-10 pt-5 text-base-content/60">
         {t('login.newHere')}{' '}

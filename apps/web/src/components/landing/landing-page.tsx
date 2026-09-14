@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useI18n } from '@/lib/i18n';
 import { Reveal } from '@/components/ui/reveal';
+import { InstallPrompt } from '@/components/install-prompt';
 import { LandingNav } from '@/components/ui/landing-nav';
 import { HeroDots } from '@/components/ui/hero-dots';
 import { HowItWorks } from '@/components/landing/how-it-works';
@@ -38,6 +39,7 @@ export default function LandingPage() {
 
   return (
     <main className="relative min-h-dvh">
+      <InstallPrompt />
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-transparent bg-canvas/70 backdrop-blur transition-colors">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">

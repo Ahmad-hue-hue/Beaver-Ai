@@ -11,6 +11,13 @@ export function ServiceWorkerRegistrar() {
         .catch(() => {
           /* SW registration is best-effort; offline won't work but app stays functional. */
         });
+
+      // When a newer service worker (and therefore newer app bundle) takes control,
+      // hard-refresh once. Combined with skipWaiting+clients.claim in the SW this
+      // guarantees a phone can never stay stuck on an old cached version.
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      });
     }
   }, []);
 

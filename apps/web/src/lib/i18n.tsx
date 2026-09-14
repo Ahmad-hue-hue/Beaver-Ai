@@ -509,6 +509,11 @@ export const EN: Dict = {
   'install.working': 'Installing…',
   'install.done': 'Beaver is installed on your device.',
   'install.hint': 'If nothing opens, use the browser menu → Install app.',
+  'install.popupTitle': 'Get the Beaver app',
+  'install.popupBody': 'Install it like a native app — one tap, works offline.',
+  'install.later': 'Later',
+  'install.ios': 'Tap Share → Add to Home Screen.',
+  'install.menuHint': 'Browser menu → Install app.',
   'install.menuPath': 'Install on your phone: Android Chrome → ⋮ → Install app · iPhone → Share → Add to Home Screen.',
 
   /* Register */
@@ -1194,6 +1199,11 @@ export const SW: Dict = {
   'install.working': 'Inasakinisha…',
   'install.done': 'Beaver imewekwa kwenye kifaa chako.',
   'install.hint': 'Ikiwa hakitafunguka, tumia menyu ya kivinjari → Sakinisha programu.',
+  'install.popupTitle': 'Pata programu ya Beaver',
+  'install.popupBody': 'Sakinisha kama programu halisi — kubofya moja, inafanya kazi bila intaneti.',
+  'install.later': 'Baadaye',
+  'install.ios': 'Bonyeza Share → Add to Home Screen.',
+  'install.menuHint': 'Menyu ya kivinjari → Sakinisha programu.',
   'install.menuPath': 'Sakinisha kwenye simu: Android Chrome → ⋮ → Sakinisha programu · iPhone → Share → Add to Home Screen.',
 
   /* Register */
