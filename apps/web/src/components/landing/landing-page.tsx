@@ -5,8 +5,8 @@ import Image from 'next/image';
 import { useI18n } from '@/lib/i18n';
 import { Reveal } from '@/components/ui/reveal';
 import { InstallPrompt } from '@/components/install-prompt';
+import { HeroBackground } from '@/components/landing/hero-background';
 import { LandingNav } from '@/components/ui/landing-nav';
-import { HeroDots } from '@/components/ui/hero-dots';
 import { HowItWorks } from '@/components/landing/how-it-works';
 import {
   ShoppingCart,
@@ -51,21 +51,24 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero — lightweight 2D-canvas dot background with overlaid copy. */}
-      <section className="relative min-h-[34rem] overflow-hidden bg-white sm:min-h-[38rem] lg:min-h-[44rem]">
-        <HeroDots className="absolute inset-0 h-full w-full" />
-        <div className="relative z-10 mx-auto flex min-h-[34rem] max-w-6xl flex-col justify-center px-6 py-24 sm:min-h-[38rem] lg:min-h-[44rem]">
+      {/* Hero — interactive particle-network background (animated-backgrounds),
+          fixed full-viewport canvas behind the transparent hero; pointer events
+          pass through to the canvas so the network follows the cursor. */}
+      <section className="relative overflow-hidden">
+        <HeroBackground />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-surface" aria-hidden="true" />
+        <div className="pointer-events-none relative z-10 mx-auto flex min-h-[34rem] max-w-6xl flex-col justify-center px-6 py-24 sm:min-h-[38rem] lg:min-h-[44rem]">
           <div className="max-w-2xl">
             <h1
-              className="animate-rise text-[2.6rem] font-semibold leading-[1.04] tracking-tight text-slate-900 sm:text-6xl lg:text-7xl"
+              className="animate-rise text-[2.6rem] font-semibold leading-[1.04] tracking-tight text-white sm:text-6xl lg:text-7xl"
               style={{ animationDelay: '0ms' }}
             >
               {t('landing.hero.titleA')}
               <br className="hidden sm:block" /> {t('landing.hero.titleB')}{' '}
-              <span className="text-brand-600">{t('landing.hero.titleC')}</span>
+              <span className="text-brand-400">{t('landing.hero.titleC')}</span>
             </h1>
             <p
-              className="animate-rise mt-6 max-w-lg text-lg leading-relaxed text-slate-600"
+              className="animate-rise mt-6 max-w-lg text-lg leading-relaxed text-slate-300"
               style={{ animationDelay: '100ms' }}
             >
               {t('landing.hero.sub')}
@@ -76,19 +79,19 @@ export default function LandingPage() {
             >
               <Link
                 href="/register"
-                className="tap inline-flex items-center gap-2 rounded-xl bg-brand-600 px-7 text-base font-medium text-white shadow-sm transition-colors hover:bg-brand-700"
+                className="tap pointer-events-auto inline-flex items-center gap-2 rounded-xl bg-brand-500 px-7 text-base font-medium text-white shadow-lg shadow-brand-950/30 transition-colors hover:bg-brand-600"
               >
                 {t('landing.hero.ctaPrimary')} <ArrowRight className="size-5" />
               </Link>
               <Link
                 href="/login"
-                className="tap inline-flex items-center rounded-xl border border-slate-300 px-6 text-base font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                className="tap pointer-events-auto inline-flex items-center rounded-xl border border-white/25 px-6 text-base font-medium text-white transition-colors hover:bg-white/10"
               >
                 {t('landing.hero.ctaSecondary')}
               </Link>
             </div>
             <p
-              className="animate-rise mt-6 text-sm text-slate-500"
+              className="animate-rise mt-6 text-sm text-slate-400"
               style={{ animationDelay: '240ms' }}
             >
               {t('landing.hero.trust')}
