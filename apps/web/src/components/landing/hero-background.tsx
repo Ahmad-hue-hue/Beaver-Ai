@@ -13,15 +13,16 @@ interface Particle {
   driftSpeed: number;
   twinklePhase: number;
   twinkleSpeed: number;
+  glow: boolean;
 }
 
 /**
- * Aceternity-style Particles hero background: soft brand-green particles drift
- * upward with bokeh-like size variation and gentle mouse attraction. Confined to
- * the hero section so the rest of the page is completely unaffected.
- *   - Honors prefers-reduced-motion (single static frame, no pointer tracking)
+ * Aceternity-style Particles: brand-green bokeh particles drift upward and scatter
+ * away from the cursor. Larger "bloom" particles render with a soft radial gradient
+ * for a natural depth-of-field effect. Confined to the hero section.
+ *   - Honors prefers-reduced-motion (static frame, no pointer tracking)
  *   - Pauses offscreen via IntersectionObserver
- *   - DPR-aware canvas, all listeners passive
+ *   - DPR-aware, all listeners passive
  */
 export function HeroBackground() {
   const ref = React.useRef<HTMLCanvasElement>(null);
@@ -43,25 +44,29 @@ export function HeroBackground() {
     let visible = true;
     const mouse = { x: -9999, y: -9999 };
 
-    const COUNT_BASE = 55;
-    const MOUSE_RADIUS = 180;
-    const MOUSE_STRENGTH = 0.012;
+    const COUNT = 90;
+    const MOUSE_RADIUS = 200;
+    const MOUSE_STRENGTH = 0.025;
 
     const makeParticles = () => {
-      const count = Math.max(30, Math.min(COUNT_BASE, Math.round((width * height) / 18000)));
+      const scale = Math.max(0.6, Math.min(1, Math.sqrt((width * height) / 250000)));
+      const count = Math.max(40, Math.round(COUNT * scale));
       particles = Array.from({ length: count }, () => {
-        const big = Math.random() < 0.15;
+        const r = Math.random();
+        const isGlow = r < 0.12;
+        const isLarge = !isGlow && r < 0.3;
         return {
           x: Math.random() * width,
           y: Math.random() * height,
-          vx: (Math.random() - 0.5) * 0.15,
-          vy: -(0.08 + Math.random() * 0.25),
-          size: big ? 2.5 + Math.random() * 3.5 : 0.8 + Math.random() * 1.8,
-          alpha: big ? 0.08 + Math.random() * 0.12 : 0.15 + Math.random() * 0.35,
+          vx: (Math.random() - 0.5) * 0.12,
+          vy: -(0.15 + Math.random() * 0.35),
+          size: isGlow ? 5 + Math.random() * 5 : isLarge ? 2.5 + Math.random() * 2.5 : 1 + Math.random() * 1.8,
+          alpha: isGlow ? 0.12 + Math.random() * 0.18 : isLarge ? 0.3 + Math.random() * 0.35 : 0.4 + Math.random() * 0.4,
           drift: Math.random() * Math.PI * 2,
-          driftSpeed: 0.002 + Math.random() * 0.006,
+          driftSpeed: 0.003 + Math.random() * 0.008,
           twinklePhase: Math.random() * Math.PI * 2,
-          twinkleSpeed: 0.3 + Math.random() * 0.8,
+          twinkleSpeed: 0.4 + Math.random() * 1.2,
+          glow: isGlow,
         };
       });
     };
@@ -100,22 +105,22 @@ export function HeroBackground() {
           if (d2 < r2 && d2 > 0.01) {
             const d = Math.sqrt(d2);
             const f = (1 - d / MOUSE_RADIUS) * MOUSE_STRENGTH;
-            p.vx += (dx / d) * f;
-            p.vy += (dy / d) * f;
+            p.vx -= (dx / d) * f;
+            p.vy -= (dy / d) * f;
           }
 
-          p.vy -= 0.0003;
+          p.vy -= 0.0004;
           const speed = Math.hypot(p.vx, p.vy);
-          const max = 0.8;
+          const max = 1.0;
           if (speed > max) {
             p.vx = (p.vx / speed) * max;
             p.vy = (p.vy / speed) * max;
           }
 
-          p.x += p.vx + Math.sin(time * p.driftSpeed * 40 + p.drift) * 0.08;
+          p.x += p.vx + Math.sin(time * p.driftSpeed * 40 + p.drift) * 0.12;
           p.y += p.vy;
-          p.vx *= 0.99;
-          p.vy *= 0.99;
+          p.vx *= 0.992;
+          p.vy *= 0.992;
         }
 
         if (p.y < -10) {
@@ -127,18 +132,28 @@ export function HeroBackground() {
 
         const twinkle = reduced
           ? 1
-          : 0.65 + 0.35 * Math.sin(time * p.twinkleSpeed + p.twinklePhase);
+          : 0.55 + 0.45 * Math.sin(time * p.twinkleSpeed + p.twinklePhase);
         const alpha = p.alpha * twinkle;
-        if (alpha < 0.005) continue;
+        if (alpha < 0.01) continue;
 
-        if (p.size > 3) {
-          const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
-          g.addColorStop(0, `rgba(3, 152, 85, ${alpha})`);
-          g.addColorStop(0.5, `rgba(3, 152, 85, ${alpha * 0.3})`);
+        if (p.glow) {
+          const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 3);
+          g.addColorStop(0, `rgba(3, 152, 85, ${alpha * 0.9})`);
+          g.addColorStop(0.35, `rgba(3, 152, 85, ${alpha * 0.4})`);
+          g.addColorStop(0.7, `rgba(3, 152, 85, ${alpha * 0.1})`);
           g.addColorStop(1, 'rgba(3, 152, 85, 0)');
           ctx.fillStyle = g;
           ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+          ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.size > 3) {
+          const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2.5);
+          g.addColorStop(0, `rgba(3, 152, 85, ${alpha})`);
+          g.addColorStop(0.45, `rgba(3, 152, 85, ${alpha * 0.35})`);
+          g.addColorStop(1, 'rgba(3, 152, 85, 0)');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 2.5, 0, Math.PI * 2);
           ctx.fill();
         }
 
