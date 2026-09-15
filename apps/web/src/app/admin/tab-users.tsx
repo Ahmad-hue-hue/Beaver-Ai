@@ -1,24 +1,20 @@
 'use client';
 
 import * as React from 'react';
-import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Switch, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Switch, TextField, Typography } from '@mui/material';
 import { Delete as DeleteIcon, Edit as EditIcon, Key as KeyIcon } from '@mui/icons-material';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 import { fetchPage, fmtDate, listPageRows, toInputDate, type Page, type UserRow } from './admin-types';
-import { dataGridSx } from './mui-theme';
-import { ConfirmDialog, EmptyNote, ErrorNote, LoadMoreButton, Loader, RowMenu, SearchField, StatusChip, useDebouncedSearch } from './admin-ui';
+import { CardGrid, ConfirmDialog, EmptyNote, ErrorNote, FieldRow, LoadMoreButton, Loader, RecordCard, RowMenu, SearchField, StatusChip, useDebouncedSearch } from './admin-ui';
 
 export function UsersTab() {
   const { t } = useI18n();
   const { session } = useAuth();
   const token = session?.accessToken;
   const qc = useQueryClient();
-  const theme = useTheme();
-  const phone = useMediaQuery(theme.breakpoints.down('sm'));
   const { value, setValue, query } = useDebouncedSearch();
   const [editing, setEditing] = React.useState<UserRow | null>(null);
   const [deleting, setDeleting] = React.useState<UserRow | null>(null);
@@ -60,46 +56,6 @@ export function UsersTab() {
   const rows = listPageRows(list.data);
   const hasMore = list.data?.pages.at(-1)?.hasMore ?? false;
 
-  const columns: GridColDef<UserRow>[] = [
-    {
-      field: 'name', headerName: t('admin.col.name'), flex: 1, minWidth: phone ? 150 : 200,
-      renderCell: (p) => (
-        <Box sx={{ lineHeight: 1.3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>{p.row.name}</Typography>
-            <StatusChip status={p.row.serviceStatus} />
-            {p.row.isPlatformAdmin && <Chip size="small" color="primary" label={t('admin.badge.admin')} />}
-          </Box>
-          <Typography variant="caption" color="text.secondary" noWrap>
-            {p.row.phone}
-          </Typography>
-        </Box>
-      ),
-    },
-    { field: 'memberCount', headerName: t('admin.col.businesses'), width: 110, type: 'number' },
-    {
-      field: 'serviceExpiresAt', headerName: t('admin.col.subscription'), width: 130,
-      renderCell: (p) => <Typography variant="body2">{fmtDate(p.row.serviceExpiresAt)}</Typography>,
-    },
-    {
-      field: 'createdAt', headerName: t('admin.col.created'), width: 120,
-      renderCell: (p) => <Typography variant="body2" color="text.secondary">{fmtDate(p.row.createdAt)}</Typography>,
-    },
-    {
-      field: 'actions', headerName: '', width: 64, sortable: false, filterable: false, resizable: false,
-      renderCell: (p) => (
-        <RowMenu
-          label={t('admin.rowMenu')}
-          items={[
-            { key: 'edit', label: t('admin.crud.edit'), icon: <EditIcon fontSize="small" />, onSelect: () => { setFormError(null); setEditing(p.row); } },
-            { key: 'reset', label: t('admin.users.resetPassword'), icon: <KeyIcon fontSize="small" />, onSelect: () => { setFormError(null); setResetting(p.row); } },
-            { key: 'delete', label: t('admin.crud.delete'), icon: <DeleteIcon fontSize="small" />, danger: true, onSelect: () => { setFormError(null); setDeleting(p.row); } },
-          ]}
-        />
-      ),
-    },
-  ];
-
   return (
     <>
       <Typography variant="h1" sx={{ mb: 0.5 }}>{t('admin.tab.users')}</Typography>
@@ -114,17 +70,40 @@ export function UsersTab() {
         <EmptyNote text={t('admin.empty')} />
       ) : (
         <>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            getRowId={(r) => r.id}
-            autoHeight
-            hideFooter
-            disableRowSelectionOnClick
-            rowHeight={64}
-            columnVisibilityModel={phone ? { memberCount: false, createdAt: false } : {}}
-            sx={dataGridSx}
-          />
+          <CardGrid>
+            {rows.map((r) => (
+              <RecordCard
+                key={r.id}
+                top={
+                  <>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>{r.name}</Typography>
+                        <StatusChip status={r.serviceStatus} />
+                        {r.isPlatformAdmin && <Chip size="small" color="primary" label={t('admin.badge.admin')} />}
+                      </Box>
+                      <Typography variant="body2" color="text.secondary" noWrap>{r.phone}</Typography>
+                    </Box>
+                    <RowMenu
+                      label={t('admin.rowMenu')}
+                      items={[
+                        { key: 'edit', label: t('admin.crud.edit'), icon: <EditIcon fontSize="small" />, onSelect: () => { setFormError(null); setEditing(r); } },
+                        { key: 'reset', label: t('admin.users.resetPassword'), icon: <KeyIcon fontSize="small" />, onSelect: () => { setFormError(null); setResetting(r); } },
+                        { key: 'delete', label: t('admin.crud.delete'), icon: <DeleteIcon fontSize="small" />, danger: true, onSelect: () => { setFormError(null); setDeleting(r); } },
+                      ]}
+                    />
+                  </>
+                }
+                body={
+                  <>
+                    <FieldRow label={t('admin.col.businesses')} value={String(r.memberCount)} />
+                    <FieldRow label={t('admin.col.subscription')} value={fmtDate(r.serviceExpiresAt)} />
+                    <FieldRow label={t('admin.col.created')} value={fmtDate(r.createdAt)} />
+                  </>
+                }
+              />
+            ))}
+          </CardGrid>
           <LoadMoreButton hasMore={hasMore} loading={list.isFetchingNextPage} onLoad={() => list.fetchNextPage()} />
         </>
       )}

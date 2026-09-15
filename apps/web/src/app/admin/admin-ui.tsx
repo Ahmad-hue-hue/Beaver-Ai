@@ -5,6 +5,8 @@ import {
   Alert,
   Box,
   Button,
+  Card,
+  CardContent,
   Chip,
   CircularProgress,
   Dialog,
@@ -12,6 +14,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Divider,
   IconButton,
   ListItemIcon,
   ListItemText,
@@ -85,6 +88,91 @@ export function ErrorNote({ message }: { message: string }) {
     <Typography color="error" sx={{ py: 5, textAlign: 'center' }}>
       {message}
     </Typography>
+  );
+}
+
+/** Responsive module grid: 1-across on phones → 2 on sm/md → 3 on desktop. */
+export function CardGrid({ children }: { children: React.ReactNode }) {
+  return (
+    <Box
+      sx={{
+        display: 'grid',
+        gap: 2,
+        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
+      }}
+    >
+      {children}
+    </Box>
+  );
+}
+
+/** One modular record card: `top` header row, `body` label/value rows, optional footer slot. */
+export function RecordCard({ top, body, footer, muted = false }: {
+  top: React.ReactNode;
+  body?: React.ReactNode;
+  footer?: React.ReactNode;
+  muted?: boolean;
+}) {
+  return (
+    <Card
+      variant="outlined"
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        minWidth: 0,
+        ...(muted ? { opacity: 0.62, backgroundColor: 'background.default' } : {}),
+      }}
+    >
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, px: 2, py: 2, flex: 1, minWidth: 0, '&:last-child': { pb: 2 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, minWidth: 0 }}>{top}</Box>
+        {body && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mt: 0.25, minWidth: 0 }}>{body}</Box>
+        )}
+      </CardContent>
+      {footer && (
+        <>
+          <Divider />
+          <Box sx={{ px: 2, py: 1.5 }}>{footer}</Box>
+        </>
+      )}
+    </Card>
+  );
+}
+
+/** Hairline label/value row used inside RecordCard bodies (tabular money in mono). */
+export function FieldRow({ label, value, mono = false }: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+}) {
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, minWidth: 0 }}>
+      <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0, pt: 0.25 }}>{label}</Typography>
+      <Box sx={{ minWidth: 0, flex: 1, textAlign: 'right' }}>
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: 500,
+            overflowWrap: 'anywhere',
+            fontFamily: mono ? '"JetBrains Mono", monospace' : undefined,
+            fontVariantNumeric: mono ? 'tabular-nums' : undefined,
+          }}
+        >
+          {value}
+        </Typography>
+      </Box>
+    </Box>
+  );
+}
+
+/** Small metric shown in a card footer (products / sales / revenue). */
+export function Stat({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <Box sx={{ minWidth: 0 }}>
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>{label}</Typography>
+      <Typography variant="body2" sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums', overflowWrap: 'anywhere' }}>{value}</Typography>
+    </Box>
   );
 }
 

@@ -1,16 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import { Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 import { fetchPage, fmtDate, listPageRows, money, type BusinessRow, type Page } from './admin-types';
-import { dataGridSx } from './mui-theme';
-import { ConfirmDialog, EmptyNote, ErrorNote, LoadMoreButton, Loader, RowMenu, SearchField, StatusChip, useDebouncedSearch } from './admin-ui';
+import { CardGrid, ConfirmDialog, EmptyNote, ErrorNote, FieldRow, LoadMoreButton, Loader, RecordCard, RowMenu, SearchField, Stat, StatusChip, useDebouncedSearch } from './admin-ui';
 
 const BUSINESS_TYPES = ['RETAIL', 'WHOLESALE', 'PHARMACY', 'RESTAURANT', 'GROCERY', 'ELECTRONICS', 'HARDWARE', 'OTHER'];
 
@@ -19,8 +17,6 @@ export function BusinessesTab() {
   const { session } = useAuth();
   const token = session?.accessToken;
   const qc = useQueryClient();
-  const theme = useTheme();
-  const phone = useMediaQuery(theme.breakpoints.down('sm'));
   const { value, setValue, query } = useDebouncedSearch();
   const [editing, setEditing] = React.useState<BusinessRow | null>(null);
   const [deleting, setDeleting] = React.useState<BusinessRow | null>(null);
@@ -53,62 +49,6 @@ export function BusinessesTab() {
   const rows = listPageRows(list.data);
   const hasMore = list.data?.pages.at(-1)?.hasMore ?? false;
 
-  const columns: GridColDef<BusinessRow>[] = [
-    {
-      field: 'name', headerName: t('admin.col.name'), flex: 1, minWidth: phone ? 140 : 180,
-      renderCell: (p) => (
-        <Box sx={{ lineHeight: 1.3 }}>
-          <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>{p.row.name}</Typography>
-          <Typography variant="caption" color="text.secondary">{p.row.type} · {p.row.country}</Typography>
-        </Box>
-      ),
-    },
-    {
-      field: 'owner', headerName: t('admin.col.owner'), flex: 1, minWidth: phone ? 130 : 170,
-      renderCell: (p) => (
-        <Box sx={{ lineHeight: 1.3 }}>
-          <Typography variant="body2" noWrap>{p.row.owner?.name ?? '—'}</Typography>
-          <Typography variant="caption" color="text.secondary" noWrap>{p.row.owner?.phone ?? ''}</Typography>
-        </Box>
-      ),
-    },
-    {
-      field: 'subscription', headerName: t('admin.col.subscription'), width: 170, sortable: false,
-      renderCell: (p) => p.row.ownerSubscription ? (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-start' }}>
-          <StatusChip status={p.row.ownerSubscription.status} />
-          {p.row.ownerSubscription.serviceExpiresAt && (
-            <Typography variant="caption" color="text.secondary">
-              {t('admin.col.renews', { date: fmtDate(p.row.ownerSubscription.serviceExpiresAt) })}
-            </Typography>
-          )}
-        </Box>
-      ) : <Typography color="text.secondary">—</Typography>,
-    },
-    { field: 'productCount', headerName: t('admin.col.products'), width: 100, type: 'number' },
-    { field: 'salesCount', headerName: t('admin.col.sales'), width: 90, type: 'number' },
-    {
-      field: 'revenue', headerName: t('admin.col.revenue'), width: 140, type: 'number',
-      renderCell: (p) => (
-        <Typography variant="body2" sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-          {money(p.row.revenue, p.row.currency)}
-        </Typography>
-      ),
-    },
-    {
-      field: 'actions', headerName: '', width: 64, sortable: false, filterable: false, resizable: false,
-      renderCell: (p) => (
-        <RowMenu
-          label={t('admin.rowMenu')}
-          items={[
-            { key: 'edit', label: t('admin.crud.edit'), icon: <EditIcon fontSize="small" />, onSelect: () => { setFormError(null); setEditing(p.row); } },
-            { key: 'delete', label: t('admin.crud.delete'), icon: <DeleteIcon fontSize="small" />, danger: true, onSelect: () => { setFormError(null); setDeleting(p.row); } },
-          ]}
-        />
-      ),
-    },
-  ];
-
   return (
     <>
       <Typography variant="h1" sx={{ mb: 0.5 }}>{t('admin.tab.businesses')}</Typography>
@@ -123,17 +63,53 @@ export function BusinessesTab() {
         <EmptyNote text={t('admin.empty')} />
       ) : (
         <>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            getRowId={(r) => r.id}
-            autoHeight
-            hideFooter
-            disableRowSelectionOnClick
-            rowHeight={64}
-            columnVisibilityModel={phone ? { productCount: false, salesCount: false } : {}}
-            sx={dataGridSx}
-          />
+          <CardGrid>
+            {rows.map((r) => (
+              <RecordCard
+                key={r.id}
+                top={
+                  <>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Typography variant="body1" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>{r.name}</Typography>
+                      <Typography variant="body2" color="text.secondary">{r.type} · {r.country}</Typography>
+                    </Box>
+                    <RowMenu
+                      label={t('admin.rowMenu')}
+                      items={[
+                        { key: 'edit', label: t('admin.crud.edit'), icon: <EditIcon fontSize="small" />, onSelect: () => { setFormError(null); setEditing(r); } },
+                        { key: 'delete', label: t('admin.crud.delete'), icon: <DeleteIcon fontSize="small" />, danger: true, onSelect: () => { setFormError(null); setDeleting(r); } },
+                      ]}
+                    />
+                  </>
+                }
+                body={
+                  <>
+                    <FieldRow label={t('admin.col.owner')} value={r.owner ? `${r.owner.name}${r.owner.phone ? ` · ${r.owner.phone}` : ''}` : '—'} />
+                    <FieldRow
+                      label={t('admin.col.subscription')}
+                      value={r.ownerSubscription ? (
+                        <Stack spacing={0.5} sx={{ alignItems: 'flex-end' }}>
+                          <StatusChip status={r.ownerSubscription.status} />
+                          {r.ownerSubscription.serviceExpiresAt && (
+                            <Typography variant="caption" color="text.secondary">
+                              {t('admin.col.renews', { date: fmtDate(r.ownerSubscription.serviceExpiresAt) })}
+                            </Typography>
+                          )}
+                        </Stack>
+                      ) : '—'}
+                    />
+                  </>
+                }
+                footer={
+                  <Stack direction="row" spacing={3} sx={{ flexWrap: 'wrap' }}>
+                    <Stat label={t('admin.col.products')} value={String(r.productCount)} />
+                    <Stat label={t('admin.col.sales')} value={String(r.salesCount)} />
+                    <Stat label={t('admin.col.revenue')} value={money(r.revenue, r.currency)} />
+                  </Stack>
+                }
+              />
+            ))}
+          </CardGrid>
           <LoadMoreButton hasMore={hasMore} loading={list.isFetchingNextPage} onLoad={() => list.fetchNextPage()} />
         </>
       )}

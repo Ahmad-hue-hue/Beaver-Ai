@@ -2,15 +2,13 @@
 
 import * as React from 'react';
 import { Alert, Autocomplete, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, MenuItem, Switch, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { Add as AddIcon, Delete as VoidIcon, Edit as EditIcon, Print as PrintIcon, Receipt as ReceiptIcon } from '@mui/icons-material';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 import { fetchPage, fmtDate, fmtTime, listPageRows, money, type Page, type PaymentRow, type UserRow } from './admin-types';
-import { dataGridSx } from './mui-theme';
-import { ConfirmDialog, EmptyNote, ErrorNote, LoadMoreButton, Loader, RowMenu, useDebouncedSearch } from './admin-ui';
+import { CardGrid, ConfirmDialog, EmptyNote, ErrorNote, FieldRow, LoadMoreButton, Loader, RecordCard, RowMenu, useDebouncedSearch } from './admin-ui';
 
 const METHODS = ['CASH', 'MOBILE_MONEY', 'BANK', 'CARD'];
 const DEFAULT_AMOUNT = 50000;
@@ -62,63 +60,6 @@ export function PaymentsTab() {
   const rows = listPageRows(list.data);
   const hasMore = list.data?.pages.at(-1)?.hasMore ?? false;
 
-  const columns: GridColDef<PaymentRow>[] = [
-    {
-      field: 'payer', headerName: t('admin.payments.payer'), flex: 1, minWidth: phone ? 140 : 190,
-      renderCell: (p) => (
-        <Box sx={{ lineHeight: 1.3 }}>
-          <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>{p.row.user.name}</Typography>
-          <Typography variant="caption" color="text.secondary" noWrap>{p.row.user.phone}</Typography>
-        </Box>
-      ),
-    },
-    {
-      field: 'amount', headerName: t('admin.payments.amount'), width: 140, type: 'number',
-      renderCell: (p) => (
-        <Typography variant="body2" sx={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
-          {money(p.row.amount)}
-        </Typography>
-      ),
-    },
-    {
-      field: 'method', headerName: t('admin.payments.method'), width: 130,
-      renderCell: (p) => <Chip size="small" variant="outlined" label={t(`admin.payments.method.${p.row.method.toLowerCase()}`)} />,
-    },
-    {
-      field: 'period', headerName: t('admin.payments.period'), width: 200,
-      renderCell: (p) => (
-        <Typography variant="body2" color="text.secondary">
-          {fmtDate(p.row.periodStart)} → {fmtDate(p.row.periodEnd)}
-        </Typography>
-      ),
-    },
-    {
-      field: 'recordedBy', headerName: t('admin.payments.recordedBy'), width: 140,
-      renderCell: (p) => <Typography variant="body2" noWrap>{p.row.recordedBy.name}</Typography>,
-    },
-    {
-      field: 'status', headerName: t('admin.col.subscription'), width: 120, sortable: false,
-      renderCell: (p) => p.row.voidedAt
-        ? <Chip size="small" color="default" label={t('admin.payments.voided')} />
-        : <Chip size="small" color="success" label={t('admin.payments.valid')} />,
-    },
-    {
-      field: 'actions', headerName: '', width: 64, sortable: false, filterable: false, resizable: false,
-      renderCell: (p) => (
-        <RowMenu
-          label={t('admin.rowMenu')}
-          items={[
-            { key: 'receipt', label: t('admin.payments.receipt'), icon: <ReceiptIcon fontSize="small" />, onSelect: () => setReceipt(p.row) },
-            ...(!p.row.voidedAt ? [
-              { key: 'edit', label: t('admin.crud.edit'), icon: <EditIcon fontSize="small" />, onSelect: () => { setFormError(null); setEditing(p.row); } },
-              { key: 'void', label: t('admin.payments.void'), icon: <VoidIcon fontSize="small" />, danger: true, onSelect: () => { setFormError(null); setVoiding(p.row); } },
-            ] : []),
-          ]}
-        />
-      ),
-    },
-  ];
-
   return (
     <>
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, mb: 0.5 }}>
@@ -147,17 +88,56 @@ export function PaymentsTab() {
         <EmptyNote text={t('admin.payments.empty')} />
       ) : (
         <>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            getRowId={(r) => r.id}
-            autoHeight
-            hideFooter
-            disableRowSelectionOnClick
-            rowHeight={64}
-            columnVisibilityModel={phone ? { period: false, recordedBy: false } : {}}
-            sx={dataGridSx}
-          />
+          <CardGrid>
+            {rows.map((r) => {
+              const voided = r.voidedAt !== null;
+              return (
+                <RecordCard
+                  key={r.id}
+                  muted={voided}
+                  top={
+                    <>
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                          <Typography variant="body1" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>{r.user.name}</Typography>
+                          {voided
+                            ? <Chip size="small" label={t('admin.payments.voided')} />
+                            : <Chip size="small" color="success" label={t('admin.payments.valid')} />}
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" noWrap>{r.user.phone}</Typography>
+                      </Box>
+                      <RowMenu
+                        label={t('admin.rowMenu')}
+                        items={[
+                          { key: 'receipt', label: t('admin.payments.receipt'), icon: <ReceiptIcon fontSize="small" />, onSelect: () => setReceipt(r) },
+                          ...(!voided ? [
+                            { key: 'edit', label: t('admin.crud.edit'), icon: <EditIcon fontSize="small" />, onSelect: () => { setFormError(null); setEditing(r); } },
+                            { key: 'void', label: t('admin.payments.void'), icon: <VoidIcon fontSize="small" />, danger: true, onSelect: () => { setFormError(null); setVoiding(r); } },
+                          ] : []),
+                        ]}
+                      />
+                    </>
+                  }
+                  body={
+                    <>
+                      <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 1, minWidth: 0, flexWrap: 'wrap' }}>
+                        <Typography variant="h5" component="p" sx={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                          {money(r.amount)}
+                        </Typography>
+                        <Chip size="small" variant="outlined" label={t(`admin.payments.method.${r.method.toLowerCase()}`)} />
+                      </Box>
+                      <FieldRow label={t('admin.payments.period')} value={`${fmtDate(r.periodStart)} → ${fmtDate(r.periodEnd)}`} />
+                      <FieldRow label={t('admin.payments.paidAt')} value={fmtTime(r.paidAt)} />
+                      <FieldRow label={t('admin.payments.recordedBy')} value={r.recordedBy.name} />
+                      {r.business && <FieldRow label={t('admin.col.business')} value={r.business.name} />}
+                      {r.referenceNo && <FieldRow label={t('admin.payments.reference')} value={r.referenceNo} />}
+                      {r.note && <FieldRow label={t('admin.payments.note')} value={r.note} />}
+                    </>
+                  }
+                />
+              );
+            })}
+          </CardGrid>
           <LoadMoreButton hasMore={hasMore} loading={list.isFetchingNextPage} onLoad={() => list.fetchNextPage()} />
         </>
       )}

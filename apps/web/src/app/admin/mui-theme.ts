@@ -66,16 +66,4 @@ export const adminTheme = createTheme({
   },
 });
 
-/** Shared DataGrid chrome (v9 has no MuiDataGrid theme key — apply via sx). */
-export const dataGridSx = {
-  border: '1px solid #eef1f4',
-  borderRadius: 3,
-  backgroundColor: '#fff',
-  fontFamily: '"General Sans", system-ui, sans-serif',
-  '& .MuiDataGrid-columnHeaders': { backgroundColor: '#fbfcfd' },
-  '& .MuiDataGrid-cell': { py: 1 },
-  '& .MuiDataGrid-cell:focus': { outline: 'none' },
-  '& .MuiDataGrid-columnHeader:focus': { outline: 'none' },
-};
-
 export const ADMIN_DRAWER_WIDTH = 264;

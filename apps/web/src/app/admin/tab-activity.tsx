@@ -1,21 +1,17 @@
 'use client';
 
-import { Box, Typography, useMediaQuery, useTheme } from '@mui/material';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { Typography } from '@mui/material';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 import { fetchPage, fmtTime, listPageRows, type ActivityRow, type Page } from './admin-types';
-import { dataGridSx } from './mui-theme';
-import { EmptyNote, ErrorNote, LoadMoreButton, Loader, SearchField, useDebouncedSearch } from './admin-ui';
+import { CardGrid, EmptyNote, ErrorNote, FieldRow, LoadMoreButton, Loader, RecordCard, SearchField, useDebouncedSearch } from './admin-ui';
 
 /** System-wide audit feed — intentionally read-only (tamper-evident). */
 export function ActivityTab() {
   const { t } = useI18n();
   const { session } = useAuth();
   const token = session?.accessToken;
-  const theme = useTheme();
-  const phone = useMediaQuery(theme.breakpoints.down('sm'));
   const { value, setValue, query } = useDebouncedSearch();
 
   const list = useInfiniteQuery({
@@ -30,28 +26,6 @@ export function ActivityTab() {
   const rows = listPageRows(list.data);
   const hasMore = list.data?.pages.at(-1)?.hasMore ?? false;
 
-  const columns: GridColDef<ActivityRow>[] = [
-    {
-      field: 'action', headerName: t('admin.col.action'), flex: 1, minWidth: 200,
-      renderCell: (p) => (
-        <Box sx={{ lineHeight: 1.3 }}>
-          <Typography variant="body2" sx={{ fontFamily: '"JetBrains Mono", monospace' }} noWrap>{p.row.action}</Typography>
-          <Typography variant="caption" color="text.secondary" noWrap>
-            {p.row.entityType}{p.row.entityId ? ` · ${p.row.entityId.slice(0, 8)}` : ''}{p.row.business ? ` · ${p.row.business.name}` : ''}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      field: 'who', headerName: t('admin.col.who'), width: 170,
-      renderCell: (p) => <Typography variant="body2" noWrap>{p.row.user?.name ?? '—'}</Typography>,
-    },
-    {
-      field: 'createdAt', headerName: t('admin.col.created'), width: 170,
-      renderCell: (p) => <Typography variant="body2" color="text.secondary">{fmtTime(p.row.createdAt)}</Typography>,
-    },
-  ];
-
   return (
     <>
       <Typography variant="h1" sx={{ mb: 0.5 }}>{t('admin.tab.activity')}</Typography>
@@ -65,17 +39,28 @@ export function ActivityTab() {
         <EmptyNote text={t('admin.empty')} />
       ) : (
         <>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            getRowId={(r) => r.id}
-            autoHeight
-            hideFooter
-            disableRowSelectionOnClick
-            rowHeight={60}
-            columnVisibilityModel={phone ? { who: false } : {}}
-            sx={dataGridSx}
-          />
+          <CardGrid>
+            {rows.map((r) => (
+              <RecordCard
+                key={r.id}
+                top={
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontFamily: '"JetBrains Mono", monospace', overflowWrap: 'anywhere' }}>
+                    {r.action}
+                  </Typography>
+                }
+                body={
+                  <>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontFamily: '"JetBrains Mono", monospace', overflowWrap: 'anywhere' }}>
+                      {r.entityType}{r.entityId ? ` · ${r.entityId.slice(0, 8)}` : ''}
+                    </Typography>
+                    <FieldRow label={t('admin.col.business')} value={r.business?.name ?? '—'} />
+                    <FieldRow label={t('admin.col.who')} value={r.user?.name ?? '—'} />
+                    <FieldRow label={t('admin.col.created')} value={fmtTime(r.createdAt)} />
+                  </>
+                }
+              />
+            ))}
+          </CardGrid>
           <LoadMoreButton hasMore={hasMore} loading={list.isFetchingNextPage} onLoad={() => list.fetchNextPage()} />
         </>
       )}
